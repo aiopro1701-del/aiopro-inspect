@@ -23,8 +23,10 @@ logo, the photos and a quote.
 
 ## Install on a phone (version 1)
 
-1. Get `index.html` onto the phone (email it to yourself, or use the hosted URL if GitHub Pages is enabled).
-2. Open it in the browser — **Safari** on iPhone, **Chrome** on Android.
+**Live app:** https://aiopro1701-del.github.io/aiopro-inspect/
+
+1. On the phone, open the live app URL above.
+2. It's already in the browser — **Safari** on iPhone, **Chrome** on Android.
 3. Add to home screen:
    - **iPhone:** Share button → *Add to Home Screen*
    - **Android:** three-dot menu → *Add to Home screen*
