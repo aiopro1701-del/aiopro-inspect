@@ -1,0 +1,13 @@
+{
+  "appId": "com.aiopro.chimneyinspect",
+  "appName": "AIO Pro Inspect",
+  "webDir": "dist",
+  "android": {
+    "allowMixedContent": true
+  },
+  "plugins": {
+    "Camera": {
+      "androidxExifInterfaceVersion": "1.3.7"
+    }
+  }
+}

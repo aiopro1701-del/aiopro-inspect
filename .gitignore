@@ -1,0 +1,17 @@
+# Dependencies / build output (version 2 native project)
+node_modules/
+dist/
+build/
+.vite/
+android/
+ios/
+
+# OS / editor cruft
+.DS_Store
+Thumbs.db
+desktop.ini
+*.log
+
+# Local env
+.env
+.env.local

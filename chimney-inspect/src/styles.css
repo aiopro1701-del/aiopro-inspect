@@ -1,0 +1,188 @@
+/* ────────────────────────────────────────────────────────────
+   Designed for a phone held in one gloved hand, in a basement
+   or on a driveway in full sun. Mortar-coloured working surface
+   so photos read true against it; soot-black structure; the
+   severity colours are the only saturated things on screen,
+   because severity is the only thing that has to jump out.
+   ──────────────────────────────────────────────────────────── */
+
+:root {
+  --mortar:   #F2EFE9;
+  --mortar-2: #E7E2D9;
+  --soot:     #14110F;
+  --soot-2:   #2A2521;
+  --ink:      #1A1614;
+  --muted:    #7A746E;
+  --rule:     #D6D0C8;
+
+  --ok:       #4A7658;
+  --monitor:  #BA862A;
+  --defect:   #B03D27;
+  --ember:    #C25A2E;
+
+  --tap: 52px;
+  --pad: 16px;
+  --radius: 6px;
+
+  --mono: ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+  --body: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+}
+
+* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+html, body, #root { height: 100%; margin: 0; }
+
+body {
+  background: var(--mortar);
+  color: var(--ink);
+  font-family: var(--body);
+  font-size: 16px;
+  line-height: 1.45;
+  overscroll-behavior-y: none;
+}
+
+button { font-family: inherit; font-size: inherit; cursor: pointer; border: none; background: none; color: inherit; }
+input, textarea, select { font-family: inherit; font-size: 16px; }
+
+/* ── App shell ──────────────────────────────────────────── */
+
+.app { min-height: 100%; display: flex; flex-direction: column; }
+
+.topbar {
+  position: sticky; top: 0; z-index: 20;
+  background: var(--soot); color: var(--mortar);
+  padding: calc(env(safe-area-inset-top, 0px) + 10px) var(--pad) 10px;
+  display: flex; align-items: center; gap: 12px;
+}
+.topbar h1 { font-size: 16px; font-weight: 700; margin: 0; letter-spacing: -0.01em; flex: 1; }
+.topbar .sub { font-family: var(--mono); font-size: 11px; color: #9C948C; }
+.iconbtn {
+  min-width: 40px; height: 40px; border-radius: var(--radius);
+  display: grid; place-items: center; color: var(--mortar);
+  font-family: var(--mono); font-size: 13px;
+}
+.iconbtn:active { background: var(--soot-2); }
+
+.screen { flex: 1; padding: var(--pad); padding-bottom: 96px; max-width: 720px; width: 100%; margin: 0 auto; }
+
+.bottombar {
+  position: fixed; left: 0; right: 0; bottom: 0; z-index: 20;
+  background: var(--mortar); border-top: 1px solid var(--rule);
+  padding: 10px var(--pad) calc(env(safe-area-inset-bottom, 0px) + 10px);
+  display: flex; gap: 10px; max-width: 720px; margin: 0 auto;
+}
+
+/* ── Buttons ────────────────────────────────────────────── */
+
+.btn {
+  min-height: var(--tap); padding: 0 20px; border-radius: var(--radius);
+  font-weight: 650; letter-spacing: -0.01em;
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+}
+.btn-primary { background: var(--soot); color: var(--mortar); flex: 1; }
+.btn-primary:active { background: var(--soot-2); }
+.btn-ghost { background: transparent; border: 1px solid var(--rule); color: var(--ink); }
+.btn-ghost:active { background: var(--mortar-2); }
+.btn-wide { width: 100%; }
+.btn:disabled { opacity: 0.4; }
+
+/* ── Cards and forms ────────────────────────────────────── */
+
+.card {
+  background: #FFF; border: 1px solid var(--rule); border-radius: var(--radius);
+  padding: var(--pad); margin-bottom: 12px;
+}
+.card-tap:active { background: var(--mortar-2); }
+
+.eyebrow {
+  font-family: var(--mono); font-size: 10.5px; letter-spacing: 0.14em;
+  text-transform: uppercase; color: var(--muted); margin-bottom: 6px;
+}
+
+.field { margin-bottom: 14px; }
+.field label { display: block; font-size: 13px; font-weight: 600; color: var(--muted); margin-bottom: 5px; }
+.field input, .field textarea, .field select {
+  width: 100%; min-height: 48px; padding: 11px 12px;
+  border: 1px solid var(--rule); border-radius: var(--radius);
+  background: #FFF; color: var(--ink);
+}
+.field textarea { min-height: 92px; resize: vertical; line-height: 1.5; }
+.field input:focus, .field textarea:focus { outline: 2px solid var(--ember); outline-offset: -1px; }
+
+.row { display: flex; gap: 10px; }
+.row > * { flex: 1; }
+
+/* ── The flue spine: progress rail on the inspect screen ── */
+
+.flue { display: flex; gap: 14px; align-items: stretch; }
+.flue-rail { width: 14px; flex: none; display: flex; flex-direction: column; gap: 3px; padding-top: 4px; }
+.flue-seg { flex: 1; background: var(--mortar-2); border-radius: 2px; min-height: 14px; }
+.flue-seg.done { background: var(--soot); }
+.flue-seg.here { background: var(--ember); }
+.flue-body { flex: 1; min-width: 0; }
+
+/* ── Checkpoint ─────────────────────────────────────────── */
+
+.stage-head { display: flex; align-items: baseline; gap: 10px; margin-bottom: 4px; }
+.stage-head .n { font-family: var(--mono); font-size: 12px; color: var(--muted); }
+.stage-head h2 { font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; margin: 0; color: var(--muted); }
+
+.item-title { font-size: 21px; font-weight: 700; line-height: 1.25; letter-spacing: -0.015em; margin: 8px 0 10px; }
+.item-help { font-size: 15px; color: #4A443F; margin-bottom: 6px; }
+.item-ref { font-family: var(--mono); font-size: 11px; color: var(--muted); margin-bottom: 16px; }
+
+.verdicts { display: flex; gap: 8px; margin-bottom: 18px; }
+.verdict {
+  flex: 1; min-height: 56px; border-radius: var(--radius);
+  border: 1.5px solid var(--rule); background: #FFF;
+  font-weight: 700; font-size: 15px; color: var(--muted);
+}
+.verdict[data-on='true'] { color: #FFF; border-color: transparent; }
+.verdict.ok[data-on='true']      { background: var(--ok); }
+.verdict.monitor[data-on='true'] { background: var(--monitor); }
+.verdict.defect[data-on='true']  { background: var(--defect); }
+
+/* ── Photo slots ────────────────────────────────────────── */
+
+.photos { display: grid; grid-template-columns: repeat(auto-fill, minmax(104px, 1fr)); gap: 10px; margin-bottom: 16px; }
+.slot {
+  aspect-ratio: 4 / 3; border-radius: var(--radius); overflow: hidden;
+  border: 1.5px dashed var(--rule); background: var(--mortar-2);
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 4px; padding: 6px; text-align: center;
+}
+.slot.filled { border-style: solid; border-color: var(--soot); padding: 0; position: relative; }
+.slot img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.slot .cap { font-size: 11px; color: var(--muted); line-height: 1.25; }
+.slot .plus { font-size: 22px; color: var(--muted); }
+.slot .retake {
+  position: absolute; right: 5px; bottom: 5px;
+  background: rgba(20,17,15,0.82); color: #FFF;
+  font-family: var(--mono); font-size: 10px; padding: 4px 7px; border-radius: 4px;
+}
+
+/* ── Job list ───────────────────────────────────────────── */
+
+.joblist-item { display: flex; align-items: center; gap: 12px; }
+.joblist-item .meta { flex: 1; min-width: 0; }
+.joblist-item .name { font-weight: 650; font-size: 17px; }
+.joblist-item .sub { font-size: 13px; color: var(--muted); }
+.pill {
+  font-family: var(--mono); font-size: 11px; padding: 4px 8px;
+  border-radius: 4px; background: var(--mortar-2); color: var(--muted); white-space: nowrap;
+}
+.pill.defect { background: var(--defect); color: #FFF; }
+.pill.done { background: var(--ok); color: #FFF; }
+
+/* ── Tally ──────────────────────────────────────────────── */
+
+.tally { display: flex; gap: 8px; margin-bottom: 16px; }
+.tally div { flex: 1; background: #FFF; border: 1px solid var(--rule); border-radius: var(--radius); padding: 12px 10px; }
+.tally .n { font-size: 24px; font-weight: 700; font-family: var(--mono); line-height: 1; }
+.tally .l { font-family: var(--mono); font-size: 9.5px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); margin-top: 5px; }
+
+.empty { text-align: center; color: var(--muted); padding: 48px 16px; }
+
+@media (prefers-reduced-motion: no-preference) {
+  .card, .verdict, .slot { transition: background-color 120ms ease, border-color 120ms ease; }
+}
