@@ -1,0 +1,15 @@
+{
+  "name": "AIO Pro Inspect",
+  "short_name": "AIO Inspect",
+  "description": "Guided chimney inspections with a customer-ready PDF. Local to the device.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#F2EFE9",
+  "theme_color": "#14110F",
+  "icons": [
+    { "src": "icons/icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" },
+    { "src": "icons/icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "maskable" }
+  ]
+}

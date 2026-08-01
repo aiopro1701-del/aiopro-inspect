@@ -8,6 +8,9 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black" />
 <meta name="mobile-web-app-capable" content="yes" />
 <title>AIO Pro Inspect</title>
+<link rel="manifest" href="manifest.webmanifest" />
+<link rel="icon" href="icons/icon.svg" type="image/svg+xml" />
+<link rel="apple-touch-icon" href="icons/icon.svg" />
 <style>
 /* ────────────────────────────────────────────────────────────
    Designed for a phone held in one gloved hand, in a basement
@@ -708,6 +711,152 @@ var TEMPLATES = [
       },
     ],
   },
+  {
+    id: 'wood-stove',
+    name: 'Wood stove',
+    blurb: 'Freestanding solid-fuel appliance and its chimney',
+    stages: [
+      {
+        id: 'ws-space',
+        name: 'Appliance & hearth',
+        items: [
+          { id: 'ws-listing', label: 'Listing plate and appliance',
+            help: 'Photograph the rating/listing plate. Confirm it is a listed appliance and note the model. An unlisted or heavily modified stove is a finding.',
+            ref: 'Manufacturer listing', photos: [{ id: 'plate', label: 'Listing plate' }] },
+          { id: 'ws-hearth', label: 'Hearth pad / floor protection',
+            help: 'Non-combustible pad under and in front of the stove, sized to the listing (typically 16 in. in front of the door). Check for combustible flooring showing through at the edges.',
+            ref: 'Manufacturer listing / NFPA 211', photos: [{ id: 'hearth', label: 'Hearth pad and front extension' }] },
+          { id: 'ws-clearance', label: 'Clearances to combustibles',
+            help: 'Measure to walls, furniture and trim against the listed clearances, or against reduced clearances only where a listed shield is actually installed. A shield screwed flat to the wall is not a reduction.',
+            ref: 'Manufacturer listing / NFPA 211 clearances', photos: [{ id: 'clear', label: 'Tightest clearance' }] },
+          { id: 'ws-alarms', label: 'Smoke and CO alarms',
+            help: 'Note whether smoke and CO alarms are present, where they are, and whether they are in date. Record as information, not as a pass.',
+            ref: 'Site condition', photos: [{ id: 'alarm', label: 'Nearest alarm' }] },
+        ],
+      },
+      {
+        id: 'ws-connector',
+        name: 'Stovepipe (connector)',
+        items: [
+          { id: 'ws-conn-mat', label: 'Connector material and size',
+            help: 'Single-wall or listed double-wall stovepipe, sized to the flue collar and not reduced. Look for thin, rusted or crushed pipe.',
+            ref: 'NFPA 211 connector', photos: [{ id: 'conn', label: 'Connector run' }] },
+          { id: 'ws-conn-clear', label: 'Connector clearance to combustibles',
+            help: 'Single-wall pipe needs 18 in. to combustibles unless a listed reduction is in place. Watch where the pipe passes a shelf, mantel or ceiling.',
+            ref: 'NFPA 211 — 18 in. single-wall', photos: [{ id: 'conn-clear', label: 'Clearance at the tightest point' }] },
+          { id: 'ws-conn-joints', label: 'Joints, fasteners and support',
+            help: 'At least three screws per joint, crimped (male) end down toward the stove, sections well supported. No open seams or foil-taped repairs.',
+            ref: 'NFPA 211 connector joints', photos: [{ id: 'joint', label: 'A typical joint' }] },
+          { id: 'ws-thimble', label: 'Wall/ceiling pass-through',
+            help: 'Where the connector passes through a wall or ceiling it must use a listed thimble or support box with full clearance — not bare pipe through drywall.',
+            ref: 'NFPA 211 pass-through', photos: [{ id: 'thimble', label: 'Pass-through' }] },
+        ],
+      },
+      {
+        id: 'ws-chimney',
+        name: 'Chimney',
+        items: [
+          { id: 'ws-liner', label: 'Chimney type and liner condition',
+            help: 'Listed metal (class A) chimney or lined masonry. Scan for cracks, gaps, rust, separated sections and displaced tiles. Unlined masonry on a wood stove is a finding.',
+            ref: 'NFPA 211 Ch. 9 lining', photos: [{ id: 'liner-top', label: 'Flue from the top' }, { id: 'liner-scan', label: 'Camera scan still' }] },
+          { id: 'ws-creosote', label: 'Creosote and blockage',
+            help: 'Measure or estimate creosote build-up (glazed third-degree creosote is the dangerous one) and check for nests, debris and fallen tile at the base.',
+            ref: 'NFPA 211 maintenance', photos: [{ id: 'creosote', label: 'Flue interior / creosote' }] },
+          { id: 'ws-crown', label: 'Crown, cap and termination',
+            help: 'Crown or storm collar sound, cap and spark screen present, chimney terminates 3 ft above the roof penetration and 2 ft above anything within 10 ft.',
+            ref: 'NFPA 211 — 3-2-10 termination', photos: [{ id: 'crown', label: 'Crown / cap' }, { id: 'term', label: 'Termination from the roof' }] },
+          { id: 'ws-exterior', label: 'Exterior and flashing',
+            help: 'Spalled brick or rusted sections, leaning stack, failed flashing or storm collar at the roof line.',
+            ref: 'NFPA 211 structural', photos: [{ id: 'exterior', label: 'Full stack from outside' }] },
+        ],
+      },
+      {
+        id: 'ws-operation',
+        name: 'Operation & safety',
+        items: [
+          { id: 'ws-door', label: 'Door, gasket and glass',
+            help: 'Door closes tight, gasket seals (dollar-bill test), glass not cracked. A leaking door burns dirty and overfires.',
+            ref: 'Field condition', photos: [{ id: 'door', label: 'Door and gasket' }] },
+          { id: 'ws-firebox', label: 'Firebox, baffle and firebrick',
+            help: 'Firebrick intact, baffle in place and not warped or fallen, no cracks through the steel or cast body.',
+            ref: 'Field condition', photos: [{ id: 'firebox', label: 'Inside the firebox' }] },
+          { id: 'ws-draft', label: 'Draft / smoke test',
+            help: 'With a small fire, confirm the chimney establishes draft and smoke goes up, not into the room. Note any spillage at the door on loading.',
+            ref: 'Field draft test', photos: [{ id: 'smoke', label: 'Draft / smoke test' }] },
+        ],
+      },
+    ],
+  },
+  {
+    id: 'open-fireplace',
+    name: 'Masonry fireplace (Level I)',
+    blurb: 'Open masonry fireplace and chimney, readily accessible',
+    stages: [
+      {
+        id: 'fp-firebox',
+        name: 'Firebox & hearth',
+        items: [
+          { id: 'fp-firebox', label: 'Firebox masonry and joints',
+            help: 'Firebrick and joints sound — no missing mortar, open joints, gaps to the surround or heat damage that exposes the masonry behind.',
+            ref: 'NFPA 211 firebox', photos: [{ id: 'firebox', label: 'Firebox back and sides' }] },
+          { id: 'fp-hearth', label: 'Hearth and hearth extension',
+            help: 'Non-combustible hearth extension of adequate size in front of and beside the opening (roughly 16–20 in. front depending on opening size). No combustible flooring under it.',
+            ref: 'IRC Ch. 10 hearth extension', photos: [{ id: 'hearth', label: 'Hearth and extension' }] },
+          { id: 'fp-clearance', label: 'Mantel and combustible clearances',
+            help: 'Mantel, trim and combustible framing kept back from the opening per code. Scorching on the mantel is a finding.',
+            ref: 'IRC Ch. 10 clearances', photos: [{ id: 'mantel', label: 'Mantel / surround' }] },
+        ],
+      },
+      {
+        id: 'fp-damper',
+        name: 'Damper & smoke chamber',
+        items: [
+          { id: 'fp-damper', label: 'Damper operation',
+            help: 'Damper opens, closes and holds position. Note a rusted, warped or painted-shut damper, or a top-mount damper and its cable.',
+            ref: 'Field condition', photos: [{ id: 'damper', label: 'Damper' }] },
+          { id: 'fp-smoke-chamber', label: 'Smoke chamber and shelf',
+            help: 'Smoke chamber parged smooth, no exposed corbelled brick or gaps, smoke shelf reasonably clear of debris.',
+            ref: 'NFPA 211 smoke chamber', photos: [{ id: 'chamber', label: 'Up into the smoke chamber' }] },
+          { id: 'fp-lintel', label: 'Lintel and throat',
+            help: 'Steel lintel over the opening sound and supported, throat area intact with no cracking through to combustibles.',
+            ref: 'NFPA 211 / IRC Ch. 10', photos: [{ id: 'lintel', label: 'Lintel and throat' }] },
+        ],
+      },
+      {
+        id: 'fp-flue',
+        name: 'Flue & liner',
+        items: [
+          { id: 'fp-liner', label: 'Liner type and condition',
+            help: 'Clay tile, listed metal liner or unlined. Scan for cracked or displaced tiles, missing joints and spalling. Unlined masonry serving a fireplace is a finding.',
+            ref: 'NFPA 211 Ch. 9 lining', photos: [{ id: 'liner-top', label: 'Flue from the top' }, { id: 'liner-scan', label: 'Camera scan still' }] },
+          { id: 'fp-blockage', label: 'Blockage, creosote and debris',
+            help: 'Nests, leaves, fallen tile and creosote. Check the base of the flue and the smoke shelf.',
+            ref: 'NFPA 211 maintenance', photos: [{ id: 'blockage', label: 'Flue interior / base' }] },
+          { id: 'fp-size', label: 'Flue size for the opening',
+            help: 'Flue area roughly matched to the fireplace opening (a common rule is about 1/10 of the opening for a lined masonry flue). A badly undersized flue smokes into the room.',
+            ref: 'NFPA 211 sizing', photos: [{ id: 'flue-size', label: 'Flue opening' }] },
+        ],
+      },
+      {
+        id: 'fp-exterior',
+        name: 'Exterior & termination',
+        items: [
+          { id: 'fp-crown', label: 'Crown / wash',
+            help: 'Crown sloped to shed water, not cracked, with a drip edge. A cracked crown lets water into the chimney and is one of the most common findings.',
+            ref: 'NFPA 211 crown', photos: [{ id: 'crown', label: 'Crown' }] },
+          { id: 'fp-cap', label: 'Cap and spark arrestor',
+            help: 'Rain cap and spark arrestor screen present and intact over each flue. Note an open flue or a rusted-out cap.',
+            ref: 'NFPA 211 termination', photos: [{ id: 'cap', label: 'Cap / arrestor' }] },
+          { id: 'fp-exterior', label: 'Exterior masonry and flashing',
+            help: 'Spalled brick, open joints, leaning stack, failed flashing at the roof line.',
+            ref: 'NFPA 211 structural', photos: [{ id: 'exterior', label: 'Full stack from outside' }] },
+          { id: 'fp-height', label: 'Termination height and clearance',
+            help: 'Chimney terminates at least 3 ft above the roof penetration and 2 ft above anything within 10 ft.',
+            ref: 'NFPA 211 — 3-2-10 termination', photos: [{ id: 'height', label: 'Termination from the roof' }] },
+        ],
+      },
+    ],
+  },
 ];
 
 function templateById(id) { return TEMPLATES.find(function (t) { return t.id === id; }) || TEMPLATES[0]; }
@@ -1130,6 +1279,12 @@ function viewSettings() {
         fld('Company name', 'company') + fld('Phone', 'phone', 'tel') + fld('Email', 'email', 'email') +
         fld('Service area or address', 'address') + fld('Licence number', 'license') +
       '</div>' +
+      '<div class="card"><div class="eyebrow">Backup</div>' +
+        '<div style="color:var(--muted);font-size:14px;margin-bottom:12px">Everything is stored on this device only. Export a backup file now and then — and use Import to move all your jobs onto a new phone.</div>' +
+        '<div class="row">' +
+          '<button class="btn btn-ghost" data-act="export-data">Export backup</button>' +
+          '<button class="btn btn-ghost" data-act="import-data">Import</button>' +
+        '</div></div>' +
     '</div>' +
     '<div class="bottombar"><button class="btn btn-primary" data-act="save-settings">Save</button></div>' +
     '</div>';
@@ -1189,8 +1344,9 @@ function viewInspect() {
 
   return '<div class="app">' +
     '<div class="topbar"><button class="iconbtn" data-act="home">‹</button>' +
-      '<div style="flex:1"><h1>' + esc(job.customer.name || 'Inspection') + '</h1>' +
-      '<div class="sub">' + (state.i + 1) + ' / ' + items.length + ' · ' + answered + ' checked</div></div>' +
+      '<button data-act="edit-customer" style="flex:1;min-width:0;text-align:left;background:none;border:none;color:inherit;padding:0">' +
+        '<h1 style="margin:0">' + esc(job.customer.name || 'Inspection') + ' <span style="font-family:var(--mono);font-size:10px;color:#9C948C;font-weight:400">EDIT</span></h1>' +
+        '<div class="sub">' + (state.i + 1) + ' / ' + items.length + ' · ' + answered + ' checked</div></button>' +
       '<button class="iconbtn" data-act="report" aria-label="Go to report">RPT</button></div>' +
     '<div class="screen">' + storageWarn() + '<div class="flue">' +
       '<div class="flue-rail" aria-hidden="true">' + rail + '</div>' +
@@ -1374,9 +1530,12 @@ root.addEventListener('click', function (e) {
       break;
     case 'remove-logo': state.settings = Object.assign({}, state.settings, { logo: null }); render(); break;
     case 'save-settings': saveSettings(state.settings); state.view = 'home'; refresh(); break;
+    case 'export-data': exportData(); break;
+    case 'import-data': importData(); break;
 
     /* inspect */
     case 'start-checks': state.showCustomer = false; render(); break;
+    case 'edit-customer': state.showCustomer = true; render(); break;
     case 'verdict':
       (function () {
         var item = allItems(templateById(state.job.templateId))[state.i];
@@ -1439,8 +1598,53 @@ function generate() {
   });
 }
 
+/* ── Backup: export / import all jobs + settings as one JSON file ── */
+function exportData() {
+  listJobs().then(function (jobs) {
+    var payload = { app: 'aiopro-inspect', version: 1, exportedAt: Date.now(), settings: state.settings, jobs: jobs };
+    var blob = new Blob([JSON.stringify(payload)], { type: 'application/json' });
+    var date = new Date().toISOString().slice(0, 10);
+    savePdf('aiopro-backup-' + date + '.json', blob);
+  });
+}
+function importData() {
+  var input = document.createElement('input');
+  input.type = 'file';
+  input.accept = 'application/json,.json';
+  input.onchange = function () {
+    var file = input.files && input.files[0];
+    if (!file) return;
+    var r = new FileReader();
+    r.onload = function () {
+      var data;
+      try { data = JSON.parse(r.result); } catch (e) { data = null; }
+      if (!data || !Array.isArray(data.jobs)) { alert('That is not an AIO Pro backup file.'); return; }
+      var jobs = data.jobs, i = 0;
+      (function next() {
+        if (i >= jobs.length) {
+          if (data.settings) { state.settings = data.settings; saveSettings(state.settings); }
+          alert('Imported ' + jobs.length + ' job(s).');
+          refresh();
+          return;
+        }
+        saveJob(jobs[i++]).then(next, next);
+      })();
+    };
+    r.readAsText(file);
+  };
+  input.click();
+}
+
 /* ── Boot ──────────────────────────────────────────────────── */
 refresh();
+
+/* Register the service worker so the app keeps working offline once
+   installed. Only over http(s); on a file:// page it is skipped. */
+if ('serviceWorker' in navigator && location.protocol.indexOf('http') === 0) {
+  window.addEventListener('load', function () {
+    navigator.serviceWorker.register('sw.js').catch(function () { /* offline mode just won't be available */ });
+  });
+}
 </script>
 </body>
 </html>

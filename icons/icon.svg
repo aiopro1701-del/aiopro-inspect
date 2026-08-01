@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512" role="img" aria-label="AIO Pro Inspect">
+  <rect width="512" height="512" fill="#14110F"/>
+  <path d="M256 107.52 C389.12 215.04 358.4 368.64 256 368.64 C153.6 368.64 122.88 215.04 256 107.52 Z" fill="#C25A2E"/>
+  <path d="M256 204.8 C317.44 250.88 302.08 343.04 256 343.04 C209.92 343.04 194.56 250.88 256 204.8 Z" fill="#E0A06A"/>
+  <path d="M184.32 378.88 L235.52 430.08 L337.92 317.44" fill="none" stroke="#F2EFE9" stroke-width="28.16" stroke-linejoin="round" stroke-linecap="round"/>
+</svg>
