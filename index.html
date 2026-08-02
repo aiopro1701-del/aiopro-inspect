@@ -613,7 +613,7 @@ var TEMPLATES = [
         items: [
           { id: 'wh-rating', label: 'Rating plate and appliance category',
             help: 'Photograph the data plate. Record input in BTU/h and confirm it is a Category I draft-hood appliance. If it is a sealed or condensing unit, stop — it does not belong on this chimney.',
-            ref: 'Manufacturer listing', photos: [{ id: 'plate', label: 'Data plate' }] },
+            ref: 'NFPA 211 Table 5.2.3.2 (vent by appliance)', photos: [{ id: 'plate', label: 'Data plate' }] },
           { id: 'wh-clearance', label: 'Clearances to combustibles',
             help: 'Check the clearances on the label against what is actually there — storage, framing, finished walls. Shelving stacked against a water heater is a finding.',
             ref: 'Appliance label', photos: [{ id: 'clear-front', label: 'Front and sides' }] },
@@ -631,22 +631,22 @@ var TEMPLATES = [
         items: [
           { id: 'wh-hood', label: 'Draft hood condition',
             help: 'Check the hood is the one that came with the appliance, seated correctly, and not blocked, crushed or rusted through.',
-            ref: 'Manufacturer listing', photos: [{ id: 'hood', label: 'Draft hood' }] },
+            ref: 'NFPA 211 §9.10 (draft hood)', photos: [{ id: 'hood', label: 'Draft hood' }] },
           { id: 'wh-conn-size', label: 'Connector size and material',
             help: 'The connector may not be smaller than the appliance outlet. Single-wall or listed double-wall — record which.',
-            ref: 'NFPA 211 connector sizing', photos: [{ id: 'conn', label: 'Connector run' }] },
+            ref: 'NFPA 211 §9.4 (connector size)', photos: [{ id: 'conn', label: 'Connector run' }] },
           { id: 'wh-conn-slope', label: 'Rise and support',
             help: 'Connector rises toward the chimney at least 1/4 in. per foot. Check for sags, long horizontal runs and missing supports.',
-            ref: 'NFPA 211 — 1/4 in. per ft rise', photos: [{ id: 'slope', label: 'Slope and supports' }] },
+            ref: 'NFPA 211 §9.7 (1/4 in./ft rise)', photos: [{ id: 'slope', label: 'Slope and supports' }] },
           { id: 'wh-conn-joints', label: 'Joints and fasteners',
             help: 'At least three fasteners per joint, crimped male end toward the appliance. Look for open seams and taped repairs.',
-            ref: 'NFPA 211 connector joints', photos: [{ id: 'joint', label: 'A typical joint' }] },
+            ref: 'NFPA 211 §9.7 (connector install)', photos: [{ id: 'joint', label: 'A typical joint' }] },
           { id: 'wh-conn-clearance', label: 'Connector clearance to combustibles',
             help: 'Single-wall connector needs 18 in. to combustibles unless a listed reduction is in place. A panel screwed flat to the wall is not a reduction.',
-            ref: 'NFPA 211 — 18 in. single-wall', photos: [{ id: 'conn-clear', label: 'Clearance at the tightest point' }] },
+            ref: 'NFPA 211 §9.5 · Table 9.5.1.1', photos: [{ id: 'conn-clear', label: 'Clearance at the tightest point' }] },
           { id: 'wh-thimble', label: 'Thimble and chimney entry',
             help: 'Connector enters through a proper thimble, does not project into the flue, and the masonry around it is sound and sealed.',
-            ref: 'NFPA 211 chimney inlet', photos: [{ id: 'thimble', label: 'Thimble / entry point' }] },
+            ref: 'NFPA 211 §7.1.9 / IRC R1003.16 (inlet)', photos: [{ id: 'thimble', label: 'Thimble / entry point' }] },
         ],
       },
       {
@@ -655,22 +655,22 @@ var TEMPLATES = [
         items: [
           { id: 'ch-liner', label: 'Liner type and condition',
             help: 'Clay, listed metal liner, or unlined. Scan for cracks, missing mortar joints, displaced tiles and spalling. Unlined masonry on a gas appliance is a finding.',
-            ref: 'NFPA 211 Ch. 9 lining', photos: [{ id: 'liner-top', label: 'Flue from the top' }, { id: 'liner-scan', label: 'Camera scan still' }] },
+            ref: 'NFPA 211 §7.2 / IRC R1003.11 (lining)', photos: [{ id: 'liner-top', label: 'Flue from the top' }, { id: 'liner-scan', label: 'Camera scan still' }] },
           { id: 'ch-size', label: 'Flue sizing for the connected load',
             help: 'Is the flue oversized for this appliance alone? Note whether a larger appliance was removed and left this one orphaned on a flue built for two.',
-            ref: 'NFPA 211 sizing', photos: [{ id: 'flue-size', label: 'Flue opening' }] },
+            ref: 'NFPA 211 §7.1.11 / IRC R1003.14 (gas: NFPA 54)', photos: [{ id: 'flue-size', label: 'Flue opening' }] },
           { id: 'ch-condensate', label: 'Condensation and corrosion',
             help: 'White staining, damp masonry, rusted connector at the chimney end, or crumbling mortar in the smoke chamber — all point to flue gas condensing.',
             ref: 'Field condition', photos: [{ id: 'staining', label: 'Staining or corrosion' }] },
           { id: 'ch-blockage', label: 'Blockage and debris',
             help: 'Nests, leaves, fallen tile, animal remains. Check the cleanout and the base of the flue.',
-            ref: 'NFPA 211 maintenance', photos: [{ id: 'cleanout', label: 'Cleanout / base of flue' }] },
+            ref: 'NFPA 211 §15.3.2.4 / §14.2', photos: [{ id: 'cleanout', label: 'Cleanout / base of flue' }] },
           { id: 'ch-crown', label: 'Crown, cap and termination',
             help: 'Crown cracked or missing wash, cap and screen present, termination height correct for the roof.',
-            ref: 'NFPA 211 termination', photos: [{ id: 'crown', label: 'Crown and cap' }, { id: 'termination', label: 'Termination from the roof' }] },
+            ref: 'IRC R1003.9 / R1003.9.1', photos: [{ id: 'crown', label: 'Crown and cap' }, { id: 'termination', label: 'Termination from the roof' }] },
           { id: 'ch-exterior', label: 'Exterior masonry and flashing',
             help: 'Spalled brick, open joints, leaning stack, failed flashing at the roof line.',
-            ref: 'NFPA 211 structural', photos: [{ id: 'exterior', label: 'Full stack from outside' }] },
+            ref: 'IRC R1003.10 / NFPA 211 §7.1.8', photos: [{ id: 'exterior', label: 'Full stack from outside' }] },
         ],
       },
       {
@@ -722,13 +722,13 @@ var TEMPLATES = [
         items: [
           { id: 'ws-listing', label: 'Listing plate and appliance',
             help: 'Photograph the rating/listing plate. Confirm it is a listed appliance and note the model. An unlisted or heavily modified stove is a finding.',
-            ref: 'Manufacturer listing', photos: [{ id: 'plate', label: 'Listing plate' }] },
+            ref: 'NFPA 211 §13.1 (listed & per listing)', photos: [{ id: 'plate', label: 'Listing plate' }] },
           { id: 'ws-hearth', label: 'Hearth pad / floor protection',
             help: 'Non-combustible pad under and in front of the stove, sized to the listing (typically 16 in. in front of the door). Check for combustible flooring showing through at the edges.',
-            ref: 'Manufacturer listing / NFPA 211', photos: [{ id: 'hearth', label: 'Hearth pad and front extension' }] },
+            ref: 'NFPA 211 §13.5 (floor protection)', photos: [{ id: 'hearth', label: 'Hearth pad and front extension' }] },
           { id: 'ws-clearance', label: 'Clearances to combustibles',
             help: 'Measure to walls, furniture and trim against the listed clearances, or against reduced clearances only where a listed shield is actually installed. A shield screwed flat to the wall is not a reduction.',
-            ref: 'Manufacturer listing / NFPA 211 clearances', photos: [{ id: 'clear', label: 'Tightest clearance' }] },
+            ref: 'NFPA 211 §13.6 · Table 13.6.1', photos: [{ id: 'clear', label: 'Tightest clearance' }] },
           { id: 'ws-alarms', label: 'Smoke and CO alarms',
             help: 'Note whether smoke and CO alarms are present, where they are, and whether they are in date. Record as information, not as a pass.',
             ref: 'Site condition', photos: [{ id: 'alarm', label: 'Nearest alarm' }] },
@@ -740,16 +740,16 @@ var TEMPLATES = [
         items: [
           { id: 'ws-conn-mat', label: 'Connector material and size',
             help: 'Single-wall or listed double-wall stovepipe, sized to the flue collar and not reduced. Look for thin, rusted or crushed pipe.',
-            ref: 'NFPA 211 connector', photos: [{ id: 'conn', label: 'Connector run' }] },
+            ref: 'NFPA 211 §13.4 / §9.4 (no galvanized)', photos: [{ id: 'conn', label: 'Connector run' }] },
           { id: 'ws-conn-clear', label: 'Connector clearance to combustibles',
             help: 'Single-wall pipe needs 18 in. to combustibles unless a listed reduction is in place. Watch where the pipe passes a shelf, mantel or ceiling.',
-            ref: 'NFPA 211 — 18 in. single-wall', photos: [{ id: 'conn-clear', label: 'Clearance at the tightest point' }] },
+            ref: 'NFPA 211 §9.5 · Table 9.5.1.1 (18 in.)', photos: [{ id: 'conn-clear', label: 'Clearance at the tightest point' }] },
           { id: 'ws-conn-joints', label: 'Joints, fasteners and support',
             help: 'At least three screws per joint, crimped (male) end down toward the stove, sections well supported. No open seams or foil-taped repairs.',
-            ref: 'NFPA 211 connector joints', photos: [{ id: 'joint', label: 'A typical joint' }] },
+            ref: 'NFPA 211 §9.7 (connector install)', photos: [{ id: 'joint', label: 'A typical joint' }] },
           { id: 'ws-thimble', label: 'Wall/ceiling pass-through',
             help: 'Where the connector passes through a wall or ceiling it must use a listed thimble or support box with full clearance — not bare pipe through drywall.',
-            ref: 'NFPA 211 pass-through', photos: [{ id: 'thimble', label: 'Pass-through' }] },
+            ref: 'NFPA 211 §9.7 · Fig 9.7.4 (pass-through)', photos: [{ id: 'thimble', label: 'Pass-through' }] },
         ],
       },
       {
@@ -758,16 +758,16 @@ var TEMPLATES = [
         items: [
           { id: 'ws-liner', label: 'Chimney type and liner condition',
             help: 'Listed metal (class A) chimney or lined masonry. Scan for cracks, gaps, rust, separated sections and displaced tiles. Unlined masonry on a wood stove is a finding.',
-            ref: 'NFPA 211 Ch. 9 lining', photos: [{ id: 'liner-top', label: 'Flue from the top' }, { id: 'liner-scan', label: 'Camera scan still' }] },
+            ref: 'NFPA 211 §6.1 / §7.2 (chimney & lining)', photos: [{ id: 'liner-top', label: 'Flue from the top' }, { id: 'liner-scan', label: 'Camera scan still' }] },
           { id: 'ws-creosote', label: 'Creosote and blockage',
             help: 'Measure or estimate creosote build-up (glazed third-degree creosote is the dangerous one) and check for nests, debris and fallen tile at the base.',
-            ref: 'NFPA 211 maintenance', photos: [{ id: 'creosote', label: 'Flue interior / creosote' }] },
+            ref: 'NFPA 211 §15.3.2.4 / §14.2', photos: [{ id: 'creosote', label: 'Flue interior / creosote' }] },
           { id: 'ws-crown', label: 'Crown, cap and termination',
             help: 'Crown or storm collar sound, cap and spark screen present, chimney terminates 3 ft above the roof penetration and 2 ft above anything within 10 ft.',
-            ref: 'NFPA 211 — 3-2-10 termination', photos: [{ id: 'crown', label: 'Crown / cap' }, { id: 'term', label: 'Termination from the roof' }] },
+            ref: 'IRC R1003.9 / NFPA 211 Table 7.2 (3-2-10)', photos: [{ id: 'crown', label: 'Crown / cap' }, { id: 'term', label: 'Termination from the roof' }] },
           { id: 'ws-exterior', label: 'Exterior and flashing',
             help: 'Spalled brick or rusted sections, leaning stack, failed flashing or storm collar at the roof line.',
-            ref: 'NFPA 211 structural', photos: [{ id: 'exterior', label: 'Full stack from outside' }] },
+            ref: 'IRC R1003.10 / NFPA 211 §7.1.8', photos: [{ id: 'exterior', label: 'Full stack from outside' }] },
         ],
       },
       {
@@ -798,13 +798,13 @@ var TEMPLATES = [
         items: [
           { id: 'fp-firebox', label: 'Firebox masonry and joints',
             help: 'Firebrick and joints sound — no missing mortar, open joints, gaps to the surround or heat damage that exposes the masonry behind.',
-            ref: 'NFPA 211 firebox', photos: [{ id: 'firebox', label: 'Firebox back and sides' }] },
+            ref: 'IRC R1001.5 / NFPA 211 §11.2.1', photos: [{ id: 'firebox', label: 'Firebox back and sides' }] },
           { id: 'fp-hearth', label: 'Hearth and hearth extension',
             help: 'Non-combustible hearth extension of adequate size in front of and beside the opening (roughly 16–20 in. front depending on opening size). No combustible flooring under it.',
-            ref: 'IRC Ch. 10 hearth extension', photos: [{ id: 'hearth', label: 'Hearth and extension' }] },
+            ref: 'IRC R1001.10 & R1001.9 / NFPA §11.3', photos: [{ id: 'hearth', label: 'Hearth and extension' }] },
           { id: 'fp-clearance', label: 'Mantel and combustible clearances',
             help: 'Mantel, trim and combustible framing kept back from the opening per code. Scorching on the mantel is a finding.',
-            ref: 'IRC Ch. 10 clearances', photos: [{ id: 'mantel', label: 'Mantel / surround' }] },
+            ref: 'IRC R1001.11 / NFPA 211 §11.2.5', photos: [{ id: 'mantel', label: 'Mantel / surround' }] },
         ],
       },
       {
@@ -813,13 +813,13 @@ var TEMPLATES = [
         items: [
           { id: 'fp-damper', label: 'Damper operation',
             help: 'Damper opens, closes and holds position. Note a rusted, warped or painted-shut damper, or a top-mount damper and its cable.',
-            ref: 'Field condition', photos: [{ id: 'damper', label: 'Damper' }] },
+            ref: 'IRC R1001.7.1 / NFPA 211 §11.2.9', photos: [{ id: 'damper', label: 'Damper' }] },
           { id: 'fp-smoke-chamber', label: 'Smoke chamber and shelf',
             help: 'Smoke chamber parged smooth, no exposed corbelled brick or gaps, smoke shelf reasonably clear of debris.',
-            ref: 'NFPA 211 smoke chamber', photos: [{ id: 'chamber', label: 'Up into the smoke chamber' }] },
+            ref: 'IRC R1001.8 / R1001.8.1', photos: [{ id: 'chamber', label: 'Up into the smoke chamber' }] },
           { id: 'fp-lintel', label: 'Lintel and throat',
             help: 'Steel lintel over the opening sound and supported, throat area intact with no cracking through to combustibles.',
-            ref: 'NFPA 211 / IRC Ch. 10', photos: [{ id: 'lintel', label: 'Lintel and throat' }] },
+            ref: 'IRC R1001.7 (lintel & throat)', photos: [{ id: 'lintel', label: 'Lintel and throat' }] },
         ],
       },
       {
@@ -828,13 +828,13 @@ var TEMPLATES = [
         items: [
           { id: 'fp-liner', label: 'Liner type and condition',
             help: 'Clay tile, listed metal liner or unlined. Scan for cracked or displaced tiles, missing joints and spalling. Unlined masonry serving a fireplace is a finding.',
-            ref: 'NFPA 211 Ch. 9 lining', photos: [{ id: 'liner-top', label: 'Flue from the top' }, { id: 'liner-scan', label: 'Camera scan still' }] },
+            ref: 'IRC R1003.11 / NFPA 211 §7.2 (lining)', photos: [{ id: 'liner-top', label: 'Flue from the top' }, { id: 'liner-scan', label: 'Camera scan still' }] },
           { id: 'fp-blockage', label: 'Blockage, creosote and debris',
             help: 'Nests, leaves, fallen tile and creosote. Check the base of the flue and the smoke shelf.',
-            ref: 'NFPA 211 maintenance', photos: [{ id: 'blockage', label: 'Flue interior / base' }] },
+            ref: 'NFPA 211 §15.3.2.4 / §14.2', photos: [{ id: 'blockage', label: 'Flue interior / base' }] },
           { id: 'fp-size', label: 'Flue size for the opening',
             help: 'Flue area roughly matched to the fireplace opening (a common rule is about 1/10 of the opening for a lined masonry flue). A badly undersized flue smokes into the room.',
-            ref: 'NFPA 211 sizing', photos: [{ id: 'flue-size', label: 'Flue opening' }] },
+            ref: 'IRC R1003.15 / NFPA 211 §7.1.11', photos: [{ id: 'flue-size', label: 'Flue opening' }] },
         ],
       },
       {
@@ -843,16 +843,16 @@ var TEMPLATES = [
         items: [
           { id: 'fp-crown', label: 'Crown / wash',
             help: 'Crown sloped to shed water, not cracked, with a drip edge. A cracked crown lets water into the chimney and is one of the most common findings.',
-            ref: 'NFPA 211 crown', photos: [{ id: 'crown', label: 'Crown' }] },
+            ref: 'IRC R1003.9.1 (crown/wash)', photos: [{ id: 'crown', label: 'Crown' }] },
           { id: 'fp-cap', label: 'Cap and spark arrestor',
             help: 'Rain cap and spark arrestor screen present and intact over each flue. Note an open flue or a rusted-out cap.',
-            ref: 'NFPA 211 termination', photos: [{ id: 'cap', label: 'Cap / arrestor' }] },
+            ref: 'IRC R1003.9.2 (spark arrestor)', photos: [{ id: 'cap', label: 'Cap / arrestor' }] },
           { id: 'fp-exterior', label: 'Exterior masonry and flashing',
             help: 'Spalled brick, open joints, leaning stack, failed flashing at the roof line.',
-            ref: 'NFPA 211 structural', photos: [{ id: 'exterior', label: 'Full stack from outside' }] },
+            ref: 'IRC R1003.10 / NFPA 211 §7.1.8', photos: [{ id: 'exterior', label: 'Full stack from outside' }] },
           { id: 'fp-height', label: 'Termination height and clearance',
             help: 'Chimney terminates at least 3 ft above the roof penetration and 2 ft above anything within 10 ft.',
-            ref: 'NFPA 211 — 3-2-10 termination', photos: [{ id: 'height', label: 'Termination from the roof' }] },
+            ref: 'IRC R1003.9 (3 ft / 2 ft @ 10 ft)', photos: [{ id: 'height', label: 'Termination from the roof' }] },
         ],
       },
     ],
@@ -969,7 +969,7 @@ function deleteJob(id) {
 
 var SETTINGS_KEY = 'aiopro-settings';
 function defaultSettings() {
-  return { company: 'AIO Pro Chimney', phone: '', email: '', address: 'Greater St. Louis, MO', license: '', logo: null };
+  return { company: 'AIO Pro Chimney', phone: '', email: '', address: 'Greater St. Louis, MO', license: '', logo: null, aiKey: '', aiModel: 'claude-sonnet-5' };
 }
 function loadSettings() { try { return JSON.parse(localStorage.getItem(SETTINGS_KEY)) || defaultSettings(); } catch (e) { return defaultSettings(); } }
 function saveSettings(s) { localStorage.setItem(SETTINGS_KEY, JSON.stringify(s)); return s; }
@@ -1033,6 +1033,7 @@ function pickImage() { return pickFile(false); }
 var M = 43, PW = 612, PH = 792, CONTENT = PW - M * 2;
 var INK = [26, 22, 20], MUTED = [122, 116, 110], RULE = [214, 208, 200];
 var SEV = { defect: [176, 61, 39], monitor: [186, 134, 42], ok: [74, 118, 88] };
+var OVERVIEW_LABELS = { front: 'Front of the house', interior: 'Fireplace / system — inside', roof: 'Chimney — from the roof', base: 'Chimney base / cleanout' };
 
 function money(n) { return '$' + (Number(n) || 0).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ','); }
 function labelFor(sev, n) {
@@ -1092,56 +1093,84 @@ function buildReport(job, settings) {
   });
   y += 10;
 
-  /* Verdict tally */
-  var tally = { ok: 0, monitor: 0, defect: 0, skipped: 0 };
-  items.forEach(function (it) {
-    var v = job.results[it.id] && job.results[it.id].verdict;
-    if (v && tally[v] !== undefined) tally[v]++; else tally.skipped++;
-  });
-  doc.setFillColor(246, 243, 238).rect(M, y, CONTENT, 46, 'F');
-  var cells = [['Defects', tally.defect, SEV.defect], ['Monitor', tally.monitor, SEV.monitor], ['Satisfactory', tally.ok, SEV.ok]];
-  cells.forEach(function (cell, i) {
-    var cx = M + 14 + i * (CONTENT / 3);
-    doc.setFont('helvetica', 'bold').setFontSize(20).setTextColor(cell[2][0], cell[2][1], cell[2][2]);
-    doc.text(String(cell[1]), cx, y + 24);
-    doc.setFont('helvetica', 'normal').setFontSize(8).setTextColor(MUTED[0], MUTED[1], MUTED[2]);
-    doc.text(cell[0].toUpperCase(), cx, y + 37);
-  });
-  y += 62;
+  /* This property and chimney — identifying photos */
+  var ov = job.overview || {};
+  var ovList = Object.keys(ov).map(function (k) { return { label: OVERVIEW_LABELS[k] || k, src: ov[k] }; }).filter(function (o) { return o.src; });
+  if (ovList.length) {
+    doc.setFont('helvetica', 'bold').setFontSize(9).setTextColor(MUTED[0], MUTED[1], MUTED[2]);
+    doc.text('THIS PROPERTY AND CHIMNEY', M, y); y += 12;
+    var owc = Math.min(3, ovList.length), ogw = (CONTENT - (owc - 1) * 8) / owc, ogh = ogw * 0.72;
+    y = ensure(y, ogh + 20);
+    ovList.slice(0, 3).forEach(function (o, i) {
+      try { doc.addImage(o.src, 'JPEG', M + i * (ogw + 8), y, ogw, ogh, undefined, 'FAST'); } catch (e) {}
+      doc.setFont('helvetica', 'normal').setFontSize(7.5).setTextColor(MUTED[0], MUTED[1], MUTED[2]);
+      doc.text(String(o.label), M + i * (ogw + 8), y + ogh + 9, { maxWidth: ogw });
+    });
+    y += ogh + 22;
+  }
 
-  if (job.summary) { y = wrapped(doc, job.summary, M, y, CONTENT, 10.5, INK); y += 12; }
+  /* Overall diagnosis */
+  var tally = { ok: 0, monitor: 0, defect: 0 };
+  items.forEach(function (it) { var v = job.results[it.id] && job.results[it.id].verdict; if (v && tally[v] !== undefined) tally[v]++; });
+  y = ensure(y, 46);
+  doc.setFont('helvetica', 'bold').setFontSize(11).setTextColor(INK[0], INK[1], INK[2]);
+  doc.text('Overall diagnosis', M, y); y += 15;
+  var counts = tally.defect + ' need attention, ' + tally.monitor + ' to monitor, ' + tally.ok + ' in good condition.';
+  var diagText = (job.summary ? String(job.summary) + '  Overall: ' : 'Overall: ') + counts;
+  y = wrapped(doc, diagText, M, y, CONTENT, 10, INK) + 14;
 
-  /* Findings, worst first */
-  ['defect', 'monitor', 'ok'].forEach(function (sev) {
+  /* Findings — worst first (defect, then monitor) */
+  var sevTitle = { defect: 'Needs attention', monitor: 'Monitor' };
+  ['defect', 'monitor'].forEach(function (sev) {
     var group = items.filter(function (it) { return job.results[it.id] && job.results[it.id].verdict === sev; });
     if (!group.length) return;
-    y = ensure(y, 60);
+    y = ensure(y, 46);
     doc.setFont('helvetica', 'bold').setFontSize(11).setTextColor(SEV[sev][0], SEV[sev][1], SEV[sev][2]);
-    doc.text(labelFor(sev, group.length).toUpperCase(), M, y);
+    doc.text(sevTitle[sev] + ' (' + group.length + ')', M, y);
     y += 6;
     doc.setDrawColor(SEV[sev][0], SEV[sev][1], SEV[sev][2]).setLineWidth(2).line(M, y, M + 46, y);
-    y += 18;
+    y += 16;
     group.forEach(function (it) {
       var r = job.results[it.id] || {};
-      y = ensure(y, 86);
-      y = wrapped(doc, it.label, M, y, CONTENT, 10.5, INK, 'bold');
-      doc.setFont('helvetica', 'normal').setFontSize(8).setTextColor(MUTED[0], MUTED[1], MUTED[2]);
-      doc.text(it.stageName + (it.ref ? '  ·  ' + it.ref : ''), M, y);
-      y += 13;
-      if (r.note) y = wrapped(doc, r.note, M, y, CONTENT, 10, INK) + 4;
-      var photos = Object.values(r.photos || {}).filter(Boolean);
+      y = ensure(y, 60);
+      y = wrapped(doc, it.label, M, y, CONTENT, 11, INK, 'bold');
+      var findingText = r.aiFinding || r.note;
+      if (findingText) y = wrapped(doc, findingText, M, y + 2, CONTENT, 10, INK) + 2;
+      var rec = r.aiRec || it.fix;
+      if (rec) y = wrapped(doc, 'Recommended: ' + rec, M, y, CONTENT, 9.5, MUTED) + 2;
+      var photos = Object.keys(r.photos || {}).map(function (k) { return r.photos[k]; }).filter(Boolean);
       if (photos.length) {
-        var pw = (CONTENT - 12) / 3, ph = pw * 0.72;
-        y = ensure(y, ph + 12);
-        photos.slice(0, 3).forEach(function (src, i) {
-          try { doc.addImage(src, 'JPEG', M + i * (pw + 6), y, pw, ph, undefined, 'FAST'); } catch (e) {}
-        });
-        y += ph + 10;
+        var pw = (CONTENT - 16) / 3, ph = pw * 0.72;
+        for (var i = 0; i < photos.length; i += 3) {
+          y = ensure(y, ph + 8);
+          for (var j = 0; j < 3 && i + j < photos.length; j++) {
+            try { doc.addImage(photos[i + j], 'JPEG', M + j * (pw + 8), y, pw, ph, undefined, 'FAST'); } catch (e) {}
+          }
+          y += ph + 8;
+        }
       }
+      if (it.ref) { doc.setFont('helvetica', 'normal').setFontSize(7.5).setTextColor(MUTED[0], MUTED[1], MUTED[2]); doc.text('Ref: ' + it.ref, M, y); y += 12; }
       y += 8;
     });
     y += 6;
   });
+
+  /* In good condition */
+  var okGroup = items.filter(function (it) { return job.results[it.id] && job.results[it.id].verdict === 'ok'; });
+  if (okGroup.length) {
+    y = ensure(y, 46);
+    doc.setFont('helvetica', 'bold').setFontSize(11).setTextColor(SEV.ok[0], SEV.ok[1], SEV.ok[2]);
+    doc.text('In good condition (' + okGroup.length + ')', M, y);
+    y += 6;
+    doc.setDrawColor(SEV.ok[0], SEV.ok[1], SEV.ok[2]).setLineWidth(2).line(M, y, M + 46, y);
+    y += 16;
+    okGroup.forEach(function (it) {
+      var r = job.results[it.id] || {};
+      y = ensure(y, 22);
+      y = wrapped(doc, it.label + (r.note ? ' — ' + r.note : ''), M, y, CONTENT, 10, INK) + 4;
+    });
+    y += 6;
+  }
 
   /* This is an inspection report only — pricing lives in a separate estimate. */
 
@@ -1167,7 +1196,8 @@ function savePdf(filename, blob) {
 /* ── App state + tiny router ───────────────────────────────── */
 var state = {
   view: 'home', jobs: [], job: null, settings: loadSettings(), loading: true,
-  picking: false, i: 0, showCustomer: false, busySlot: null, making: false, error: null,
+  picking: false, i: 0, showCustomer: false, busySlot: null, making: false, error: null, aiBusy: false, aiError: null,
+  aiStepBusy: false, aiStep: null, aiStepErr: null,
 };
 var root = document.getElementById('root');
 var saveTimer = null;
@@ -1263,6 +1293,11 @@ function viewSettings() {
         fld('Company name', 'company') + fld('Phone', 'phone', 'tel') + fld('Email', 'email', 'email') +
         fld('Service area or address', 'address') + fld('Licence number', 'license') +
       '</div>' +
+      '<div class="card"><div class="eyebrow">AI report writer (Claude)</div>' +
+        '<div style="color:var(--muted);font-size:14px;margin-bottom:12px">Paste your Anthropic API key. It is stored only on this device and is used to turn your checks into a plain-language diagnosis and report. Get a key at console.anthropic.com. You can change the model if needed.</div>' +
+        '<div class="field"><label>Anthropic API key</label><input type="password" data-model="settings.aiKey" value="' + esc(s.aiKey || '') + '" placeholder="sk-ant-..."></div>' +
+        fld('Model', 'aiModel') +
+      '</div>' +
       '<div class="card"><div class="eyebrow">Backup</div>' +
         '<div style="color:var(--muted);font-size:14px;margin-bottom:12px">Everything is stored on this device only. Export a backup file now and then — and use Import to move all your jobs onto a new phone.</div>' +
         '<div class="row">' +
@@ -1344,6 +1379,16 @@ function viewInspect() {
       '<span class="plus">' + (busy ? '…' : '+') + '</span><span class="cap">' + esc(p.label) + '</span></button>';
   }).join('');
 
+  var aiPanel = '';
+  if (state.aiStepErr) aiPanel += '<div style="font-size:13px;color:var(--defect);margin:8px 0">' + esc(state.aiStepErr) + '</div>';
+  if (state.aiStep && state.aiStep.itemId === item.id) {
+    var a = state.aiStep, vlabel = a.assessment ? a.assessment.toUpperCase() : '—';
+    aiPanel += '<div class="card" style="border-left:3px solid var(--ok);margin-top:10px">' +
+      '<div class="eyebrow">Master says</div>' +
+      '<div style="font-size:14px;margin-bottom:8px">' + esc(a.observation) + '</div>' +
+      '<div style="font-size:13px;color:var(--muted);margin-bottom:8px">Suggested: <b>' + esc(vlabel) + '</b>' + (a.recommended ? ' · ' + esc(a.recommended) : '') + '</div>' +
+      '<button class="btn btn-ghost" data-act="ai-apply">Use this</button></div>';
+  }
   var nextBtn = state.i + 1 < items.length
     ? '<button class="btn btn-primary" data-act="next">Next checkpoint</button>'
     : '<button class="btn btn-primary" data-act="report">Finish and review</button>';
@@ -1364,6 +1409,8 @@ function viewInspect() {
         '<div class="verdicts">' + verdicts + '</div>' +
         '<div class="eyebrow">Photos</div>' +
         '<div class="photos">' + photos + '</div>' +
+        '<button class="btn btn-ghost" data-act="ai-step" style="margin:10px 0"' + (state.aiStepBusy ? ' disabled' : '') + '>' + (state.aiStepBusy ? 'Asking the master…' : 'Ask the master (AI)') + '</button>' +
+        aiPanel +
         '<div class="field"><label>What you found</label>' +
           '<textarea data-model="note" placeholder="Plain language — this goes on the customer\'s report.">' + esc(res.note || '') + '</textarea></div>' +
       '</div>' +
@@ -1407,7 +1454,11 @@ function viewReport() {
         '<div><div class="n" style="color:var(--ok)">' + tally.ok + '</div><div class="l">OK</div></div>' +
       '</div>' + skipHint +
       '<div class="card"><div class="eyebrow">Summary for the customer</div>' +
-        '<div class="field" style="margin-bottom:0"><textarea data-model="summary" placeholder="Two or three sentences: what you found, what it means, what happens next.">' + esc(job.summary || '') + '</textarea></div></div>' +
+        '<div class="row" style="margin-bottom:10px">' +
+          '<button class="btn btn-ghost" data-act="ai-write"' + (state.aiBusy ? ' disabled' : '') + '>' + (state.aiBusy ? 'Writing…' : 'Write with AI') + '</button>' +
+        '</div>' +
+        (state.aiError ? '<div style="font-size:13px;color:var(--defect);margin-bottom:10px">' + esc(state.aiError) + '</div>' : '') +
+        '<div class="field" style="margin-bottom:0"><textarea data-model="summary" placeholder="Write with AI, or type: what you found, what it means, what happens next.">' + esc(job.summary || '') + '</textarea></div></div>' +
       (sendTo
         ? '<div style="font-size:13px;color:var(--muted);margin-bottom:12px">Report will be sent to: <b>' + esc(sendTo) + '</b></div>'
         : '<div style="font-size:13px;color:var(--defect);margin-bottom:12px">No email yet — add the customer email in the customer details and your own email in SET, so the report can be sent.</div>') +
@@ -1577,6 +1628,9 @@ root.addEventListener('click', function (e) {
       }, { render: true });
       break;
     case 'generate': generate(); break;
+    case 'ai-write': aiWrite(); break;
+    case 'ai-step': aiStep(); break;
+    case 'ai-apply': aiApply(); break;
   }
 });
 
@@ -1594,6 +1648,142 @@ function generate() {
     state.error = (err && err.message) ? err.message : 'Could not build the report.';
     state.making = false; render();
   });
+}
+
+/* ── AI: turn the tech's checks into a plain-language diagnosis + report ──
+   Runs live against the Anthropic API using the key saved in settings. The
+   knowledge from NFPA 211 / IRC Ch.10 is carried on each item's `ref`, so the
+   model grounds its wording in the real code rather than inventing it. */
+function parseAiJson(text) {
+  try { return JSON.parse(text); } catch (e) {}
+  var m = String(text).match(/\{[\s\S]*\}/);
+  if (m) { try { return JSON.parse(m[0]); } catch (e2) {} }
+  return null;
+}
+function aiWrite() {
+  var s = state.settings;
+  if (!s.aiKey) { state.aiError = 'Add your Anthropic API key in company details (SET) first.'; render(); return; }
+  var job = state.job, tpl = templateById(job.templateId), items = allItems(tpl);
+  var findings = items.filter(function (it) { return job.results[it.id] && job.results[it.id].verdict; })
+    .map(function (it) {
+      var r = job.results[it.id];
+      return { id: it.id, component: it.label, area: it.stageName, verdict: r.verdict, tech_note: r.note || '', code: it.ref || '' };
+    });
+  if (!findings.length) { state.aiError = 'Answer at least one checkpoint before writing the report.'; render(); return; }
+  state.aiBusy = true; state.aiError = null; render();
+
+  var payload = { system: tpl.name, work: jobTypeName(job.jobType), customer: job.customer.name || '', findings: findings };
+  var prompt = 'You are a master chimney inspector writing a customer-facing inspection report for '
+    + (s.company || 'a chimney company') + '. You are given the system type, the work type, and each checkpoint the '
+    + 'technician assessed: a verdict (ok, monitor, or defect), the technician\'s raw note, and the governing code reference. '
+    + 'Write in plain, warm, professional language a homeowner understands — never code jargon. Ground your wording in the '
+    + 'code reference given, but do not quote section numbers in the sentences. Do not invent problems that were not noted. '
+    + 'Return ONLY valid JSON (no markdown) shaped exactly like: '
+    + '{"summary":"2-3 sentence overall diagnosis of this specific chimney and whether it is safe to use",'
+    + '"findings":[{"id":"<the id>","finding":"one or two plain sentences on the condition found","recommended":"the recommended action, or empty string"}]}. '
+    + 'Only include findings whose verdict is defect or monitor. Here is the data as JSON:\n' + JSON.stringify(payload);
+
+  fetch('https://api.anthropic.com/v1/messages', {
+    method: 'POST',
+    headers: {
+      'content-type': 'application/json',
+      'x-api-key': s.aiKey,
+      'anthropic-version': '2023-06-01',
+      'anthropic-dangerous-direct-browser-access': 'true'
+    },
+    body: JSON.stringify({
+      model: s.aiModel || 'claude-sonnet-5',
+      max_tokens: 1500,
+      messages: [{ role: 'user', content: prompt }]
+    })
+  }).then(function (res) { return res.json(); }).then(function (data) {
+    if (data.error) throw new Error(data.error.message || 'AI request failed.');
+    var text = (data.content && data.content[0] && data.content[0].text) || '';
+    var parsed = parseAiJson(text);
+    if (!parsed) throw new Error('Could not read the AI response — try again.');
+    update(function (prev) {
+      var next = Object.assign({}, prev);
+      next.summary = parsed.summary || prev.summary;
+      var results = Object.assign({}, prev.results);
+      (parsed.findings || []).forEach(function (f) {
+        if (f && f.id && results[f.id]) {
+          results[f.id] = Object.assign({}, results[f.id], { aiFinding: f.finding || '', aiRec: f.recommended || '' });
+        }
+      });
+      next.results = results;
+      return next;
+    });
+    state.aiBusy = false; render();
+  }).catch(function (err) {
+    state.aiBusy = false;
+    state.aiError = (err && err.message) ? err.message : 'AI request failed.';
+    render();
+  });
+}
+
+/* Per-checkpoint AI: looks at the photo(s) just taken and the code context for
+   this checkpoint, then suggests what it sees, a verdict, and what to do. */
+function aiStep() {
+  var s = state.settings;
+  if (!s.aiKey) { state.aiStepErr = 'Add your Anthropic API key in SET first.'; render(); return; }
+  var job = state.job, tpl = templateById(job.templateId), items = allItems(tpl);
+  var item = items[state.i];
+  var res = job.results[item.id] || { verdict: null, note: '', photos: {} };
+  var imgs = Object.keys(res.photos || {}).map(function (k) { return res.photos[k]; }).filter(Boolean);
+  state.aiStepBusy = true; state.aiStepErr = null; state.aiStep = null; render();
+
+  var instr = 'You are a master chimney inspector helping a technician in the field, right now, at one checkpoint. '
+    + 'System: ' + tpl.name + '. Work type: ' + jobTypeName(job.jobType) + '. '
+    + 'Checkpoint: "' + item.label + '" in the ' + item.stageName + ' stage. What to check: ' + item.help + ' '
+    + 'Governing code: ' + (item.ref || 'n/a') + '. '
+    + (res.note ? 'Technician note so far: ' + res.note + '. ' : '')
+    + (imgs.length ? 'The technician\'s photo(s) for this checkpoint are attached — look closely and describe what you actually see. ' : 'No photo has been taken yet — tell the technician exactly what to photograph and look for. ')
+    + 'Answer in plain field language. Return ONLY JSON (no markdown): '
+    + '{"observation":"what to look at and, if a photo is attached, what you see","assessment":"ok|monitor|defect","recommended":"what to do about it, empty string if OK","note":"a short finding note the technician can keep for the report"}.';
+  var content = [{ type: 'text', text: instr }];
+  imgs.slice(0, 4).forEach(function (src) {
+    var m = /^data:(image\/[\w.+-]+);base64,(.*)$/.exec(src);
+    if (m) content.push({ type: 'image', source: { type: 'base64', media_type: m[1], data: m[2] } });
+  });
+
+  fetch('https://api.anthropic.com/v1/messages', {
+    method: 'POST',
+    headers: {
+      'content-type': 'application/json',
+      'x-api-key': s.aiKey,
+      'anthropic-version': '2023-06-01',
+      'anthropic-dangerous-direct-browser-access': 'true'
+    },
+    body: JSON.stringify({ model: s.aiModel || 'claude-sonnet-5', max_tokens: 700, messages: [{ role: 'user', content: content }] })
+  }).then(function (r) { return r.json(); }).then(function (data) {
+    if (data.error) throw new Error(data.error.message || 'AI request failed.');
+    var text = (data.content && data.content[0] && data.content[0].text) || '';
+    var p = parseAiJson(text);
+    if (!p) throw new Error('Could not read the AI response — try again.');
+    state.aiStep = { itemId: item.id, observation: p.observation || '', assessment: String(p.assessment || '').toLowerCase(), recommended: p.recommended || '', note: p.note || '' };
+    state.aiStepBusy = false; render();
+  }).catch(function (err) {
+    state.aiStepBusy = false;
+    state.aiStepErr = (err && err.message) ? err.message : 'AI request failed.';
+    render();
+  });
+}
+function aiApply() {
+  if (!state.aiStep) return;
+  var a = state.aiStep;
+  var items = allItems(templateById(state.job.templateId));
+  var item = items[state.i];
+  if (a.itemId !== item.id) return;
+  var v = (a.assessment === 'defect' || a.assessment === 'monitor' || a.assessment === 'ok') ? a.assessment : null;
+  update(function (prev) {
+    var results = Object.assign({}, prev.results);
+    var cur = Object.assign({ verdict: null, note: '', photos: {} }, results[item.id]);
+    if (v) cur.verdict = v;
+    if (a.note) cur.note = a.note;
+    results[item.id] = cur;
+    return Object.assign({}, prev, { results: results });
+  });
+  state.aiStep = null; render();
 }
 
 /* Send the finished report to the customer and to the company. On a phone this
