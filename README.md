@@ -46,7 +46,23 @@ Nothing else in the code needs to change.
 
 ## Current content
 
-One template: `gas-wh` (gas water heater vent) — 5 stages, 24 checkpoints, 26 photo slots.
+Three templates:
+- `gas-wh` — Gas water heater vent — 5 stages, 24 checkpoints, 26 photos.
+- `wood-stove` — Wood stove (freestanding solid-fuel) — 4 stages, 15 checkpoints, 17 photos.
+- `open-fireplace` — Masonry fireplace (Level I) — 4 stages, 13 checkpoints, 14 photos.
+
+## Installable app + offline
+
+Served over HTTPS it's a full PWA: a web manifest, an app icon and a service
+worker that caches the app shell, so once it's added to the home screen it opens
+and runs **with no network** (jsPDF is inlined, storage is on-device). Bump the
+`CACHE` name in `sw.js` when you want to force installed devices to pick up a new build.
+
+## Backup / move to a new phone
+
+Settings → **Export backup** writes a JSON file with every job (photos included)
+and the company settings. **Import** on another device restores them. This is the
+only copy — the app never uploads anything.
 
 ## Status
 
