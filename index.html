@@ -1293,9 +1293,10 @@ function viewSettings() {
         fld('Company name', 'company') + fld('Phone', 'phone', 'tel') + fld('Email', 'email', 'email') +
         fld('Service area or address', 'address') + fld('Licence number', 'license') +
       '</div>' +
-      '<div class="card"><div class="eyebrow">AI report writer (Claude)</div>' +
-        '<div style="color:var(--muted);font-size:14px;margin-bottom:12px">Paste your Anthropic API key. It is stored only on this device and is used to turn your checks into a plain-language diagnosis and report. Get a key at console.anthropic.com. You can change the model if needed.</div>' +
-        '<div class="field"><label>Anthropic API key</label><input type="password" data-model="settings.aiKey" value="' + esc(s.aiKey || '') + '" placeholder="sk-ant-..."></div>' +
+      '<div class="card"><div class="eyebrow">AI (Claude) — powers the app</div>' +
+        '<div style="font-size:15px;font-weight:650;margin-bottom:10px;color:' + (s.aiKey ? 'var(--ok)' : 'var(--defect)') + '">' + (s.aiKey ? 'AI key saved ✓' : 'No AI key yet — paste it below and press Save') + '</div>' +
+        '<div style="color:var(--muted);font-size:14px;margin-bottom:12px">Create a key at console.anthropic.com (separate from your Claude subscription). Paste it here and press <b>Save</b>. Stored only on this device.</div>' +
+        '<div class="field"><label>Anthropic API key</label><input data-model="settings.aiKey" autocapitalize="off" autocorrect="off" spellcheck="false" value="' + esc(s.aiKey || '') + '" placeholder="sk-ant-..."></div>' +
         fld('Model', 'aiModel') +
       '</div>' +
       '<div class="card"><div class="eyebrow">Backup</div>' +
@@ -1492,7 +1493,7 @@ function render() {
 /* Text inputs update state without a re-render, so focus is never lost. */
 function wireInputs() {
   root.querySelectorAll('[data-model]').forEach(function (el) {
-    el.addEventListener('input', function () {
+    var modelHandler = function () {
       var path = el.getAttribute('data-model');
       var val = el.value;
       if (path === 'note') {
@@ -1514,7 +1515,9 @@ function wireInputs() {
         state.settings = Object.assign({}, state.settings, defObj(sk, val));
         // saved on the Save button, matching the original flow
       }
-    });
+    };
+    el.addEventListener('input', modelHandler);
+    el.addEventListener('change', modelHandler);
   });
   root.querySelectorAll('[data-qline]').forEach(function (el) {
     el.addEventListener('input', function () {
@@ -1582,7 +1585,7 @@ root.addEventListener('click', function (e) {
       pickImage().then(function (data) { state.settings = Object.assign({}, state.settings, { logo: data }); render(); }).catch(function () {});
       break;
     case 'remove-logo': state.settings = Object.assign({}, state.settings, { logo: null }); render(); break;
-    case 'save-settings': saveSettings(state.settings); state.view = 'home'; refresh(); break;
+    case 'save-settings': saveSettings(state.settings); render(); break;
     case 'export-data': exportData(); break;
     case 'import-data': importData(); break;
 
