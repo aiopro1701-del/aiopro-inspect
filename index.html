@@ -1364,20 +1364,25 @@ function viewInspect() {
     return '<button class="verdict ' + v + '" data-on="' + (res.verdict === v) + '" data-act="verdict" data-arg="' + v + '">' + label + '</button>';
   }).join('');
 
-  // On a repair job, ask for an "after" shot at every checkpoint too.
-  var photoSlots = job.jobType === 'repair'
-    ? item.photos.concat([{ id: '__after', label: 'After / repair' }])
-    : item.photos;
-  var photos = photoSlots.map(function (p) {
-    var src = res.photos && res.photos[p.id];
+  // Photos: any number per checkpoint. Guided slots use the camera; the "Add
+  // photo" button lets you take a new one OR pick one already in the gallery.
+  // Every photo has a ✕ to remove it.
+  var pmap = res.photos || {};
+  var thumbs = Object.keys(pmap).filter(function (k) { return pmap[k]; }).map(function (k) {
+    return '<div class="slot filled" style="position:relative">' +
+      '<img src="' + pmap[k] + '" alt="photo">' +
+      '<button data-act="del-photo" data-arg="' + esc(k) + '" aria-label="Delete photo" style="position:absolute;top:3px;right:3px;width:24px;height:24px;border:none;border-radius:50%;background:rgba(0,0,0,.6);color:#fff;font-size:13px;line-height:1;padding:0">✕</button>' +
+    '</div>';
+  }).join('');
+  var slotDefs = job.jobType === 'repair' ? item.photos.concat([{ id: '__after', label: 'After / repair' }]) : item.photos;
+  var emptySlots = slotDefs.filter(function (p) { return !pmap[p.id]; }).map(function (p) {
     var busy = state.busySlot === p.id;
-    if (src) {
-      return '<button class="slot filled" data-act="shoot" data-arg="' + esc(p.id) + '"' + (busy ? ' disabled' : '') + '>' +
-        '<img src="' + src + '" alt="' + esc(p.label) + '"><span class="retake">RETAKE</span></button>';
-    }
     return '<button class="slot" data-act="shoot" data-arg="' + esc(p.id) + '"' + (busy ? ' disabled' : '') + '>' +
       '<span class="plus">' + (busy ? '…' : '+') + '</span><span class="cap">' + esc(p.label) + '</span></button>';
   }).join('');
+  var addBtn = '<button class="slot" data-act="add-photo"' + (state.busySlot === '__add' ? ' disabled' : '') + '>' +
+    '<span class="plus">' + (state.busySlot === '__add' ? '…' : '+') + '</span><span class="cap">Add photo (camera or gallery)</span></button>';
+  var photos = thumbs + emptySlots + addBtn;
 
   var aiPanel = '';
   if (state.aiStepErr) aiPanel += '<div style="font-size:13px;color:var(--defect);margin:8px 0">' + esc(state.aiStepErr) + '</div>';
@@ -1610,6 +1615,34 @@ root.addEventListener('click', function (e) {
           });
           state.busySlot = null; render();
         }).catch(function () { state.busySlot = null; render(); });
+      })();
+      break;
+    case 'add-photo':
+      (function () {
+        var item = allItems(templateById(state.job.templateId))[state.i];
+        state.busySlot = '__add'; render();
+        pickImage().then(function (dataUrl) {
+          update(function (prev) {
+            var results = Object.assign({}, prev.results);
+            var cur = Object.assign({ verdict: null, note: '', photos: {} }, results[item.id]);
+            cur.photos = Object.assign({}, cur.photos, defObj('extra-' + Date.now() + '-' + Math.random().toString(36).slice(2, 6), dataUrl));
+            results[item.id] = cur;
+            return Object.assign({}, prev, { results: results });
+          });
+          state.busySlot = null; render();
+        }).catch(function () { state.busySlot = null; render(); });
+      })();
+      break;
+    case 'del-photo':
+      (function () {
+        var item = allItems(templateById(state.job.templateId))[state.i];
+        update(function (prev) {
+          var results = Object.assign({}, prev.results);
+          var cur = Object.assign({ verdict: null, note: '', photos: {} }, results[item.id]);
+          var np = Object.assign({}, cur.photos); delete np[arg]; cur.photos = np;
+          results[item.id] = cur;
+          return Object.assign({}, prev, { results: results });
+        }, { render: true });
       })();
       break;
     case 'prev': if (state.i > 0) { state.i--; render(); } break;
