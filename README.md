@@ -36,7 +36,17 @@ logo, the photos and a quote.
 
 - **Content layer** — the `TEMPLATES` array near the top of `index.html`. Each template is `template → stages → items`; each item carries `label`, `help`, `ref` (the code citation printed on the report) and `photos` (the required shots). Adding an appliance type touches nothing else.
 - **Storage** — one record per job. Tries IndexedDB; falls back to `localStorage` automatically if IndexedDB is blocked (some browsers block it on a local `file://` page). A warning shows if device storage fills up.
-- **PDF** — jsPDF, US-Letter portrait: logo header, customer block, verdict tally, findings grouped worst-first with photos, quote table, footer on every page.
+- **PDF** — jsPDF, US-Letter portrait: logo header, customer block (incl. email), the job type, verdict tally, findings grouped worst-first with photos, footer on every page. **Inspection report only — no pricing.** Only answered checkpoints appear; blanks are omitted.
+
+## Flow
+
+System type → **what did we come to do** (Level 1 / Level 2 / Estimate / Repair) → customer details (incl. email) → checkpoints → report. On a Repair job each checkpoint also asks for an "after / repair" photo.
+
+## Report delivery
+
+Finishing the report calls **Create & send**. On a phone it opens the share sheet with the PDF attached — pick Gmail/Mail and send it to the customer and yourself (their address plus the company address from SET are pre-typed in the message body). On desktop it downloads the PDF and opens an email draft to both.
+
+Fully hands-off auto-send (no tap, straight to both inboxes) would need a small email service (e.g. EmailJS / a serverless function) and an API key, and it means the report leaves the device — a deliberate change from the local-only design. Not wired up yet.
 
 ## Adding an appliance type
 

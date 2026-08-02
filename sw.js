@@ -1,7 +1,7 @@
 /* AIO Pro Inspect — service worker.
    Caches the app shell so it works offline once installed. Bump CACHE
    whenever index.html or the sidecar files change to force a refresh. */
-var CACHE = 'aiopro-inspect-v1';
+var CACHE = 'aiopro-inspect-v2';
 var ASSETS = [
   './',
   './index.html',

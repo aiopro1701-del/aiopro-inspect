@@ -977,11 +977,20 @@ function saveSettings(s) { localStorage.setItem(SETTINGS_KEY, JSON.stringify(s))
 function newJob(templateId) {
   return {
     id: 'job-' + Date.now() + '-' + Math.random().toString(36).slice(2, 7),
-    templateId: templateId, createdAt: Date.now(), updatedAt: Date.now(),
-    customer: { name: '', address: '', phone: '' },
-    results: {}, quote: [], summary: '', done: false,
+    templateId: templateId, jobType: '', createdAt: Date.now(), updatedAt: Date.now(),
+    customer: { name: '', address: '', phone: '', email: '' },
+    results: {}, summary: '', done: false,
   };
 }
+
+/* What we came to do — chosen right after the system type. */
+var JOB_TYPES = [
+  { id: 'level1',   name: 'Inspection — Level 1', blurb: 'Readily accessible, normal use' },
+  { id: 'level2',   name: 'Inspection — Level 2', blurb: 'Added scope: video scan and accessible areas; on sale, change or after an event' },
+  { id: 'estimate', name: 'Estimate',             blurb: 'Scope the problem so it can be priced separately' },
+  { id: 'repair',   name: 'Repair',               blurb: 'Document the work — before and after' },
+];
+function jobTypeName(id) { var t = JOB_TYPES.find(function (j) { return j.id === id; }); return t ? t.name : ''; }
 
 /* ── Camera: file input + downscale (works on iPhone & Android) ── */
 var MAX_EDGE = 1400, QUALITY = 0.72;
@@ -1070,10 +1079,10 @@ function buildReport(job, settings) {
   doc.text('Chimney Inspection Report', M, y);
   y += 18;
   doc.setFont('helvetica', 'normal').setFontSize(9.5).setTextColor(MUTED[0], MUTED[1], MUTED[2]);
-  doc.text(tpl.name + '  ·  ' + new Date(job.createdAt).toLocaleDateString(), M, y);
+  doc.text(tpl.name + (job.jobType ? '  ·  ' + jobTypeName(job.jobType) : '') + '  ·  ' + new Date(job.createdAt).toLocaleDateString(), M, y);
   y += 24;
 
-  var cust = [['Customer', job.customer.name || '—'], ['Address', job.customer.address || '—'], ['Phone', job.customer.phone || '—']];
+  var cust = [['Customer', job.customer.name || '—'], ['Address', job.customer.address || '—'], ['Phone', job.customer.phone || '—'], ['Email', job.customer.email || '—']];
   cust.forEach(function (kv) {
     doc.setFont('helvetica', 'bold').setFontSize(9).setTextColor(MUTED[0], MUTED[1], MUTED[2]);
     doc.text(kv[0].toUpperCase(), M, y);
@@ -1090,9 +1099,9 @@ function buildReport(job, settings) {
     if (v && tally[v] !== undefined) tally[v]++; else tally.skipped++;
   });
   doc.setFillColor(246, 243, 238).rect(M, y, CONTENT, 46, 'F');
-  var cells = [['Defects', tally.defect, SEV.defect], ['Monitor', tally.monitor, SEV.monitor], ['Satisfactory', tally.ok, SEV.ok], ['Not inspected', tally.skipped, MUTED]];
+  var cells = [['Defects', tally.defect, SEV.defect], ['Monitor', tally.monitor, SEV.monitor], ['Satisfactory', tally.ok, SEV.ok]];
   cells.forEach(function (cell, i) {
-    var cx = M + 14 + i * (CONTENT / 4);
+    var cx = M + 14 + i * (CONTENT / 3);
     doc.setFont('helvetica', 'bold').setFontSize(20).setTextColor(cell[2][0], cell[2][1], cell[2][2]);
     doc.text(String(cell[1]), cx, y + 24);
     doc.setFont('helvetica', 'normal').setFontSize(8).setTextColor(MUTED[0], MUTED[1], MUTED[2]);
@@ -1134,32 +1143,7 @@ function buildReport(job, settings) {
     y += 6;
   });
 
-  /* Quote */
-  var lines = (job.quote || []).filter(function (l) { return l.desc; });
-  if (lines.length) {
-    y = ensure(y, 90);
-    doc.setFont('helvetica', 'bold').setFontSize(11).setTextColor(INK[0], INK[1], INK[2]);
-    doc.text('RECOMMENDED WORK', M, y);
-    y += 6;
-    doc.setDrawColor(INK[0], INK[1], INK[2]).setLineWidth(2).line(M, y, M + 46, y);
-    y += 18;
-    var total = 0;
-    lines.forEach(function (l) {
-      y = ensure(y, 22);
-      var amount = Number(l.amount) || 0;
-      total += amount;
-      doc.setFont('helvetica', 'normal').setFontSize(10).setTextColor(INK[0], INK[1], INK[2]);
-      doc.text(String(l.desc), M, y, { maxWidth: CONTENT - 90 });
-      doc.text(money(amount), PW - M, y, { align: 'right' });
-      y += 15;
-      doc.setDrawColor(RULE[0], RULE[1], RULE[2]).setLineWidth(0.5).line(M, y - 5, PW - M, y - 5);
-    });
-    y += 6;
-    doc.setFont('helvetica', 'bold').setFontSize(11.5).setTextColor(INK[0], INK[1], INK[2]);
-    doc.text('Total', M, y);
-    doc.text(money(total), PW - M, y, { align: 'right' });
-    y += 20;
-  }
+  /* This is an inspection report only — pricing lives in a separate estimate. */
 
   /* Footer on every page */
   var pages = doc.getNumberOfPages();
@@ -1285,10 +1269,26 @@ function viewSettings() {
           '<button class="btn btn-ghost" data-act="export-data">Export backup</button>' +
           '<button class="btn btn-ghost" data-act="import-data">Import</button>' +
         '</div></div>' +
-      '<div style="text-align:center;color:var(--muted);font-family:var(--mono);font-size:11px;margin-top:2px">AIO Pro Inspect · v1.0</div>' +
+      '<div style="text-align:center;color:var(--muted);font-family:var(--mono);font-size:11px;margin-top:2px">AIO Pro Inspect · v1.1</div>' +
     '</div>' +
     '<div class="bottombar"><button class="btn btn-primary" data-act="save-settings">Save</button></div>' +
     '</div>';
+}
+
+function viewJobType() {
+  var job = state.job;
+  var tpl = templateById(job.templateId);
+  return '<div class="app">' +
+    '<div class="topbar"><button class="iconbtn" data-act="home">‹</button>' +
+      '<div style="flex:1"><h1>New inspection</h1><div class="sub">' + esc(tpl.name) + '</div></div></div>' +
+    '<div class="screen">' +
+      '<div class="eyebrow">What did we come to do?</div>' +
+      JOB_TYPES.map(function (t) {
+        return '<button class="card card-tap" style="display:block;width:100%;text-align:left" data-act="pick-jobtype" data-arg="' + esc(t.id) + '">' +
+          '<div style="font-weight:700;font-size:18px">' + esc(t.name) + '</div>' +
+          '<div style="color:var(--muted);font-size:14px">' + esc(t.blurb) + '</div></button>';
+      }).join('') +
+    '</div></div>';
 }
 
 function viewInspect() {
@@ -1300,11 +1300,12 @@ function viewInspect() {
     var c = job.customer;
     return '<div class="app">' +
       '<div class="topbar"><button class="iconbtn" data-act="home">‹</button>' +
-        '<div style="flex:1"><h1>New inspection</h1><div class="sub">' + esc(tpl.name) + '</div></div></div>' +
+        '<div style="flex:1"><h1>New inspection</h1><div class="sub">' + esc(tpl.name) + (job.jobType ? ' · ' + esc(jobTypeName(job.jobType)) : '') + '</div></div></div>' +
       '<div class="screen"><div class="card">' +
         '<div class="field"><label>Customer name</label><input data-model="customer.name" value="' + esc(c.name) + '" autofocus></div>' +
         '<div class="field"><label>Service address</label><input data-model="customer.address" value="' + esc(c.address) + '"></div>' +
         '<div class="field"><label>Phone</label><input data-model="customer.phone" inputmode="tel" value="' + esc(c.phone) + '"></div>' +
+        '<div class="field"><label>Email (report is sent here)</label><input data-model="customer.email" inputmode="email" value="' + esc(c.email || '') + '"></div>' +
       '</div>' +
       '<div style="color:var(--muted);font-size:14px">' + items.length + ' checkpoints across ' + tpl.stages.length +
         ' stages. Everything saves as you go — you can close the app and come back to it.</div>' +
@@ -1328,7 +1329,11 @@ function viewInspect() {
     return '<button class="verdict ' + v + '" data-on="' + (res.verdict === v) + '" data-act="verdict" data-arg="' + v + '">' + label + '</button>';
   }).join('');
 
-  var photos = item.photos.map(function (p) {
+  // On a repair job, ask for an "after" shot at every checkpoint too.
+  var photoSlots = job.jobType === 'repair'
+    ? item.photos.concat([{ id: '__after', label: 'After / repair' }])
+    : item.photos;
+  var photos = photoSlots.map(function (p) {
     var src = res.photos && res.photos[p.id];
     var busy = state.busySlot === p.id;
     if (src) {
@@ -1379,23 +1384,10 @@ function viewReport() {
     var v = job.results[it.id] && job.results[it.id].verdict;
     if (v) tally[v]++; else { tally.skipped++; skipped.push(it); }
   });
-  var quote = job.quote && job.quote.length ? job.quote : [{ desc: '', amount: '' }];
-  var total = quote.reduce(function (t, l) { return t + (Number(l.amount) || 0); }, 0);
-
-  var skippedCard = '';
-  if (skipped.length) {
-    var names = skipped.slice(0, 6).map(function (it) { return '<div style="font-size:14px;color:var(--muted)">· ' + esc(it.label) + '</div>'; }).join('');
-    if (skipped.length > 6) names += '<div style="font-size:14px;color:var(--muted)">· and ' + (skipped.length - 6) + ' more</div>';
-    skippedCard = '<div class="card" style="border-left:3px solid var(--monitor)"><div class="eyebrow">Not inspected yet</div>' +
-      '<div style="font-size:14px;margin-bottom:10px">These print on the report as “not inspected”. Go back if any of them should be answered.</div>' + names + '</div>';
-  }
-
-  var qlines = quote.map(function (l, idx) {
-    return '<div class="row" style="margin-bottom:10px">' +
-      '<input style="flex:3;min-height:48px;padding:11px 12px;border:1px solid var(--rule);border-radius:6px" placeholder="Description" data-qline="' + idx + '" data-qfield="desc" value="' + esc(l.desc) + '">' +
-      '<input style="flex:1;min-height:48px;padding:11px 12px;border:1px solid var(--rule);border-radius:6px" placeholder="0.00" inputmode="decimal" data-qline="' + idx + '" data-qfield="amount" value="' + esc(l.amount) + '">' +
-      '</div>';
-  }).join('');
+  var skipHint = skipped.length
+    ? '<div style="font-size:13px;color:var(--muted);margin-bottom:12px">' + skipped.length + ' checkpoint(s) not answered — those are simply left out of the report.</div>'
+    : '';
+  var sendTo = [job.customer.email, state.settings.email].filter(Boolean).join(', ');
 
   var errCard = state.error
     ? '<div class="card" style="border-left:3px solid var(--defect)"><div style="font-weight:650;margin-bottom:4px">The PDF did not build</div><div style="font-size:14px;color:var(--muted)">' + esc(state.error) + '</div></div>'
@@ -1406,32 +1398,32 @@ function viewReport() {
 
   return '<div class="app">' +
     '<div class="topbar"><button class="iconbtn" data-act="back-checks">‹</button>' +
-      '<div style="flex:1"><h1>Report</h1><div class="sub">' + esc(job.customer.name || 'Unnamed job') + '</div></div>' +
+      '<div style="flex:1"><h1>Report</h1><div class="sub">' + esc(job.customer.name || 'Unnamed job') + (job.jobType ? ' · ' + esc(jobTypeName(job.jobType)) : '') + '</div></div>' +
       '<button class="iconbtn" data-act="home">DONE</button></div>' +
     '<div class="screen">' + storageWarn() +
       '<div class="tally">' +
         '<div><div class="n" style="color:var(--defect)">' + tally.defect + '</div><div class="l">Defects</div></div>' +
         '<div><div class="n" style="color:var(--monitor)">' + tally.monitor + '</div><div class="l">Monitor</div></div>' +
         '<div><div class="n" style="color:var(--ok)">' + tally.ok + '</div><div class="l">OK</div></div>' +
-        '<div><div class="n" style="color:var(--muted)">' + tally.skipped + '</div><div class="l">Skipped</div></div>' +
-      '</div>' + skippedCard +
+      '</div>' + skipHint +
       '<div class="card"><div class="eyebrow">Summary for the customer</div>' +
         '<div class="field" style="margin-bottom:0"><textarea data-model="summary" placeholder="Two or three sentences: what you found, what it means, what happens next.">' + esc(job.summary || '') + '</textarea></div></div>' +
-      '<div class="card"><div class="eyebrow">Recommended work</div>' + qlines +
-        '<button class="btn btn-ghost btn-wide" data-act="add-line">Add line</button>' +
-        '<div style="display:flex;justify-content:space-between;margin-top:14px;font-weight:700;font-size:18px"><span>Total</span><span id="qtotal" style="font-family:var(--mono)">$' + total.toFixed(2) + '</span></div>' +
-      '</div>' + logoNote + errCard +
+      (sendTo
+        ? '<div style="font-size:13px;color:var(--muted);margin-bottom:12px">Report will be sent to: <b>' + esc(sendTo) + '</b></div>'
+        : '<div style="font-size:13px;color:var(--defect);margin-bottom:12px">No email yet — add the customer email in the customer details and your own email in SET, so the report can be sent.</div>') +
+      logoNote + errCard +
     '</div>' +
     '<div class="bottombar">' +
       '<button class="btn btn-ghost" data-act="back-checks">Back to checks</button>' +
-      '<button class="btn btn-primary" data-act="generate"' + (state.making ? ' disabled' : '') + '>' + (state.making ? 'Building…' : 'Create PDF') + '</button>' +
+      '<button class="btn btn-primary" data-act="generate"' + (state.making ? ' disabled' : '') + '>' + (state.making ? 'Preparing…' : 'Create & send report') + '</button>' +
     '</div></div>';
 }
 
 /* ── Render + wiring ───────────────────────────────────────── */
 function render() {
   var html;
-  if (state.view === 'inspect' && state.job) html = viewInspect();
+  if (state.view === 'jobtype' && state.job) html = viewJobType();
+  else if (state.view === 'inspect' && state.job) html = viewInspect();
   else if (state.view === 'report' && state.job) html = viewReport();
   else if (state.view === 'settings') html = viewSettings();
   else html = viewHome();
@@ -1506,8 +1498,12 @@ root.addEventListener('click', function (e) {
     case 'pick':
       var j = newJob(arg);
       saveJob(j).then(function () {
-        state.job = j; state.picking = false; state.i = 0; state.showCustomer = true; state.view = 'inspect'; render();
+        state.job = j; state.picking = false; state.i = 0; state.showCustomer = false; state.view = 'jobtype'; render();
       });
+      break;
+    case 'pick-jobtype':
+      update({ jobType: arg });
+      state.showCustomer = true; state.view = 'inspect'; render();
       break;
     case 'open':
       getJob(arg).then(function (job) {
@@ -1590,13 +1586,42 @@ function generate() {
     var blob = buildReport(state.job, state.settings);
     var safe = (state.job.customer.name || 'inspection').replace(/[^a-z0-9]+/gi, '-').toLowerCase();
     var date = new Date(state.job.createdAt).toISOString().slice(0, 10);
-    savePdf(safe + '-' + date + '.pdf', blob);
+    var filename = safe + '-' + date + '.pdf';
     update({ done: true });
     state.making = false; render();
+    return sendReport(filename, blob, state.job, state.settings);
   }).catch(function (err) {
-    state.error = (err && err.message) ? err.message : 'Could not build the PDF.';
+    state.error = (err && err.message) ? err.message : 'Could not build the report.';
     state.making = false; render();
   });
+}
+
+/* Send the finished report to the customer and to the company. On a phone this
+   opens the share sheet with the PDF attached (pick Gmail/Mail, the addresses
+   are pre-typed in the message body); on desktop it downloads the PDF and opens
+   an email draft addressed to both. Fully hands-off auto-send would need a mail
+   service — see the note in the README. */
+function sendReport(filename, blob, job, settings) {
+  var file = null;
+  try { file = new File([blob], filename, { type: 'application/pdf' }); } catch (e) {}
+  var to = job.customer.email || '';
+  var cc = settings.email || '';
+  var subject = 'Chimney inspection report' + (job.customer.name ? ' — ' + job.customer.name : '');
+  var body = 'Attached is the chimney inspection report' + (job.customer.name ? ' for ' + job.customer.name : '') + '.'
+    + (to || cc ? '\n\nTo: ' + [to, cc].filter(Boolean).join(', ') : '');
+
+  if (file && navigator.canShare && navigator.canShare({ files: [file] })) {
+    return navigator.share({ files: [file], title: subject, text: body })
+      .catch(function () { savePdf(filename, blob); });
+  }
+  // Fallback: save the PDF and open an email draft to both recipients.
+  savePdf(filename, blob);
+  var mailto = 'mailto:' + encodeURIComponent(to) +
+    '?cc=' + encodeURIComponent(cc) +
+    '&subject=' + encodeURIComponent(subject) +
+    '&body=' + encodeURIComponent(body + '\n\n(Attach the report PDF that just downloaded.)');
+  try { window.location.href = mailto; } catch (e) {}
+  return Promise.resolve();
 }
 
 /* ── Backup: export / import all jobs + settings as one JSON file ── */
