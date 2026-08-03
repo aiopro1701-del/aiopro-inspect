@@ -1261,12 +1261,14 @@ function viewHome() {
         '<button class="iconbtn" style="color:var(--muted)" data-act="delete" data-arg="' + esc(j.id) + '" aria-label="Delete job">DEL</button>' +
         '</div>';
     }).join('');
-    body = '<div class="eyebrow">Jobs</div>' + list;
+    var dueList = loadClients().filter(dueSoon);
+    var dueHtml = dueList.length ? '<div class="eyebrow">Follow-ups due</div>' + dueList.map(function (c) { return '<button class="card card-tap" style="display:block;width:100%;text-align:left" data-act="client-open" data-arg="' + esc(c.id) + '"><div style="font-weight:650">' + esc(c.name || 'Unnamed') + '</div><div style="color:var(--muted);font-size:13px">next service: ' + esc(c.nextServiceDue) + '</div></button>'; }).join('') : '';
+    body = dueHtml + '<div class="eyebrow">Jobs</div>' + list;
   }
 
   return '<div class="app">' +
     '<div class="topbar"><div style="flex:1"><h1>AIO Pro Inspect</h1><div class="sub">field inspections</div></div>' +
-    (state.picking ? '' : '<button class="iconbtn" data-act="settings" aria-label="Settings">SET</button>') + '</div>' +
+    (state.picking ? '' : '<button class="iconbtn" data-act="clients" aria-label="Clients">CLI</button><button class="iconbtn" data-act="settings" aria-label="Settings">SET</button>') + '</div>' +
     '<div class="screen">' + body + '</div>' +
     (state.picking ? '' : '<div class="bottombar" style="gap:6px"><button class="btn btn-primary" data-act="ai-start">Start with AI</button><button class="btn btn-ghost" data-act="start-pick">Checklist</button></div>') +
     '</div>';
@@ -1724,6 +1726,65 @@ function chatWire() {
   if (chat.draw) setupDrawCanvas(chat.draw);
 }
 
+/* ══ Clients (local CRM) ═════════════════════════════════════
+   Saved on this device. Customers, notes, next-service-due date;
+   follow-ups that are due surface on the home screen. */
+var CLIENTS_KEY = 'aiopro-clients';
+function loadClients() { try { return JSON.parse(localStorage.getItem(CLIENTS_KEY)) || []; } catch (e) { return []; } }
+function saveClients(list) { try { localStorage.setItem(CLIENTS_KEY, JSON.stringify(list)); } catch (e) {} }
+function newClient() { return { id: 'cl-' + Date.now() + '-' + Math.random().toString(36).slice(2, 6), name: '', phone: '', email: '', address: '', notes: '', nextServiceDue: '', createdAt: Date.now(), history: [] }; }
+function upsertClient(c) { var list = loadClients(); var i = list.findIndex(function (x) { return x.id === c.id; }); if (i >= 0) list[i] = c; else list.unshift(c); saveClients(list); return c; }
+function removeClient(id) { saveClients(loadClients().filter(function (c) { return c.id !== id; })); }
+function dueSoon(c) { if (!c.nextServiceDue) return false; var d = new Date(c.nextServiceDue); if (isNaN(d.getTime())) return false; return d.getTime() <= Date.now() + 30 * 864e5; }
+function viewClients() {
+  var list = loadClients();
+  var rows = list.length ? list.map(function (c) {
+    var due = dueSoon(c) ? '<span class="pill defect">DUE</span>' : '';
+    return '<div class="card joblist-item">' +
+      '<button class="meta" style="text-align:left" data-act="client-open" data-arg="' + esc(c.id) + '">' +
+      '<div class="name">' + esc(c.name || 'Unnamed') + '</div>' +
+      '<div class="sub">' + esc([c.phone, c.address].filter(Boolean).join(' · ') || 'No contact') + (c.nextServiceDue ? ' · next: ' + esc(c.nextServiceDue) : '') + '</div>' +
+      '</button>' + due +
+      '<button class="iconbtn" style="color:var(--muted)" data-act="client-del" data-arg="' + esc(c.id) + '" aria-label="Delete">DEL</button>' +
+    '</div>';
+  }).join('') : '<div class="empty">No clients yet. Add your first one.</div>';
+  return '<div class="app">' +
+    '<div class="topbar"><button class="iconbtn" data-act="home">‹</button><div style="flex:1"><h1>Clients</h1></div></div>' +
+    '<div class="screen">' +
+      '<input id="clientSearch" placeholder="Search name, phone, address" style="width:100%;padding:9px 11px;border:0.5px solid var(--rule);border-radius:8px;font-size:15px;margin-bottom:12px">' +
+      rows +
+    '</div>' +
+    '<div class="bottombar"><button class="btn btn-primary" data-act="client-new">Add client</button></div>' +
+  '</div>';
+}
+function viewClient() {
+  var c = state.editClient || newClient();
+  function f(label, key, mode) { return '<div class="field"><label>' + label + '</label><input data-model="client.' + key + '"' + (mode ? ' inputmode="' + mode + '"' : '') + ' value="' + esc(c[key] || '') + '"></div>'; }
+  var hist = (c.history || []).length ? (c.history || []).map(function (h) { return '<div style="font-size:13px;color:var(--muted);padding:4px 0;border-top:0.5px solid var(--rule)">' + esc(h.date || '') + ' · ' + esc(h.title || h.kind || '') + '</div>'; }).join('') : '<div style="font-size:13px;color:var(--muted)">No visits recorded yet.</div>';
+  return '<div class="app">' +
+    '<div class="topbar"><button class="iconbtn" data-act="clients">‹</button><div style="flex:1"><h1>' + esc(c.name || 'New client') + '</h1></div></div>' +
+    '<div class="screen">' +
+      '<div class="card">' + f('Name', 'name') + f('Phone', 'phone', 'tel') + f('Email', 'email', 'email') + f('Address', 'address') + '</div>' +
+      '<div class="card">' + f('Next service due (YYYY-MM-DD)', 'nextServiceDue') +
+        '<div class="field"><label>Notes</label><textarea data-model="client.notes">' + esc(c.notes || '') + '</textarea></div></div>' +
+      '<div class="card"><div class="eyebrow">History</div>' + hist + '</div>' +
+    '</div>' +
+    '<div class="bottombar" style="gap:6px"><button class="btn btn-primary" data-act="client-save">Save</button>' +
+      (c._existing ? '<button class="btn btn-ghost" data-act="client-del" data-arg="' + esc(c.id) + '">Delete</button>' : '') + '</div>' +
+  '</div>';
+}
+function wireClients() {
+  var search = root.querySelector('#clientSearch');
+  if (search) {
+    search.addEventListener('input', function () {
+      var q = search.value.toLowerCase();
+      root.querySelectorAll('.joblist-item').forEach(function (row) {
+        row.style.display = row.textContent.toLowerCase().indexOf(q) > -1 ? '' : 'none';
+      });
+    });
+  }
+}
+
 /* ── Render + wiring ───────────────────────────────────────── */
 function render() {
   var html;
@@ -1732,12 +1793,15 @@ function render() {
   else if (state.view === 'report' && state.job) html = viewReport();
   else if (state.view === 'chatstart') html = viewChatStart();
   else if (state.view === 'chat') html = viewChat();
+  else if (state.view === 'clients') html = viewClients();
+  else if (state.view === 'client') html = viewClient();
   else if (state.view === 'settings') html = viewSettings();
   else html = viewHome();
   root.innerHTML = html;
   wireInputs();
   wirePhotoMarks();
   chatWire();
+  wireClients();
   var af = root.querySelector('[autofocus]');
   if (af) { try { af.focus(); } catch (e) {} }
 }
@@ -1789,6 +1853,9 @@ function wireInputs() {
         var sk = path.slice(9);
         state.settings = Object.assign({}, state.settings, defObj(sk, val));
         // saved on the Save button, matching the original flow
+      } else if (path.indexOf('client.') === 0) {
+        var clk = path.slice(7);
+        state.editClient = Object.assign({}, state.editClient || newClient(), defObj(clk, val));
       }
     };
     el.addEventListener('input', modelHandler);
@@ -1979,6 +2046,21 @@ root.addEventListener('click', function (e) {
     case 'draw-done': drawDone(); break;
     case 'chat-send': chatSend(); break;
     case 'chat-report': chatReport(); break;
+    case 'clients': state.view = 'clients'; render(); break;
+    case 'client-new': state.editClient = newClient(); state.view = 'client'; render(); break;
+    case 'client-open':
+      var foundc = loadClients().find(function (c) { return c.id === arg; });
+      state.editClient = Object.assign({ _existing: true }, foundc || newClient());
+      state.view = 'client'; render();
+      break;
+    case 'client-save':
+      var toSave = Object.assign({}, state.editClient || newClient()); delete toSave._existing;
+      upsertClient(toSave);
+      state.editClient = null; state.view = 'clients'; render();
+      break;
+    case 'client-del':
+      if (confirm('Delete this client?')) { removeClient(arg); state.editClient = null; state.view = 'clients'; render(); }
+      break;
   }
 });
 
