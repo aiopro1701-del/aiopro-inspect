@@ -1369,10 +1369,17 @@ function viewInspect() {
   // photo" button lets you take a new one OR pick one already in the gallery.
   // Every photo has a ✕ to remove it.
   var pmap = res.photos || {};
+  var pmarks = res.photoMarks || {};
   var thumbs = Object.keys(pmap).filter(function (k) { return pmap[k]; }).map(function (k) {
+    var mk = pmarks[k] || [];
+    var dots = mk.map(function (m, idx) {
+      return '<span style="position:absolute;left:' + (m.x * 100) + '%;top:' + (m.y * 100) + '%;transform:translate(-50%,-50%);min-width:20px;height:20px;border-radius:50%;background:var(--defect);color:#fff;font-size:11px;line-height:20px;text-align:center;border:2px solid #fff;pointer-events:none">' + (idx + 1) + '</span>';
+    }).join('');
     return '<div class="slot filled" style="position:relative">' +
-      '<img src="' + pmap[k] + '" alt="photo">' +
+      '<img src="' + pmap[k] + '" alt="photo" data-mark="' + esc(k) + '" style="cursor:crosshair">' +
+      dots +
       '<button data-act="del-photo" data-arg="' + esc(k) + '" aria-label="Delete photo" style="position:absolute;top:3px;right:3px;width:24px;height:24px;border:none;border-radius:50%;background:rgba(0,0,0,.6);color:#fff;font-size:13px;line-height:1;padding:0">✕</button>' +
+      (mk.length ? '<button data-act="clear-marks" data-arg="' + esc(k) + '" style="position:absolute;bottom:3px;right:3px;border:none;border-radius:4px;background:rgba(0,0,0,.6);color:#fff;font-size:10px;padding:2px 5px">clear</button>' : '') +
     '</div>';
   }).join('');
   var slotDefs = job.jobType === 'repair' ? item.photos.concat([{ id: '__after', label: 'After / repair' }]) : item.photos;
@@ -1417,6 +1424,7 @@ function viewInspect() {
         '<div class="verdicts">' + verdicts + '</div>' +
         '<div class="eyebrow">Photos</div>' +
         '<div class="photos">' + photos + '</div>' +
+        '<div style="font-size:12px;color:var(--muted);margin-top:6px">Tap a photo to mark problem spots (numbered). The master reads your marks and your note.</div>' +
         '<button class="btn btn-ghost" data-act="ai-step" style="margin:10px 0"' + (state.aiStepBusy ? ' disabled' : '') + '>' + (state.aiStepBusy ? 'Asking the master…' : 'Ask the master (AI)') + '</button>' +
         aiPanel +
         '<div class="field"><label>What you found</label>' +
@@ -1488,8 +1496,32 @@ function render() {
   else html = viewHome();
   root.innerHTML = html;
   wireInputs();
+  wirePhotoMarks();
   var af = root.querySelector('[autofocus]');
   if (af) { try { af.focus(); } catch (e) {} }
+}
+
+/* Tap a photo to drop a numbered problem-marker at that spot. */
+function wirePhotoMarks() {
+  root.querySelectorAll('img[data-mark]').forEach(function (img) {
+    img.addEventListener('click', function (e) {
+      var key = img.getAttribute('data-mark');
+      var rect = img.getBoundingClientRect();
+      if (!rect.width || !rect.height) return;
+      var x = Math.min(1, Math.max(0, (e.clientX - rect.left) / rect.width));
+      var y = Math.min(1, Math.max(0, (e.clientY - rect.top) / rect.height));
+      var item = allItems(templateById(state.job.templateId))[state.i];
+      update(function (prev) {
+        var results = Object.assign({}, prev.results);
+        var cur = Object.assign({ verdict: null, note: '', photos: {}, photoMarks: {} }, results[item.id]);
+        var pm = Object.assign({}, cur.photoMarks);
+        pm[key] = (pm[key] || []).concat([{ x: x, y: y }]);
+        cur.photoMarks = pm;
+        results[item.id] = cur;
+        return Object.assign({}, prev, { results: results });
+      }, { render: true });
+    });
+  });
 }
 
 /* Text inputs update state without a re-render, so focus is never lost. */
@@ -1652,6 +1684,18 @@ root.addEventListener('click', function (e) {
         }, { render: true });
       })();
       break;
+    case 'clear-marks':
+      (function () {
+        var item = allItems(templateById(state.job.templateId))[state.i];
+        update(function (prev) {
+          var results = Object.assign({}, prev.results);
+          var cur = Object.assign({ verdict: null, note: '', photos: {}, photoMarks: {} }, results[item.id]);
+          var pm = Object.assign({}, cur.photoMarks); delete pm[arg]; cur.photoMarks = pm;
+          results[item.id] = cur;
+          return Object.assign({}, prev, { results: results });
+        }, { render: true });
+      })();
+      break;
     case 'prev': if (state.i > 0) { state.i--; render(); } break;
     case 'next':
       var count = allItems(templateById(state.job.templateId)).length;
@@ -1761,6 +1805,34 @@ function aiWrite() {
   });
 }
 
+/* Draw the technician's numbered problem-markers onto a copy of the photo so the
+   AI sees exactly what was flagged. Returns a JPEG data URL (original if none). */
+function compositeMarks(src, marks) {
+  return new Promise(function (resolve) {
+    if (!marks || !marks.length) return resolve(src);
+    var img = new Image();
+    img.onload = function () {
+      try {
+        var c = document.createElement('canvas'); c.width = img.width; c.height = img.height;
+        var ctx = c.getContext('2d'); ctx.drawImage(img, 0, 0);
+        var r = Math.max(14, img.width * 0.03);
+        marks.forEach(function (m, idx) {
+          var x = m.x * img.width, y = m.y * img.height;
+          ctx.beginPath(); ctx.arc(x, y, r, 0, 2 * Math.PI);
+          ctx.fillStyle = 'rgba(200,40,30,0.85)'; ctx.fill();
+          ctx.lineWidth = Math.max(2, r * 0.15); ctx.strokeStyle = '#fff'; ctx.stroke();
+          ctx.fillStyle = '#fff'; ctx.font = 'bold ' + Math.round(r * 1.1) + 'px sans-serif';
+          ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+          ctx.fillText(String(idx + 1), x, y);
+        });
+        resolve(c.toDataURL('image/jpeg', 0.8));
+      } catch (e) { resolve(src); }
+    };
+    img.onerror = function () { resolve(src); };
+    img.src = src;
+  });
+}
+
 /* Per-checkpoint AI: looks at the photo(s) just taken and the code context for
    this checkpoint, then suggests what it sees, a verdict, and what to do. */
 function aiStep() {
@@ -1769,7 +1841,8 @@ function aiStep() {
   var job = state.job, tpl = templateById(job.templateId), items = allItems(tpl);
   var item = items[state.i];
   var res = job.results[item.id] || { verdict: null, note: '', photos: {} };
-  var imgs = Object.keys(res.photos || {}).map(function (k) { return res.photos[k]; }).filter(Boolean);
+  var pmarks = res.photoMarks || {};
+  var imgs = Object.keys(res.photos || {}).map(function (k) { return { key: k, src: res.photos[k] }; }).filter(function (o) { return o.src; });
   state.aiStepBusy = true; state.aiStepErr = null; state.aiStep = null; render();
 
   var instr = 'You are a master chimney inspector helping a technician in the field, right now, at one checkpoint. '
@@ -1777,24 +1850,25 @@ function aiStep() {
     + 'Checkpoint: "' + item.label + '" in the ' + item.stageName + ' stage. What to check: ' + item.help + ' '
     + 'Governing code: ' + (item.ref || 'n/a') + '. '
     + (res.note ? 'Technician note so far: ' + res.note + '. ' : '')
-    + (imgs.length ? 'The technician\'s photo(s) for this checkpoint are attached — look closely and describe what you actually see. ' : 'No photo has been taken yet — tell the technician exactly what to photograph and look for. ')
+    + (imgs.length ? 'The technician\'s photo(s) are attached. Any red numbered circles on a photo mark spots the technician flagged as possible problems — address each numbered spot specifically, plus anything else you see. ' : 'No photo has been taken yet — tell the technician exactly what to photograph and look for. ')
     + 'Answer in plain field language. Return ONLY JSON (no markdown): '
     + '{"observation":"what to look at and, if a photo is attached, what you see","assessment":"ok|monitor|defect","recommended":"what to do about it, empty string if OK","note":"a short finding note the technician can keep for the report"}.';
-  var content = [{ type: 'text', text: instr }];
-  imgs.slice(0, 4).forEach(function (src) {
-    var m = /^data:(image\/[\w.+-]+);base64,(.*)$/.exec(src);
-    if (m) content.push({ type: 'image', source: { type: 'base64', media_type: m[1], data: m[2] } });
-  });
-
-  fetch('https://api.anthropic.com/v1/messages', {
-    method: 'POST',
-    headers: {
-      'content-type': 'application/json',
-      'x-api-key': s.aiKey,
-      'anthropic-version': '2023-06-01',
-      'anthropic-dangerous-direct-browser-access': 'true'
-    },
-    body: JSON.stringify({ model: s.aiModel || 'claude-sonnet-5', max_tokens: 700, messages: [{ role: 'user', content: content }] })
+  Promise.all(imgs.slice(0, 4).map(function (o) { return compositeMarks(o.src, pmarks[o.key] || []); })).then(function (composited) {
+    var content = [{ type: 'text', text: instr }];
+    composited.forEach(function (src) {
+      var m = /^data:(image\/[\w.+-]+);base64,(.*)$/.exec(src);
+      if (m) content.push({ type: 'image', source: { type: 'base64', media_type: m[1], data: m[2] } });
+    });
+    return fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'content-type': 'application/json',
+        'x-api-key': s.aiKey,
+        'anthropic-version': '2023-06-01',
+        'anthropic-dangerous-direct-browser-access': 'true'
+      },
+      body: JSON.stringify({ model: s.aiModel || 'claude-sonnet-5', max_tokens: 700, messages: [{ role: 'user', content: content }] })
+    });
   }).then(function (r) { return r.json(); }).then(function (data) {
     if (data.error) throw new Error(data.error.message || 'AI request failed.');
     var text = (data.content && data.content[0] && data.content[0].text) || '';
@@ -1823,7 +1897,10 @@ function aiApply() {
     results[item.id] = cur;
     return Object.assign({}, prev, { results: results });
   });
-  state.aiStep = null; render();
+  state.aiStep = null;
+  var items2 = allItems(templateById(state.job.templateId));
+  if (state.i + 1 < items2.length) state.i++;
+  render();
 }
 
 /* Send the finished report to the customer and to the company. On a phone this
