@@ -1197,7 +1197,7 @@ function savePdf(filename, blob) {
 var state = {
   view: 'home', jobs: [], job: null, settings: loadSettings(), loading: true,
   picking: false, i: 0, showCustomer: false, busySlot: null, making: false, error: null, aiBusy: false, aiError: null,
-  aiStepBusy: false, aiStep: null, aiStepErr: null,
+  aiStepBusy: false, aiStep: null, aiStepErr: null, chat: null,
 };
 var root = document.getElementById('root');
 var saveTimer = null;
@@ -1268,7 +1268,7 @@ function viewHome() {
     '<div class="topbar"><div style="flex:1"><h1>AIO Pro Inspect</h1><div class="sub">field inspections</div></div>' +
     (state.picking ? '' : '<button class="iconbtn" data-act="settings" aria-label="Settings">SET</button>') + '</div>' +
     '<div class="screen">' + body + '</div>' +
-    (state.picking ? '' : '<div class="bottombar"><button class="btn btn-primary" data-act="start-pick">Start inspection</button></div>') +
+    (state.picking ? '' : '<div class="bottombar" style="gap:6px"><button class="btn btn-primary" data-act="ai-start">Start with AI</button><button class="btn btn-ghost" data-act="start-pick">Checklist</button></div>') +
     '</div>';
 }
 
@@ -1486,17 +1486,258 @@ function viewReport() {
     '</div></div>';
 }
 
+/* ══ Conversational AI mode ══════════════════════════════════
+   The app talks to the technician: greeting -> pick what we are
+   doing -> the master (Claude) leads the conversation, reads the
+   photos and drawings, and produces the customer report/estimate. */
+var CHAT_MODES = {
+  level1:   { name: 'Inspection — Level 1', out: 'Level 1 inspection report', focus: 'a Level 1 chimney inspection' },
+  level2:   { name: 'Inspection — Level 2', out: 'Level 2 inspection report', focus: 'a Level 2 chimney inspection' },
+  estimate: { name: 'Estimate', out: 'repair estimate', focus: 'a repair estimate' },
+  invoice:  { name: 'Invoice', out: 'invoice', focus: 'an invoice for completed work' }
+};
+function chatSystem(mode) {
+  var m = CHAT_MODES[mode] || CHAT_MODES.level1;
+  return 'You are the master chimney inspector and estimator for ' + (state.settings.company || 'AIO Pro Chimney') + ' (Greater St. Louis), guiding a technician in the field through ' + m.focus + '. '
+    + 'Talk like a sharp, friendly expert: ONE short step at a time, plain language, no code jargon. '
+    + 'Begin by asking the technician for a photo of the FRONT of the house. Then ask for a photo facing the fireplace, water heater, or the problem being addressed. '
+    + 'Then ask focused questions and request photos as needed. Judge conditions using NFPA 211 and the 2021 IRC chapter 10, but never quote section numbers to the technician. '
+    + 'Red drawing on a photo marks the spots the technician is flagging as problems - address those. '
+    + 'Keep each reply to 1-3 short sentences. When you have enough to produce the customer ' + m.out + ', tell the technician to tap Create report.';
+}
+function chatApiMessages(chat) {
+  return chat.messages.map(function (msg) {
+    if (msg.role === 'assistant') return { role: 'assistant', content: msg.text || '(...)' };
+    var content = [];
+    if (msg.text) content.push({ type: 'text', text: msg.text });
+    (msg.images || []).forEach(function (src) {
+      var mm = /^data:(image\/[\w.+-]+);base64,(.*)$/.exec(src);
+      if (mm) content.push({ type: 'image', source: { type: 'base64', media_type: mm[1], data: mm[2] } });
+    });
+    if (!content.length) content.push({ type: 'text', text: '(no message)' });
+    return { role: 'user', content: content };
+  });
+}
+function chatCall(extraUserText, isReport) {
+  var chat = state.chat, s = state.settings;
+  var msgs = chatApiMessages(chat);
+  if (extraUserText) msgs = msgs.concat([{ role: 'user', content: [{ type: 'text', text: extraUserText }] }]);
+  return fetch('https://api.anthropic.com/v1/messages', {
+    method: 'POST',
+    headers: { 'content-type': 'application/json', 'x-api-key': s.aiKey, 'anthropic-version': '2023-06-01', 'anthropic-dangerous-direct-browser-access': 'true' },
+    body: JSON.stringify({ model: s.aiModel || 'claude-sonnet-5', max_tokens: isReport ? 2000 : 600, system: chatSystem(chat.mode), messages: msgs })
+  }).then(function (r) { return r.json(); }).then(function (data) {
+    if (data.error) throw new Error(data.error.message || 'AI request failed.');
+    return (data.content && data.content[0] && data.content[0].text) || '';
+  });
+}
+function chatStartMode(mode) {
+  if (!state.settings.aiKey) { state.chat = null; state.view = 'settings'; render(); return; }
+  state.chat = { mode: mode, messages: [{ role: 'user', text: 'I am here to do ' + CHAT_MODES[mode].name + '.', images: [] }], pending: { photos: [] }, pendingText: '', busy: true, err: null, reportBusy: false, draw: null };
+  state.view = 'chat'; render();
+  chatCall(null, false).then(function (text) {
+    state.chat.messages.push({ role: 'assistant', text: text });
+    state.chat.busy = false; render(); chatScroll();
+  }).catch(function (err) { state.chat.busy = false; state.chat.err = err.message; render(); });
+}
+function chatSend() {
+  var chat = state.chat; if (!chat || chat.busy) return;
+  var input = root.querySelector('#chatInput');
+  var text = input ? input.value.trim() : '';
+  var photos = (chat.pending && chat.pending.photos) || [];
+  if (!text && !photos.length) return;
+  chat.messages.push({ role: 'user', text: text, images: photos.slice() });
+  chat.pending = { photos: [] }; chat.pendingText = '';
+  chat.busy = true; chat.err = null; render();
+  chatCall(null, false).then(function (t) {
+    chat.messages.push({ role: 'assistant', text: t });
+    chat.busy = false; render(); chatScroll();
+  }).catch(function (err) { chat.busy = false; chat.err = err.message; render(); });
+}
+function chatReport() {
+  var chat = state.chat; if (!chat || chat.reportBusy) return;
+  chat.reportBusy = true; chat.err = null; render();
+  var instr = 'Now produce the customer-facing ' + CHAT_MODES[chat.mode].out + ' from our whole conversation. '
+    + 'Return ONLY JSON (no markdown): {"title":"short title","summary":"2-4 plain sentences","sections":[{"heading":"short heading","body":"plain-language paragraph","recommended":"recommended action or empty string"}]}. No code section numbers.';
+  chatCall(instr, true).then(function (text) {
+    var parsed = parseAiJson(text);
+    if (!parsed) throw new Error('Could not read the AI report - try again.');
+    var imgs = [];
+    chat.messages.forEach(function (m) { if (m.role === 'user' && m.images) imgs = imgs.concat(m.images); });
+    var blob = buildChatReport(parsed, imgs, state.settings, CHAT_MODES[chat.mode].name);
+    var fn = chat.mode + '-' + new Date().toISOString().slice(0, 10) + '.pdf';
+    chat.reportBusy = false; render();
+    savePdf(fn, blob);
+  }).catch(function (err) { chat.reportBusy = false; chat.err = err.message; render(); });
+}
+function chatScroll() { var el = root.querySelector('#chatScroll'); if (el) el.scrollTop = el.scrollHeight; }
+function buildChatReport(data, images, settings, modeName) {
+  var jsPDF = window.jspdf.jsPDF;
+  var doc = new jsPDF({ unit: 'pt', format: 'letter' });
+  var y = M;
+  function ensure(cursor, need) { if (cursor + need > PH - 52) { doc.addPage(); return M; } return cursor; }
+  if (settings.logo) { try { doc.addImage(settings.logo, 'JPEG', M, y, 96, 96 * 0.42, undefined, 'FAST'); } catch (e) {} }
+  doc.setFont('helvetica', 'bold').setFontSize(15).setTextColor(INK[0], INK[1], INK[2]);
+  doc.text(settings.company || 'AIO Pro Chimney', M + (settings.logo ? 110 : 0), y + 14);
+  doc.setFont('helvetica', 'normal').setFontSize(8.5).setTextColor(MUTED[0], MUTED[1], MUTED[2]);
+  doc.text([settings.phone, settings.email, settings.address].filter(Boolean).join('   ·   '), M + (settings.logo ? 110 : 0), y + 28, { maxWidth: CONTENT - 110 });
+  y += settings.logo ? 58 : 44;
+  doc.setDrawColor(RULE[0], RULE[1], RULE[2]).setLineWidth(1).line(M, y, PW - M, y); y += 22;
+  doc.setFont('helvetica', 'bold').setFontSize(19).setTextColor(INK[0], INK[1], INK[2]);
+  doc.text(String(data.title || modeName), M, y); y += 16;
+  doc.setFont('helvetica', 'normal').setFontSize(9.5).setTextColor(MUTED[0], MUTED[1], MUTED[2]);
+  doc.text(modeName + '  ·  ' + new Date().toLocaleDateString(), M, y); y += 20;
+  var cover = images.slice(0, 2);
+  if (cover.length) {
+    var gw = (CONTENT - 8) / 2, gh = gw * 0.72;
+    y = ensure(y, gh + 6);
+    cover.forEach(function (src, i) { try { doc.addImage(src, 'JPEG', M + i * (gw + 8), y, gw, gh, undefined, 'FAST'); } catch (e) {} });
+    y += gh + 16;
+  }
+  if (data.summary) { y = wrapped(doc, String(data.summary), M, y, CONTENT, 10.5, INK) + 12; }
+  (data.sections || []).forEach(function (sec) {
+    y = ensure(y, 40);
+    y = wrapped(doc, String(sec.heading || ''), M, y, CONTENT, 12, INK, 'bold') + 2;
+    if (sec.body) y = wrapped(doc, String(sec.body), M, y, CONTENT, 10, INK) + 2;
+    if (sec.recommended) y = wrapped(doc, 'Recommended: ' + sec.recommended, M, y, CONTENT, 9.5, MUTED) + 2;
+    y += 8;
+  });
+  var rest = images.slice(2);
+  if (rest.length) {
+    y = ensure(y, 20);
+    doc.setFont('helvetica', 'bold').setFontSize(10).setTextColor(MUTED[0], MUTED[1], MUTED[2]);
+    doc.text('PHOTOS', M, y); y += 12;
+    var pw = (CONTENT - 16) / 3, ph = pw * 0.72;
+    for (var i = 0; i < rest.length; i += 3) {
+      y = ensure(y, ph + 8);
+      for (var j = 0; j < 3 && i + j < rest.length; j++) { try { doc.addImage(rest[i + j], 'JPEG', M + j * (pw + 8), y, pw, ph, undefined, 'FAST'); } catch (e) {} }
+      y += ph + 8;
+    }
+  }
+  var pages = doc.getNumberOfPages();
+  for (var p = 1; p <= pages; p++) { doc.setPage(p); doc.setFont('helvetica', 'normal').setFontSize(7.5).setTextColor(MUTED[0], MUTED[1], MUTED[2]); doc.text((settings.company || '') + '  ·  ' + new Date().toLocaleDateString(), M, PH - 24); doc.text(p + ' / ' + pages, PW - M, PH - 24, { align: 'right' }); }
+  return doc.output('blob');
+}
+function drawDone() {
+  var chat = state.chat; if (!chat || !chat.draw) return;
+  var draw = chat.draw, img = new Image();
+  img.onload = function () {
+    try {
+      var c = document.createElement('canvas'); c.width = img.width; c.height = img.height;
+      var ctx = c.getContext('2d'); ctx.drawImage(img, 0, 0);
+      ctx.strokeStyle = 'rgba(220,40,30,0.95)'; ctx.lineWidth = Math.max(3, img.width * 0.012); ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+      draw.strokes.forEach(function (st) { ctx.beginPath(); st.forEach(function (pt, i) { var x = pt.x * img.width, yy = pt.y * img.height; if (i === 0) ctx.moveTo(x, yy); else ctx.lineTo(x, yy); }); ctx.stroke(); });
+      chat.pending.photos[draw.index] = c.toDataURL('image/jpeg', 0.8);
+    } catch (e) {}
+    chat.draw = null; render();
+  };
+  img.onerror = function () { chat.draw = null; render(); };
+  img.src = draw.src;
+}
+function setupDrawCanvas(draw) {
+  var canvas = root.querySelector('#drawCanvas'); if (!canvas) return;
+  var img = new Image();
+  img.onload = function () {
+    var maxW = (root.clientWidth || 360) - 44, maxH = 380;
+    var scale = Math.min(maxW / img.width, maxH / img.height, 1);
+    canvas.width = Math.round(img.width * scale); canvas.height = Math.round(img.height * scale);
+    var ctx = canvas.getContext('2d');
+    function redraw() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+      ctx.strokeStyle = 'rgba(220,40,30,0.95)'; ctx.lineWidth = Math.max(3, canvas.width * 0.012); ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+      draw.strokes.forEach(function (st) { ctx.beginPath(); st.forEach(function (pt, i) { var x = pt.x * canvas.width, yy = pt.y * canvas.height; if (i === 0) ctx.moveTo(x, yy); else ctx.lineTo(x, yy); }); ctx.stroke(); });
+    }
+    redraw();
+    var drawing = false, cur = null;
+    function pos(e) { var r = canvas.getBoundingClientRect(); var t = (e.touches && e.touches[0]) || e; return { x: (t.clientX - r.left) / r.width, y: (t.clientY - r.top) / r.height }; }
+    canvas.addEventListener('pointerdown', function (e) { e.preventDefault(); drawing = true; cur = [pos(e)]; draw.strokes.push(cur); });
+    canvas.addEventListener('pointermove', function (e) { if (!drawing) return; e.preventDefault(); cur.push(pos(e)); redraw(); });
+    window.addEventListener('pointerup', function () { drawing = false; });
+  };
+  img.src = draw.src;
+}
+function viewChatStart() {
+  var opts = [['level1', 'Inspection — Level 1'], ['level2', 'Inspection — Level 2'], ['estimate', 'Estimate'], ['invoice', 'Invoice']];
+  return '<div class="app">' +
+    '<div class="topbar"><button class="iconbtn" data-act="home">‹</button><div style="flex:1"><h1>AIO Pro</h1></div><button class="iconbtn" data-act="settings">SET</button></div>' +
+    '<div class="screen">' +
+      '<div class="card"><div style="font-size:17px;line-height:1.5">Hi — what are we doing today?</div></div>' +
+      opts.map(function (o) { return '<button class="card card-tap" style="display:block;width:100%;text-align:left;font-weight:650;font-size:17px" data-act="chat-mode" data-arg="' + o[0] + '">' + esc(o[1]) + '</button>'; }).join('') +
+    '</div></div>';
+}
+function viewChat() {
+  var chat = state.chat;
+  if (!chat) return viewChatStart();
+  var bubbles = chat.messages.map(function (m, i) {
+    if (i === 0 && m.role === 'user') return '';
+    var mine = m.role === 'user';
+    var imgs = (m.images || []).map(function (src) { return '<img src="' + src + '" style="max-width:130px;border-radius:8px;margin:4px 4px 0 0">'; }).join('');
+    return '<div style="display:flex;justify-content:' + (mine ? 'flex-end' : 'flex-start') + ';margin-bottom:10px">' +
+      '<div style="max-width:82%;padding:9px 12px;border-radius:12px;background:' + (mine ? 'var(--ember)' : '#fff') + ';color:' + (mine ? '#fff' : 'var(--ink)') + ';border:0.5px solid var(--rule)">' +
+      (m.text ? '<div style="font-size:14px;line-height:1.5;white-space:pre-wrap">' + esc(m.text) + '</div>' : '') + imgs + '</div></div>';
+  }).join('');
+  var pend = (chat.pending && chat.pending.photos || []).map(function (src, idx) {
+    return '<div style="position:relative;display:inline-block;margin:0 8px 6px 0">' +
+      '<img src="' + src + '" style="height:56px;border-radius:6px">' +
+      '<button data-act="chat-del-pending" data-arg="' + idx + '" aria-label="Remove" style="position:absolute;top:-6px;right:-6px;width:20px;height:20px;border-radius:50%;border:none;background:#000;color:#fff;font-size:11px;padding:0">✕</button>' +
+      '<button data-act="chat-draw" data-arg="' + idx + '" style="position:absolute;bottom:-2px;left:-2px;border:none;border-radius:4px;background:rgba(0,0,0,.65);color:#fff;font-size:9px;padding:1px 5px">draw</button>' +
+    '</div>';
+  }).join('');
+  var modal = chat.draw ? (
+    '<div style="position:absolute;inset:0;background:rgba(0,0,0,.9);z-index:60;display:flex;flex-direction:column;padding:12px">' +
+      '<div style="color:#fff;font-size:13px;text-align:center;margin-bottom:8px">Draw on the problem, then Done</div>' +
+      '<div style="flex:1;display:flex;align-items:center;justify-content:center;overflow:hidden">' +
+        '<canvas id="drawCanvas" style="max-width:100%;touch-action:none;border-radius:6px"></canvas>' +
+      '</div>' +
+      '<div style="display:flex;gap:8px;justify-content:center;padding-top:10px">' +
+        '<button class="btn btn-ghost" data-act="draw-clear">Clear</button>' +
+        '<button class="btn btn-ghost" data-act="draw-cancel">Cancel</button>' +
+        '<button class="btn btn-primary" data-act="draw-done">Done</button>' +
+      '</div></div>'
+  ) : '';
+  return '<div class="app">' +
+    '<div class="topbar"><button class="iconbtn" data-act="home">‹</button><div style="flex:1"><h1>' + esc(CHAT_MODES[chat.mode].name) + '</h1></div>' +
+      '<button class="btn btn-ghost" data-act="chat-report" style="padding:6px 12px"' + (chat.reportBusy ? ' disabled' : '') + '>' + (chat.reportBusy ? 'Building…' : 'Create report') + '</button></div>' +
+    '<div class="screen" id="chatScroll">' + bubbles +
+      (chat.busy ? '<div style="color:var(--muted);font-size:13px;padding:4px">Master is thinking…</div>' : '') +
+      (chat.err ? '<div style="color:var(--defect);font-size:13px;padding:4px">' + esc(chat.err) + '</div>' : '') +
+    '</div>' +
+    '<div class="bottombar" style="flex-direction:column;align-items:stretch;gap:6px">' +
+      (pend ? '<div style="text-align:left">' + pend + '</div>' : '') +
+      '<div style="display:flex;gap:6px;align-items:center">' +
+        '<button class="btn btn-ghost" data-act="chat-cam" style="padding:8px 10px">Cam</button>' +
+        '<button class="btn btn-ghost" data-act="chat-gal" style="padding:8px 10px">Gal</button>' +
+        '<input id="chatInput" placeholder="Type…" style="flex:1;min-width:0;padding:9px 11px;border:0.5px solid var(--rule);border-radius:8px;font-size:15px" value="' + esc(chat.pendingText || '') + '">' +
+        '<button class="btn btn-primary" data-act="chat-send" style="padding:8px 12px"' + (chat.busy ? ' disabled' : '') + '>Send</button>' +
+      '</div>' +
+    '</div>' + modal + '</div>';
+}
+function chatWire() {
+  var chat = state.chat;
+  if (!chat || state.view !== 'chat') return;
+  var input = root.querySelector('#chatInput');
+  if (input) {
+    input.addEventListener('input', function () { chat.pendingText = input.value; });
+    input.addEventListener('keydown', function (e) { if (e.key === 'Enter') { e.preventDefault(); chatSend(); } });
+  }
+  if (chat.draw) setupDrawCanvas(chat.draw);
+}
+
 /* ── Render + wiring ───────────────────────────────────────── */
 function render() {
   var html;
   if (state.view === 'jobtype' && state.job) html = viewJobType();
   else if (state.view === 'inspect' && state.job) html = viewInspect();
   else if (state.view === 'report' && state.job) html = viewReport();
+  else if (state.view === 'chatstart') html = viewChatStart();
+  else if (state.view === 'chat') html = viewChat();
   else if (state.view === 'settings') html = viewSettings();
   else html = viewHome();
   root.innerHTML = html;
   wireInputs();
   wirePhotoMarks();
+  chatWire();
   var af = root.querySelector('[autofocus]');
   if (af) { try { af.focus(); } catch (e) {} }
 }
@@ -1715,6 +1956,29 @@ root.addEventListener('click', function (e) {
     case 'ai-write': aiWrite(); break;
     case 'ai-step': aiStep(); break;
     case 'ai-apply': aiApply(); break;
+    case 'ai-start': state.chat = null; state.view = 'chatstart'; render(); break;
+    case 'chat-mode': chatStartMode(arg); break;
+    case 'chat-cam':
+    case 'chat-gal':
+      (function () {
+        if (!state.chat) return;
+        var inp = root.querySelector('#chatInput'); if (inp) state.chat.pendingText = inp.value;
+        (act === 'chat-cam' ? takePhoto() : pickImage()).then(function (dataUrl) {
+          state.chat.pending.photos.push(dataUrl); render();
+        }).catch(function () {});
+      })();
+      break;
+    case 'chat-del-pending':
+      if (state.chat) { state.chat.pending.photos.splice(Number(arg), 1); render(); }
+      break;
+    case 'chat-draw':
+      if (state.chat) { var di = Number(arg); state.chat.draw = { index: di, src: state.chat.pending.photos[di], strokes: [] }; render(); }
+      break;
+    case 'draw-clear': if (state.chat && state.chat.draw) { state.chat.draw.strokes = []; render(); } break;
+    case 'draw-cancel': if (state.chat) { state.chat.draw = null; render(); } break;
+    case 'draw-done': drawDone(); break;
+    case 'chat-send': chatSend(); break;
+    case 'chat-report': chatReport(); break;
   }
 });
 
