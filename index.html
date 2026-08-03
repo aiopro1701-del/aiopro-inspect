@@ -1381,9 +1381,11 @@ function viewInspect() {
     return '<button class="slot" data-act="shoot" data-arg="' + esc(p.id) + '"' + (busy ? ' disabled' : '') + '>' +
       '<span class="plus">' + (busy ? '…' : '+') + '</span><span class="cap">' + esc(p.label) + '</span></button>';
   }).join('');
-  var addBtn = '<button class="slot" data-act="add-photo"' + (state.busySlot === '__add' ? ' disabled' : '') + '>' +
-    '<span class="plus">' + (state.busySlot === '__add' ? '…' : '+') + '</span><span class="cap">Add photo (camera or gallery)</span></button>';
-  var photos = thumbs + emptySlots + addBtn;
+  var camBtn = '<button class="slot" data-act="add-camera"' + (state.busySlot === '__cam' ? ' disabled' : '') + '>' +
+    '<span class="plus">' + (state.busySlot === '__cam' ? '…' : '+') + '</span><span class="cap">Take photo</span></button>';
+  var galBtn = '<button class="slot" data-act="add-gallery"' + (state.busySlot === '__gal' ? ' disabled' : '') + '>' +
+    '<span class="plus">' + (state.busySlot === '__gal' ? '…' : '+') + '</span><span class="cap">From gallery</span></button>';
+  var photos = thumbs + emptySlots + camBtn + galBtn;
 
   var aiPanel = '';
   if (state.aiStepErr) aiPanel += '<div style="font-size:13px;color:var(--defect);margin:8px 0">' + esc(state.aiStepErr) + '</div>';
@@ -1620,11 +1622,13 @@ root.addEventListener('click', function (e) {
         }).catch(function () { state.busySlot = null; render(); });
       })();
       break;
-    case 'add-photo':
+    case 'add-camera':
+    case 'add-gallery':
       (function () {
         var item = allItems(templateById(state.job.templateId))[state.i];
-        state.busySlot = '__add'; render();
-        pickImage().then(function (dataUrl) {
+        var useCam = act === 'add-camera';
+        state.busySlot = useCam ? '__cam' : '__gal'; render();
+        (useCam ? takePhoto() : pickImage()).then(function (dataUrl) {
           update(function (prev) {
             var results = Object.assign({}, prev.results);
             var cur = Object.assign({ verdict: null, note: '', photos: {} }, results[item.id]);
