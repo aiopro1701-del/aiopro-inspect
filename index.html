@@ -1562,8 +1562,17 @@ function chatSend() {
 function chatReport() {
   var chat = state.chat; if (!chat || chat.reportBusy) return;
   chat.reportBusy = true; chat.err = null; render();
-  var instr = 'Now produce the customer-facing ' + CHAT_MODES[chat.mode].out + ' from our whole conversation. '
-    + 'Return ONLY JSON (no markdown): {"title":"short title","summary":"2-4 plain sentences","sections":[{"heading":"short heading","body":"plain-language paragraph","recommended":"recommended action or empty string"}]}. No code section numbers.';
+  var instr = 'Now write the customer-facing ' + CHAT_MODES[chat.mode].out + ' from our ENTIRE conversation, like a professional chimney inspection report. '
+    + 'Return ONLY JSON, no markdown. Use "" for anything not discussed. Shape: '
+    + '{"title":"Chimney Inspection Report",'
+    + '"customer":{"name":"","address":"","cityStateZip":"","phone":"","email":"","preparedBy":""},'
+    + '"property":{"stories":"","roof":"","systemLocation":"","roomLocation":""},'
+    + '"appliance":{"type":"","fuel":"","makeModel":"","dateCode":"","facingMaterial":"","openingSize":"","flueCollar":""},'
+    + '"levelOfInspection":"one plain sentence describing the level performed",'
+    + '"summary":"2-4 plain sentences on the overall condition and whether it is safe to use",'
+    + '"components":[{"name":"e.g. Firebox / Damper & throat / Smoke chamber / Flue & liner / Chimney exterior & crown / Hearth & clearances","status":"ok|monitor|defect","condition":"plain-language what was found","recommended":"recommended action, or empty"}],'
+    + '"limitations":"short plain note on what was and was not accessible in this inspection"}. '
+    + 'Cover every part you discussed as its own component. Plain homeowner language, no code section numbers.';
   chatCall(instr, true).then(function (text) {
     var parsed = parseAiJson(text);
     if (!parsed) throw new Error('Could not read the AI report - try again.');
@@ -1579,48 +1588,102 @@ function chatScroll() { var el = root.querySelector('#chatScroll'); if (el) el.s
 function buildChatReport(data, images, settings, modeName) {
   var jsPDF = window.jspdf.jsPDF;
   var doc = new jsPDF({ unit: 'pt', format: 'letter' });
+  var BLUE = [23, 105, 170];
   var y = M;
-  function ensure(cursor, need) { if (cursor + need > PH - 52) { doc.addPage(); return M; } return cursor; }
-  if (settings.logo) { try { doc.addImage(settings.logo, 'JPEG', M, y, 96, 96 * 0.42, undefined, 'FAST'); } catch (e) {} }
-  doc.setFont('helvetica', 'bold').setFontSize(15).setTextColor(INK[0], INK[1], INK[2]);
-  doc.text(settings.company || 'AIO Pro Chimney', M + (settings.logo ? 110 : 0), y + 14);
-  doc.setFont('helvetica', 'normal').setFontSize(8.5).setTextColor(MUTED[0], MUTED[1], MUTED[2]);
-  doc.text([settings.phone, settings.email, settings.address].filter(Boolean).join('   ·   '), M + (settings.logo ? 110 : 0), y + 28, { maxWidth: CONTENT - 110 });
-  y += settings.logo ? 58 : 44;
-  doc.setDrawColor(RULE[0], RULE[1], RULE[2]).setLineWidth(1).line(M, y, PW - M, y); y += 22;
-  doc.setFont('helvetica', 'bold').setFontSize(19).setTextColor(INK[0], INK[1], INK[2]);
-  doc.text(String(data.title || modeName), M, y); y += 16;
-  doc.setFont('helvetica', 'normal').setFontSize(9.5).setTextColor(MUTED[0], MUTED[1], MUTED[2]);
-  doc.text(modeName + '  ·  ' + new Date().toLocaleDateString(), M, y); y += 20;
-  var cover = images.slice(0, 2);
-  if (cover.length) {
-    var gw = (CONTENT - 8) / 2, gh = gw * 0.72;
-    y = ensure(y, gh + 6);
-    cover.forEach(function (src, i) { try { doc.addImage(src, 'JPEG', M + i * (gw + 8), y, gw, gh, undefined, 'FAST'); } catch (e) {} });
-    y += gh + 16;
+  function drawHeader() {
+    if (settings.logo) { try { doc.addImage(settings.logo, 'JPEG', M, y, 96, 96 * 0.42, undefined, 'FAST'); } catch (e) {} }
+    doc.setFont('helvetica', 'bold').setFontSize(14).setTextColor(INK[0], INK[1], INK[2]);
+    doc.text(settings.company || 'AIO Pro Chimney', M + (settings.logo ? 108 : 0), y + 12);
+    doc.setFont('helvetica', 'normal').setFontSize(8).setTextColor(MUTED[0], MUTED[1], MUTED[2]);
+    doc.text([settings.phone, settings.email, settings.address].filter(Boolean).join('   ·   '), M + (settings.logo ? 108 : 0), y + 25, { maxWidth: CONTENT - 108 });
+    y += settings.logo ? 52 : 40;
+    doc.setDrawColor(RULE[0], RULE[1], RULE[2]).setLineWidth(1).line(M, y, PW - M, y); y += 18;
   }
-  if (data.summary) { y = wrapped(doc, String(data.summary), M, y, CONTENT, 10.5, INK) + 12; }
-  (data.sections || []).forEach(function (sec) {
-    y = ensure(y, 40);
-    y = wrapped(doc, String(sec.heading || ''), M, y, CONTENT, 12, INK, 'bold') + 2;
-    if (sec.body) y = wrapped(doc, String(sec.body), M, y, CONTENT, 10, INK) + 2;
-    if (sec.recommended) y = wrapped(doc, 'Recommended: ' + sec.recommended, M, y, CONTENT, 9.5, MUTED) + 2;
-    y += 8;
-  });
+  function ensure(need) { if (y + need > PH - 52) { doc.addPage(); y = M; drawHeader(); } }
+  function head(t) { ensure(30); doc.setFont('helvetica', 'bold').setFontSize(11).setTextColor(BLUE[0], BLUE[1], BLUE[2]); doc.text(String(t).toUpperCase(), M, y); y += 5; doc.setDrawColor(BLUE[0], BLUE[1], BLUE[2]).setLineWidth(0.8).line(M, y, PW - M, y); y += 15; }
+  function kv(rows) {
+    rows.forEach(function (r) {
+      if (!r[1]) return;
+      ensure(16);
+      doc.setFont('helvetica', 'bold').setFontSize(8.5).setTextColor(MUTED[0], MUTED[1], MUTED[2]);
+      doc.text(String(r[0]), M, y);
+      doc.setFont('helvetica', 'normal').setFontSize(9.5).setTextColor(INK[0], INK[1], INK[2]);
+      var lines = doc.splitTextToSize(String(r[1]), CONTENT - 150);
+      doc.text(lines, M + 150, y);
+      y += Math.max(15, lines.length * 12);
+    });
+  }
+  drawHeader();
+  doc.setFont('helvetica', 'bold').setFontSize(18).setTextColor(INK[0], INK[1], INK[2]);
+  doc.text(String(data.title || modeName), M, y); y += 15;
+  doc.setFont('helvetica', 'normal').setFontSize(9).setTextColor(MUTED[0], MUTED[1], MUTED[2]);
+  doc.text(modeName + '  ·  ' + new Date().toLocaleDateString(), M, y); y += 18;
+
+  var c = data.customer || {};
+  head('Customer information');
+  if (images[0]) { var iw = CONTENT, ih = iw * 0.5; ensure(ih + 6); try { doc.addImage(images[0], 'JPEG', M, y, iw, ih, undefined, 'FAST'); } catch (e) {} y += ih + 8; }
+  kv([['Customer', c.name], ['Service address', c.address], ['City, State, Zip', c.cityStateZip], ['Phone', c.phone], ['Email', c.email], ['Prepared by', c.preparedBy], ['Date', new Date().toLocaleDateString()]]);
+  y += 6;
+
+  if (data.levelOfInspection) { head('Level of inspection'); y = wrapped(doc, String(data.levelOfInspection), M, y, CONTENT, 9.5, INK) + 10; }
+
+  var p = data.property || {};
+  if (p.stories || p.roof || p.systemLocation || p.roomLocation || images[1]) {
+    head('Property information');
+    if (images[1]) { var iw2 = CONTENT * 0.62, ih2 = iw2 * 0.72; ensure(ih2 + 6); try { doc.addImage(images[1], 'JPEG', M, y, iw2, ih2, undefined, 'FAST'); } catch (e) {} y += ih2 + 8; }
+    kv([['Stories', p.stories], ['Roof material & pitch', p.roof], ['System location', p.systemLocation], ['Room location', p.roomLocation]]);
+    y += 6;
+  }
+
+  var a = data.appliance || {};
+  if (a.type || a.fuel || a.makeModel || a.facingMaterial) {
+    head('Appliance information');
+    kv([['Type', a.type], ['Fuel', a.fuel], ['Make & model', a.makeModel], ['Date code', a.dateCode], ['Facing material', a.facingMaterial], ['Opening size', a.openingSize], ['Flue collar size', a.flueCollar]]);
+    y += 6;
+  }
+
+  if (data.summary) { head('Overall diagnosis'); y = wrapped(doc, String(data.summary), M, y, CONTENT, 10, INK) + 10; }
+
+  var comps = data.components || [];
+  if (comps.length) {
+    head('Findings by component');
+    var order = { defect: 0, monitor: 1, ok: 2 };
+    comps.sort(function (x, z) { return (order[String(x.status).toLowerCase()] == null ? 3 : order[String(x.status).toLowerCase()]) - (order[String(z.status).toLowerCase()] == null ? 3 : order[String(z.status).toLowerCase()]); });
+    comps.forEach(function (comp) {
+      ensure(42);
+      var st = String(comp.status || '').toLowerCase();
+      var col = SEV[st] || INK;
+      doc.setFont('helvetica', 'bold').setFontSize(11).setTextColor(INK[0], INK[1], INK[2]);
+      doc.text(String(comp.name || ''), M, y);
+      var label = st === 'defect' ? 'DEFECT' : st === 'monitor' ? 'MONITOR' : st === 'ok' ? 'OK' : '';
+      if (label) { doc.setFont('helvetica', 'bold').setFontSize(8.5).setTextColor(col[0], col[1], col[2]); doc.text(label, PW - M, y, { align: 'right' }); }
+      y += 14;
+      if (comp.condition) y = wrapped(doc, String(comp.condition), M, y, CONTENT, 9.5, INK) + 2;
+      if (comp.recommended) y = wrapped(doc, 'Recommended: ' + comp.recommended, M, y, CONTENT, 9, MUTED) + 2;
+      y += 8;
+    });
+  }
+
   var rest = images.slice(2);
   if (rest.length) {
-    y = ensure(y, 20);
-    doc.setFont('helvetica', 'bold').setFontSize(10).setTextColor(MUTED[0], MUTED[1], MUTED[2]);
-    doc.text('PHOTOS', M, y); y += 12;
+    head('Photos');
     var pw = (CONTENT - 16) / 3, ph = pw * 0.72;
     for (var i = 0; i < rest.length; i += 3) {
-      y = ensure(y, ph + 8);
+      ensure(ph + 8);
       for (var j = 0; j < 3 && i + j < rest.length; j++) { try { doc.addImage(rest[i + j], 'JPEG', M + j * (pw + 8), y, pw, ph, undefined, 'FAST'); } catch (e) {} }
       y += ph + 8;
     }
   }
+
+  if (data.limitations) { head('Inspection limitations'); y = wrapped(doc, String(data.limitations), M, y, CONTENT, 8.5, MUTED) + 6; }
+
   var pages = doc.getNumberOfPages();
-  for (var p = 1; p <= pages; p++) { doc.setPage(p); doc.setFont('helvetica', 'normal').setFontSize(7.5).setTextColor(MUTED[0], MUTED[1], MUTED[2]); doc.text((settings.company || '') + '  ·  ' + new Date().toLocaleDateString(), M, PH - 24); doc.text(p + ' / ' + pages, PW - M, PH - 24, { align: 'right' }); }
+  for (var pg = 1; pg <= pages; pg++) {
+    doc.setPage(pg);
+    doc.setFont('helvetica', 'normal').setFontSize(7.5).setTextColor(MUTED[0], MUTED[1], MUTED[2]);
+    doc.text([settings.company, settings.phone].filter(Boolean).join('   ·   '), M, PH - 22);
+    doc.text('Page ' + pg + ' of ' + pages, PW - M, PH - 22, { align: 'right' });
+  }
   return doc.output('blob');
 }
 function drawDone() {
