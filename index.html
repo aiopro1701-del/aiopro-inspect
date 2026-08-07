@@ -1570,9 +1570,10 @@ function chatReport() {
     + '"appliance":{"type":"","fuel":"","makeModel":"","dateCode":"","facingMaterial":"","openingSize":"","flueCollar":""},'
     + '"levelOfInspection":"one plain sentence describing the level performed",'
     + '"summary":"2-4 plain sentences on the overall condition and whether it is safe to use",'
-    + '"components":[{"name":"e.g. Firebox / Damper & throat / Smoke chamber / Flue & liner / Chimney exterior & crown / Hearth & clearances","status":"ok|monitor|defect","condition":"plain-language what was found","recommended":"recommended action, or empty"}],'
+    + '"components":[{"name":"e.g. Firebox / Damper & throat / Smoke chamber / Flue & liner / Chimney exterior (flashing, chase, crown, cricket) / Hearth & clearances","status":"ok|monitor|defect","condition":"plain-language what was found","recommended":"recommended action, or empty"}],'
+    + '"conclusion":"one clear verdict: is the system safe to use as-is, or should use be discontinued until repairs are made",'
     + '"limitations":"short plain note on what was and was not accessible in this inspection"}. '
-    + 'Cover every part you discussed as its own component. Plain homeowner language, no code section numbers.';
+    + 'Cover every part you discussed as its own component, including the chimney exterior. Plain homeowner language, no code section numbers.';
   chatCall(instr, true).then(function (text) {
     var parsed = parseAiJson(text);
     if (!parsed) throw new Error('Could not read the AI report - try again.');
@@ -1664,6 +1665,8 @@ function buildChatReport(data, images, settings, modeName) {
     });
   }
 
+  if (data.conclusion) { head('Inspection conclusion & recommendations'); y = wrapped(doc, String(data.conclusion), M, y, CONTENT, 10, INK) + 10; }
+
   var rest = images.slice(2);
   if (rest.length) {
     head('Photos');
@@ -1676,6 +1679,8 @@ function buildChatReport(data, images, settings, modeName) {
   }
 
   if (data.limitations) { head('Inspection limitations'); y = wrapped(doc, String(data.limitations), M, y, CONTENT, 8.5, MUTED) + 6; }
+  head('Acknowledgment');
+  y = wrapped(doc, 'This inspection covered the readily accessible areas of the chimney and connected appliance visible at the time of service, to the NFPA 211 standard for the level performed. Areas that cannot be seen without removing parts of the chimney or the structure are not included. No warranty is given as to the future safe use of the system, as use and conditions can change after the inspection.', M, y, CONTENT, 8.5, MUTED) + 6;
 
   var pages = doc.getNumberOfPages();
   for (var pg = 1; pg <= pages; pg++) {
