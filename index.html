@@ -1587,6 +1587,51 @@ function chatReport() {
   }).catch(function (err) { chat.reportBusy = false; chat.err = err.message; render(); });
 }
 function chatScroll() { var el = root.querySelector('#chatScroll'); if (el) el.scrollTop = el.scrollHeight; }
+/* Original, offline reference diagrams drawn as vector in the PDF (not copies of
+   any other company's graphics). Returns the height used. */
+function drawDiagram(doc, type, x, y, w) {
+  doc.setDrawColor(INK[0], INK[1], INK[2]); doc.setLineWidth(0.8); doc.setTextColor(INK[0], INK[1], INK[2]);
+  if (type === 'anatomy') {
+    var labels = ['Cap / crown', 'Flue liner', 'Smoke chamber', 'Damper / throat', 'Firebox', 'Hearth / cleanout'];
+    var boxW = Math.min(220, w * 0.6), bx = x + (w - boxW) / 2, bh = 24, gap = 5;
+    labels.forEach(function (lab, i) {
+      var by = y + i * (bh + gap);
+      doc.setFillColor(246, 243, 238); doc.rect(bx, by, boxW, bh, 'FD');
+      doc.setFont('helvetica', 'normal').setFontSize(9).setTextColor(INK[0], INK[1], INK[2]);
+      doc.text(lab, bx + boxW / 2, by + bh / 2 + 3.2, { align: 'center' });
+    });
+    return labels.length * (bh + gap);
+  }
+  if (type === 'termination') {
+    var h = 150, base = y + h - 18, peakX = x + w * 0.62, peakY = y + 34;
+    doc.setLineWidth(1); doc.line(x + 8, base, peakX, peakY); doc.line(peakX, peakY, x + w - 8, base);
+    var cw = 30, cx = x + w * 0.26, ctop = y + 6;
+    var slope = (peakY - base) / (peakX - (x + 8));
+    var roofYatC = base + slope * ((cx + cw / 2) - (x + 8));
+    doc.setFillColor(240, 236, 230); doc.rect(cx, ctop, cw, roofYatC - ctop, 'FD');
+    doc.setLineWidth(0.5); doc.setLineDashPattern([2, 2], 0);
+    doc.line(cx, ctop, x + w - 14, ctop);
+    doc.line(peakX, peakY, x + w - 14, peakY);
+    doc.setLineDashPattern([], 0);
+    doc.setFont('helvetica', 'normal').setFontSize(8).setTextColor(MUTED[0], MUTED[1], MUTED[2]);
+    doc.text('3 ft min above where it exits the roof', x + 6, ctop - 4);
+    doc.text('2 ft min above any roof or structure within 10 ft', x + 6, peakY - 4);
+    return h;
+  }
+  if (type === 'clearance') {
+    var fh = 84, fbW = w * 0.34, fbx = x + (w - fbW) / 2, fby = y + 10;
+    doc.setFillColor(240, 236, 230); doc.rect(fbx, fby, fbW, fh * 0.55, 'FD');
+    doc.setFont('helvetica', 'normal').setFontSize(8).setTextColor(MUTED[0], MUTED[1], MUTED[2]);
+    doc.text('Fireplace opening', fbx + fbW / 2, fby + fh * 0.3, { align: 'center' });
+    doc.setLineWidth(0.6); doc.setLineDashPattern([2, 2], 0);
+    doc.rect(fbx - w * 0.14, fby, fbW + w * 0.28, fh, 'D');
+    doc.setLineDashPattern([], 0);
+    doc.text('Front: 16 in min (20 in if opening ≥ 6 sq ft)', x + 6, y + fh + 20);
+    doc.text('Sides: 8 in min (12 in if opening ≥ 6 sq ft)', x + 6, y + fh + 32);
+    return fh + 36;
+  }
+  return 0;
+}
 function buildChatReport(data, images, settings, modeName) {
   var jsPDF = window.jspdf.jsPDF;
   var doc = new jsPDF({ unit: 'pt', format: 'letter' });
@@ -1667,6 +1712,14 @@ function buildChatReport(data, images, settings, modeName) {
   }
 
   if (data.conclusion) { head('Inspection conclusion & recommendations'); y = wrapped(doc, String(data.conclusion), M, y, CONTENT, 10, INK) + 10; }
+
+  head('Reference diagrams');
+  ensure(30); doc.setFont('helvetica', 'bold').setFontSize(9).setTextColor(MUTED[0], MUTED[1], MUTED[2]); doc.text('Chimney anatomy', M, y); y += 12;
+  ensure(180); y += drawDiagram(doc, 'anatomy', M, y, CONTENT) + 16;
+  ensure(24); doc.setFont('helvetica', 'bold').setFontSize(9).setTextColor(MUTED[0], MUTED[1], MUTED[2]); doc.text('Termination — the 3-2-10 rule', M, y); y += 12;
+  ensure(160); y += drawDiagram(doc, 'termination', M, y, CONTENT) + 16;
+  ensure(24); doc.setFont('helvetica', 'bold').setFontSize(9).setTextColor(MUTED[0], MUTED[1], MUTED[2]); doc.text('Hearth extension clearances', M, y); y += 12;
+  ensure(140); y += drawDiagram(doc, 'clearance', M, y, CONTENT) + 12;
 
   var rest = images.slice(2);
   if (rest.length) {
