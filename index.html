@@ -1952,7 +1952,7 @@ function viewClients() {
       '<input id="clientSearch" placeholder="Search name, phone, address" style="width:100%;padding:9px 11px;border:0.5px solid var(--rule);border-radius:8px;font-size:15px;margin-bottom:12px">' +
       rows +
     '</div>' +
-    '<div class="bottombar"><button class="btn btn-primary" data-act="client-new">Add client</button></div>' +
+    '<div class="bottombar" style="gap:6px"><button class="btn btn-primary" data-act="client-new">Add client</button><button class="btn btn-ghost" data-act="message-start">Message clients</button></div>' +
   '</div>';
 }
 function viewClient() {
@@ -1983,6 +1983,73 @@ function wireClients() {
   }
 }
 
+/* ══ Client messaging / campaigns (no backend yet) ═══════════
+   Draft a message (AI or typed), pick a channel, and fire it to each
+   client via WhatsApp / SMS / email links (tap Send per client). True
+   one-tap-to-everyone needs a server + messaging provider — later phase. */
+function buildMsgLink(channel, c, text) {
+  var t = encodeURIComponent(text || '');
+  if (channel === 'whatsapp') { var p = (c.phone || '').replace(/[^0-9]/g, ''); return p ? 'https://wa.me/' + p + '?text=' + t : ''; }
+  if (channel === 'sms') { var ph = (c.phone || '').replace(/[^0-9+]/g, ''); return ph ? 'sms:' + ph + '?&body=' + t : ''; }
+  if (channel === 'email') { return c.email ? 'mailto:' + encodeURIComponent(c.email) + '?subject=' + encodeURIComponent(state.settings.company || 'AIO Pro Chimney') + '&body=' + t : ''; }
+  return '';
+}
+var MSG_PRESETS = {
+  annual: 'an annual chimney inspection reminder (a yearly inspection is recommended)',
+  winter: 'booking a chimney cleaning and inspection before winter',
+  offer: 'a friendly seasonal special offer on chimney cleaning or inspection'
+};
+function msgDraft(purpose) {
+  var s = state.settings, m = state.msg; if (!m) return;
+  if (!s.aiKey) { m.err = 'Add your Anthropic API key in SET first.'; render(); return; }
+  m.busy = true; m.err = null; render();
+  var prompt = 'Write a short, warm text message from ' + (s.company || 'AIO Pro Chimney') + ', a chimney company, to a past customer, about ' + (MSG_PRESETS[purpose] || purpose) + '. '
+    + '1 to 3 sentences, plain and friendly, with a light call to action to reply or call. Start with a generic greeting like "Hi" (no name placeholder). Return ONLY the message text.';
+  fetch('https://api.anthropic.com/v1/messages', {
+    method: 'POST', headers: { 'content-type': 'application/json', 'x-api-key': s.aiKey, 'anthropic-version': '2023-06-01', 'anthropic-dangerous-direct-browser-access': 'true' },
+    body: JSON.stringify({ model: s.aiModel || 'claude-haiku-4-5-20251001', max_tokens: 300, messages: [{ role: 'user', content: prompt }] })
+  }).then(function (r) { return r.json(); }).then(function (data) {
+    if (data.error) throw new Error(data.error.message || 'AI request failed.');
+    var t = ''; if (data.content && data.content.length) data.content.forEach(function (b) { if (b && b.type === 'text' && b.text) t += b.text; });
+    m.text = t.trim(); m.busy = false; render();
+  }).catch(function (err) { m.busy = false; m.err = err.message; render(); });
+}
+function viewMessage() {
+  var m = state.msg || (state.msg = { channel: 'whatsapp', text: '', off: {}, busy: false, err: null });
+  var clients = loadClients();
+  function ch(id, label) { return '<button class="btn ' + (m.channel === id ? 'btn-primary' : 'btn-ghost') + '" data-act="msg-channel" data-arg="' + id + '" style="padding:6px 10px">' + label + '</button>'; }
+  function preset(id, label) { return '<button class="btn btn-ghost" data-act="msg-draft" data-arg="' + id + '" style="padding:6px 10px"' + (m.busy ? ' disabled' : '') + '>' + label + '</button>'; }
+  var rows = clients.length ? clients.map(function (c) {
+    var on = !m.off[c.id];
+    var contact = m.channel === 'email' ? (c.email || '') : (c.phone || '');
+    var link = on ? buildMsgLink(m.channel, c, m.text) : '';
+    return '<div class="card joblist-item">' +
+      '<button class="iconbtn" data-act="msg-toggle" data-arg="' + esc(c.id) + '" aria-label="Toggle">' + (on ? '☑' : '☐') + '</button>' +
+      '<div class="meta" style="text-align:left"><div class="name">' + esc(c.name || 'Unnamed') + '</div><div class="sub">' + esc(contact || 'no contact') + '</div></div>' +
+      (on && link ? '<a class="btn btn-ghost" style="padding:6px 10px" href="' + link + '" target="_blank" rel="noopener">Send</a>' : (on ? '<span class="pill">no ' + (m.channel === 'email' ? 'email' : 'phone') + '</span>' : '')) +
+    '</div>';
+  }).join('') : '<div class="empty">No clients yet. Add clients first.</div>';
+  return '<div class="app">' +
+    '<div class="topbar"><button class="iconbtn" data-act="clients">‹</button><div style="flex:1"><h1>Message clients</h1></div></div>' +
+    '<div class="screen">' +
+      '<div class="card"><div class="eyebrow">Channel</div><div class="row" style="gap:6px">' + ch('whatsapp', 'WhatsApp') + ch('sms', 'SMS') + ch('email', 'Email') + '</div></div>' +
+      '<div class="card"><div class="eyebrow">Write with AI</div><div class="row" style="gap:6px;flex-wrap:wrap">' + preset('annual', 'Annual reminder') + preset('winter', 'Before winter') + preset('offer', 'Special offer') + '</div>' +
+        (m.busy ? '<div style="color:var(--muted);font-size:13px;margin-top:8px">Writing…</div>' : '') +
+        (m.err ? '<div style="color:var(--defect);font-size:13px;margin-top:8px">' + esc(m.err) + '</div>' : '') +
+        '<div class="field" style="margin-top:8px;margin-bottom:0"><label>Message</label><textarea id="msgText" placeholder="Write with AI above, or type your message.">' + esc(m.text || '') + '</textarea></div>' +
+      '</div>' +
+      '<div class="eyebrow">Recipients — tap Send for each</div>' + rows +
+    '</div>' +
+  '</div>';
+}
+function wireMsg() {
+  var ta = root.querySelector('#msgText');
+  if (ta && state.msg) {
+    ta.addEventListener('input', function () { state.msg.text = ta.value; });
+    ta.addEventListener('change', function () { state.msg.text = ta.value; render(); });
+  }
+}
+
 /* ── Render + wiring ───────────────────────────────────────── */
 function render() {
   var html;
@@ -1993,6 +2060,7 @@ function render() {
   else if (state.view === 'chat') html = viewChat();
   else if (state.view === 'clients') html = viewClients();
   else if (state.view === 'client') html = viewClient();
+  else if (state.view === 'message') html = viewMessage();
   else if (state.view === 'settings') html = viewSettings();
   else html = viewHome();
   root.innerHTML = html;
@@ -2000,6 +2068,7 @@ function render() {
   wirePhotoMarks();
   chatWire();
   wireClients();
+  wireMsg();
   var af = root.querySelector('[autofocus]');
   if (af) { try { af.focus(); } catch (e) {} }
 }
@@ -2250,6 +2319,10 @@ root.addEventListener('click', function (e) {
     case 'sig-cancel': if (state.chat) { state.chat.signing = false; render(); } break;
     case 'sig-done': sigDone(); break;
     case 'clients': state.view = 'clients'; render(); break;
+    case 'message-start': state.msg = { channel: 'whatsapp', text: '', off: {}, busy: false, err: null }; state.view = 'message'; render(); break;
+    case 'msg-channel': if (state.msg) { state.msg.channel = arg; render(); } break;
+    case 'msg-toggle': if (state.msg) { state.msg.off[arg] = !state.msg.off[arg]; render(); } break;
+    case 'msg-draft': msgDraft(arg); break;
     case 'client-new': state.editClient = newClient(); state.view = 'client'; render(); break;
     case 'client-open':
       var foundc = loadClients().find(function (c) { return c.id === arg; });
