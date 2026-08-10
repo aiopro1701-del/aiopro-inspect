@@ -1,7 +1,8 @@
 /* AIO Pro Inspect — service worker.
-   Caches the app shell so it works offline once installed. Bump CACHE
-   whenever index.html or the sidecar files change to force a refresh. */
-var CACHE = 'aiopro-inspect-v2';
+   Network-first for the app HTML so a new deploy shows up immediately when
+   online; the cache is only a fallback for offline. Other assets use
+   cache-first with a background refresh. Bump CACHE when this file changes. */
+var CACHE = 'aiopro-inspect-v3';
 var ASSETS = [
   './',
   './index.html',
@@ -26,16 +27,34 @@ self.addEventListener('activate', function (e) {
   );
 });
 
-/* Cache-first for speed and offline, with a background refresh so a new
-   deploy is picked up on the next load. */
 self.addEventListener('fetch', function (e) {
   if (e.request.method !== 'GET') return;
+  var req = e.request;
+  var isHTML = req.mode === 'navigate' || (req.headers.get('accept') || '').indexOf('text/html') > -1;
+
+  if (isHTML) {
+    /* Network-first: always try the latest HTML; fall back to cache offline. */
+    e.respondWith(
+      fetch(req).then(function (res) {
+        if (res && res.status === 200) {
+          var copy = res.clone();
+          caches.open(CACHE).then(function (c) { c.put('./index.html', copy); });
+        }
+        return res;
+      }).catch(function () {
+        return caches.match(req).then(function (m) { return m || caches.match('./index.html'); });
+      })
+    );
+    return;
+  }
+
+  /* Other GETs: cache-first with background refresh. */
   e.respondWith(
-    caches.match(e.request).then(function (cached) {
-      var network = fetch(e.request).then(function (res) {
+    caches.match(req).then(function (cached) {
+      var network = fetch(req).then(function (res) {
         if (res && res.status === 200 && res.type === 'basic') {
           var copy = res.clone();
-          caches.open(CACHE).then(function (c) { c.put(e.request, copy); });
+          caches.open(CACHE).then(function (c) { c.put(req, copy); });
         }
         return res;
       }).catch(function () { return cached; });
