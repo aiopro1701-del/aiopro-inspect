@@ -1577,6 +1577,7 @@ function chatReport() {
   chatCall(instr, true).then(function (text) {
     var parsed = parseAiJson(text);
     if (!parsed) throw new Error('Could not read the AI report - try again.');
+    parsed._signature = chat.signature; parsed._signedAt = chat.signedAt;
     var imgs = [];
     chat.messages.forEach(function (m) { if (m.role === 'user' && m.images) imgs = imgs.concat(m.images); });
     var blob = buildChatReport(parsed, imgs, state.settings, CHAT_MODES[chat.mode].name);
@@ -1682,6 +1683,16 @@ function buildChatReport(data, images, settings, modeName) {
   head('Acknowledgment');
   y = wrapped(doc, 'This inspection covered the readily accessible areas of the chimney and connected appliance visible at the time of service, to the NFPA 211 standard for the level performed. Areas that cannot be seen without removing parts of the chimney or the structure are not included. No warranty is given as to the future safe use of the system, as use and conditions can change after the inspection.', M, y, CONTENT, 8.5, MUTED) + 6;
 
+  if (data._signature) {
+    head('Signature');
+    ensure(96);
+    try { doc.addImage(data._signature, 'JPEG', M, y, 200, 70, undefined, 'FAST'); } catch (e) {}
+    doc.setDrawColor(RULE[0], RULE[1], RULE[2]).setLineWidth(0.5).line(M, y + 74, M + 200, y + 74);
+    doc.setFont('helvetica', 'normal').setFontSize(8).setTextColor(MUTED[0], MUTED[1], MUTED[2]);
+    doc.text('Signed ' + (data._signedAt ? new Date(data._signedAt).toLocaleString() : new Date().toLocaleString()), M, y + 86);
+    y += 96;
+  }
+
   var pages = doc.getNumberOfPages();
   for (var pg = 1; pg <= pages; pg++) {
     doc.setPage(pg);
@@ -1769,9 +1780,22 @@ function viewChat() {
         '<button class="btn btn-primary" data-act="draw-done">Done</button>' +
       '</div></div>'
   ) : '';
+  var sigModal = chat.signing ? (
+    '<div style="position:absolute;inset:0;background:rgba(0,0,0,.9);z-index:60;display:flex;flex-direction:column;padding:12px">' +
+      '<div style="color:#fff;font-size:13px;text-align:center;margin-bottom:8px">Sign below, then Save</div>' +
+      '<div style="flex:1;display:flex;align-items:center;justify-content:center;overflow:hidden">' +
+        '<canvas id="sigCanvas" style="width:100%;max-width:520px;height:220px;background:#fff;touch-action:none;border-radius:6px"></canvas>' +
+      '</div>' +
+      '<div style="display:flex;gap:8px;justify-content:center;padding-top:10px">' +
+        '<button class="btn btn-ghost" data-act="sig-clear">Clear</button>' +
+        '<button class="btn btn-ghost" data-act="sig-cancel">Cancel</button>' +
+        '<button class="btn btn-primary" data-act="sig-done">Save</button>' +
+      '</div></div>'
+  ) : '';
   return '<div class="app">' +
     '<div class="topbar"><button class="iconbtn" data-act="home">‹</button><div style="flex:1"><h1>' + esc(CHAT_MODES[chat.mode].name) + '</h1></div>' +
-      '<button class="btn btn-ghost" data-act="chat-report" style="padding:6px 12px"' + (chat.reportBusy ? ' disabled' : '') + '>' + (chat.reportBusy ? 'Building…' : 'Create report') + '</button></div>' +
+      '<button class="btn btn-ghost" data-act="chat-sign" style="padding:6px 8px">Sign' + (chat.signature ? ' ✓' : '') + '</button>' +
+      '<button class="btn btn-ghost" data-act="chat-report" style="padding:6px 10px"' + (chat.reportBusy ? ' disabled' : '') + '>' + (chat.reportBusy ? 'Building…' : 'Create report') + '</button></div>' +
     '<div class="screen" id="chatScroll">' + bubbles +
       (chat.busy ? '<div style="color:var(--muted);font-size:13px;padding:4px">Master is thinking…</div>' : '') +
       (chat.err ? '<div style="color:var(--defect);font-size:13px;padding:4px">' + esc(chat.err) + '</div>' : '') +
@@ -1784,7 +1808,7 @@ function viewChat() {
         '<input id="chatInput" placeholder="Type…" style="flex:1;min-width:0;padding:9px 11px;border:0.5px solid var(--rule);border-radius:8px;font-size:15px" value="' + esc(chat.pendingText || '') + '">' +
         '<button class="btn btn-primary" data-act="chat-send" style="padding:8px 12px"' + (chat.busy ? ' disabled' : '') + '>Send</button>' +
       '</div>' +
-    '</div>' + modal + '</div>';
+    '</div>' + modal + sigModal + '</div>';
 }
 function chatWire() {
   var chat = state.chat;
@@ -1795,6 +1819,32 @@ function chatWire() {
     input.addEventListener('keydown', function (e) { if (e.key === 'Enter') { e.preventDefault(); chatSend(); } });
   }
   if (chat.draw) setupDrawCanvas(chat.draw);
+  if (chat.signing) setupSigCanvas();
+}
+function setupSigCanvas() {
+  var canvas = root.querySelector('#sigCanvas'); if (!canvas) return;
+  var rect = canvas.getBoundingClientRect();
+  canvas.width = Math.round(rect.width) || 480; canvas.height = Math.round(rect.height) || 220;
+  var ctx = canvas.getContext('2d');
+  ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, canvas.width, canvas.height);
+  ctx.strokeStyle = '#111'; ctx.lineWidth = 2.5; ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+  var chat = state.chat; if (chat) chat._sig = false;
+  var drawing = false;
+  function pos(e) { var r = canvas.getBoundingClientRect(); var t = (e.touches && e.touches[0]) || e; return { x: t.clientX - r.left, y: t.clientY - r.top }; }
+  canvas.addEventListener('pointerdown', function (e) { e.preventDefault(); drawing = true; if (chat) chat._sig = true; var p = pos(e); ctx.beginPath(); ctx.moveTo(p.x, p.y); });
+  canvas.addEventListener('pointermove', function (e) { if (!drawing) return; e.preventDefault(); var p = pos(e); ctx.lineTo(p.x, p.y); ctx.stroke(); });
+  window.addEventListener('pointerup', function () { drawing = false; });
+}
+function sigDone() {
+  var chat = state.chat; if (!chat) return;
+  var canvas = root.querySelector('#sigCanvas');
+  if (canvas && chat._sig) { try { chat.signature = canvas.toDataURL('image/jpeg', 0.85); chat.signedAt = Date.now(); } catch (e) {} }
+  chat.signing = false; render();
+}
+function sigClear() {
+  var canvas = root.querySelector('#sigCanvas'); if (!canvas) return;
+  var ctx = canvas.getContext('2d'); ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, canvas.width, canvas.height);
+  if (state.chat) state.chat._sig = false;
 }
 
 /* ══ Clients (local CRM) ═════════════════════════════════════
@@ -2117,6 +2167,10 @@ root.addEventListener('click', function (e) {
     case 'draw-done': drawDone(); break;
     case 'chat-send': chatSend(); break;
     case 'chat-report': chatReport(); break;
+    case 'chat-sign': if (state.chat) { state.chat.signing = true; render(); } break;
+    case 'sig-clear': sigClear(); break;
+    case 'sig-cancel': if (state.chat) { state.chat.signing = false; render(); } break;
+    case 'sig-done': sigDone(); break;
     case 'clients': state.view = 'clients'; render(); break;
     case 'client-new': state.editClient = newClient(); state.view = 'client'; render(); break;
     case 'client-open':
