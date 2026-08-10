@@ -1244,33 +1244,45 @@ function viewHome() {
       }).join('') +
       '<button class="btn btn-ghost btn-wide" data-act="cancel-pick">Cancel</button>';
   } else {
-    var list;
-    if (state.loading) list = '<div class="empty">Loading…</div>';
-    else if (!state.jobs.length) list = '<div class="empty">No inspections yet.<br>Start one and it saves as you go.</div>';
-    else list = state.jobs.map(function (j) {
+    var today = isoToday(), tom = isoAddDays(today, 1);
+    var sched = loadSched();
+    function byTime(a, b) { return (a.time || '').localeCompare(b.time || ''); }
+    var todays = sched.filter(function (a) { return a.date === today; }).sort(byTime);
+    var toms = sched.filter(function (a) { return a.date === tom; }).sort(byTime);
+    var due = loadClients().filter(dueSoon);
+
+    var recent;
+    if (state.loading) recent = '';
+    else recent = state.jobs.slice(0, 6).map(function (j) {
       var tpl = templateById(j.templateId);
       var items = allItems(tpl);
-      var filled = items.filter(function (it) { return j.results[it.id] && j.results[it.id].verdict; }).length;
       var defects = items.filter(function (it) { return j.results[it.id] && j.results[it.id].verdict === 'defect'; }).length;
       var pill = j.done ? '<span class="pill done">DONE</span>' : defects ? '<span class="pill defect">' + defects + ' DEF</span>' : '<span class="pill">OPEN</span>';
       return '<div class="card joblist-item">' +
         '<button class="meta" style="text-align:left" data-act="open" data-arg="' + esc(j.id) + '">' +
         '<div class="name">' + esc(j.customer.name || 'Unnamed job') + '</div>' +
-        '<div class="sub">' + esc(tpl.name) + ' · ' + filled + '/' + items.length + ' checked · ' + new Date(j.createdAt).toLocaleDateString() + '</div>' +
+        '<div class="sub">' + esc(tpl.name) + ' · ' + new Date(j.createdAt).toLocaleDateString() + '</div>' +
         '</button>' + pill +
         '<button class="iconbtn" style="color:var(--muted)" data-act="delete" data-arg="' + esc(j.id) + '" aria-label="Delete job">DEL</button>' +
-        '</div>';
+      '</div>';
     }).join('');
-    var dueList = loadClients().filter(dueSoon);
-    var dueHtml = dueList.length ? '<div class="eyebrow">Follow-ups due</div>' + dueList.map(function (c) { return '<button class="card card-tap" style="display:block;width:100%;text-align:left" data-act="client-open" data-arg="' + esc(c.id) + '"><div style="font-weight:650">' + esc(c.name || 'Unnamed') + '</div><div style="color:var(--muted);font-size:13px">next service: ' + esc(c.nextServiceDue) + '</div></button>'; }).join('') : '';
-    body = dueHtml + '<div class="eyebrow">Jobs</div>' + list;
+
+    function q(act, label) { return '<button class="card card-tap" style="flex:1;min-width:44%;text-align:center;font-weight:650;font-size:15px;padding:18px 8px" data-act="' + act + '">' + label + '</button>'; }
+    var quick = '<div class="row" style="gap:8px;flex-wrap:wrap;margin-bottom:16px">' +
+      q('ai-start', 'New inspection') + q('appt-new', 'New job') + q('clients', 'Clients') + q('message-start', 'Message clients') + '</div>';
+    var todayBlk = '<div class="eyebrow">Today · ' + esc(fmtDay(today)) + '</div>' +
+      (todays.length ? todays.map(apptCard).join('') : '<div class="empty" style="padding:14px">No jobs today. Tap "New job" to add one.</div>');
+    var tomBlk = toms.length ? ('<div class="eyebrow">Tomorrow · ' + esc(fmtDay(tom)) + '</div>' + toms.map(apptCard).join('')) : '';
+    var dueBlk = due.length ? ('<div class="eyebrow">Follow-ups due</div>' + due.map(function (c) { return '<button class="card card-tap" style="display:block;width:100%;text-align:left" data-act="client-open" data-arg="' + esc(c.id) + '"><div style="font-weight:650">' + esc(c.name || 'Unnamed') + '</div><div style="color:var(--muted);font-size:13px">next service: ' + esc(c.nextServiceDue) + '</div></button>'; }).join('')) : '';
+    var recentBlk = recent ? ('<div class="eyebrow">Recent inspections</div>' + recent) : '';
+    body = quick + todayBlk + tomBlk + dueBlk + recentBlk;
   }
 
   return '<div class="app">' +
-    '<div class="topbar"><div style="flex:1"><h1>AIO Pro Inspect</h1><div class="sub">field inspections</div></div>' +
-    (state.picking ? '' : '<button class="iconbtn" data-act="clients" aria-label="Clients">CLI</button><button class="iconbtn" data-act="settings" aria-label="Settings">SET</button>') + '</div>' +
+    '<div class="topbar"><div style="flex:1"><h1>AIO Pro Chimney</h1><div class="sub">' + esc(new Date().toLocaleDateString(undefined, { weekday: 'long', month: 'short', day: 'numeric' })) + '</div></div>' +
+    (state.picking ? '' : '<button class="iconbtn" data-act="schedule" aria-label="Schedule">CAL</button><button class="iconbtn" data-act="clients" aria-label="Clients">CLI</button><button class="iconbtn" data-act="settings" aria-label="Settings">SET</button>') + '</div>' +
     '<div class="screen">' + body + '</div>' +
-    (state.picking ? '' : '<div class="bottombar" style="gap:6px"><button class="btn btn-primary" data-act="ai-start">Start with AI</button><button class="btn btn-ghost" data-act="start-pick">Checklist</button></div>') +
+    (state.picking ? '' : '<div class="bottombar" style="gap:6px"><button class="btn btn-primary" data-act="ai-start">New inspection</button><button class="btn btn-ghost" data-act="start-pick">Checklist</button></div>') +
     '</div>';
 }
 
@@ -2050,6 +2062,64 @@ function wireMsg() {
   }
 }
 
+/* ══ Schedule / jobs calendar (local) ═══════════════════════
+   Book jobs by date/time, assign an employee, see today & tomorrow on
+   the home dashboard. Shared multi-user (employees log in) = backend phase. */
+var SCHED_KEY = 'aiopro-schedule';
+function loadSched() { try { return JSON.parse(localStorage.getItem(SCHED_KEY)) || []; } catch (e) { return []; } }
+function saveSched(list) { try { localStorage.setItem(SCHED_KEY, JSON.stringify(list)); } catch (e) {} }
+function isoToday() { var d = new Date(); return new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 10); }
+function isoAddDays(iso, n) { var d = new Date(iso + 'T00:00:00'); d.setDate(d.getDate() + n); return new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 10); }
+function fmtDay(iso) { var d = new Date(iso + 'T00:00:00'); if (isNaN(d.getTime())) return iso; return d.toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' }); }
+function newAppt() { return { id: 'ap-' + Date.now() + '-' + Math.random().toString(36).slice(2, 6), clientName: '', phone: '', address: '', date: isoToday(), time: '09:00', type: 'Inspection', assignedTo: '', notes: '', status: 'scheduled', createdAt: Date.now() }; }
+function upsertAppt(a) { var l = loadSched(); var i = l.findIndex(function (x) { return x.id === a.id; }); if (i >= 0) l[i] = a; else l.push(a); saveSched(l); return a; }
+function removeAppt(id) { saveSched(loadSched().filter(function (a) { return a.id !== id; })); }
+function apptCard(a) {
+  var badge = a.status === 'done' ? '<span class="pill done">DONE</span>' : '';
+  return '<div class="card joblist-item">' +
+    '<button class="meta" style="text-align:left" data-act="appt-open" data-arg="' + esc(a.id) + '">' +
+    '<div class="name">' + esc((a.time || '') + '  ' + (a.clientName || 'Unnamed')) + '</div>' +
+    '<div class="sub">' + esc([a.type, a.address, a.assignedTo && ('→ ' + a.assignedTo)].filter(Boolean).join(' · ')) + '</div>' +
+    '</button>' + badge +
+  '</div>';
+}
+function viewSchedule() {
+  var list = loadSched().slice().sort(function (a, b) { return (a.date + (a.time || '')).localeCompare(b.date + (b.time || '')); });
+  var byDate = {};
+  list.forEach(function (a) { (byDate[a.date] = byDate[a.date] || []).push(a); });
+  var dates = Object.keys(byDate).sort();
+  var today = isoToday(), tom = isoAddDays(today, 1);
+  var body = dates.length ? dates.map(function (d) {
+    var label = d === today ? 'Today · ' + fmtDay(d) : (d === tom ? 'Tomorrow · ' + fmtDay(d) : fmtDay(d));
+    return '<div class="eyebrow">' + esc(label) + '</div>' + byDate[d].map(apptCard).join('');
+  }).join('') : '<div class="empty">No jobs scheduled. Add your first one.</div>';
+  return '<div class="app">' +
+    '<div class="topbar"><button class="iconbtn" data-act="home">‹</button><div style="flex:1"><h1>Schedule</h1></div></div>' +
+    '<div class="screen">' + body + '</div>' +
+    '<div class="bottombar"><button class="btn btn-primary" data-act="appt-new">Add job</button></div>' +
+  '</div>';
+}
+function viewAppt() {
+  var a = state.editAppt || newAppt();
+  function f(label, key, mode) { return '<div class="field"><label>' + label + '</label><input data-model="appt.' + key + '"' + (mode ? ' inputmode="' + mode + '"' : '') + ' value="' + esc(a[key] || '') + '"></div>'; }
+  var waLink = a.phone ? 'https://wa.me/' + a.phone.replace(/[^0-9]/g, '') : '';
+  return '<div class="app">' +
+    '<div class="topbar"><button class="iconbtn" data-act="schedule">‹</button><div style="flex:1"><h1>' + esc(a.clientName || 'New job') + '</h1></div></div>' +
+    '<div class="screen">' +
+      '<div class="card">' + f('Customer', 'clientName') + f('Phone', 'phone', 'tel') + f('Address', 'address') + '</div>' +
+      '<div class="card">' + f('Date (YYYY-MM-DD)', 'date') + f('Time', 'time') + f('Type', 'type') + f('Assigned to (employee)', 'assignedTo') +
+        '<div class="field" style="margin-bottom:0"><label>Notes</label><textarea data-model="appt.notes">' + esc(a.notes || '') + '</textarea></div></div>' +
+      '<div class="card"><div class="eyebrow">Actions</div><div class="row" style="gap:6px;flex-wrap:wrap">' +
+        '<button class="btn btn-ghost" data-act="ai-start">Start inspection</button>' +
+        (waLink ? '<a class="btn btn-ghost" href="' + waLink + '" target="_blank" rel="noopener">Message customer</a>' : '') +
+        '<button class="btn btn-ghost" data-act="appt-done" data-arg="' + esc(a.id) + '">' + (a.status === 'done' ? 'Mark not done' : 'Mark done') + '</button>' +
+      '</div></div>' +
+    '</div>' +
+    '<div class="bottombar" style="gap:6px"><button class="btn btn-primary" data-act="appt-save">Save</button>' +
+      (a._existing ? '<button class="btn btn-ghost" data-act="appt-del" data-arg="' + esc(a.id) + '">Delete</button>' : '') + '</div>' +
+  '</div>';
+}
+
 /* ── Render + wiring ───────────────────────────────────────── */
 function render() {
   var html;
@@ -2061,6 +2131,8 @@ function render() {
   else if (state.view === 'clients') html = viewClients();
   else if (state.view === 'client') html = viewClient();
   else if (state.view === 'message') html = viewMessage();
+  else if (state.view === 'schedule') html = viewSchedule();
+  else if (state.view === 'appt') html = viewAppt();
   else if (state.view === 'settings') html = viewSettings();
   else html = viewHome();
   root.innerHTML = html;
@@ -2123,6 +2195,9 @@ function wireInputs() {
       } else if (path.indexOf('client.') === 0) {
         var clk = path.slice(7);
         state.editClient = Object.assign({}, state.editClient || newClient(), defObj(clk, val));
+      } else if (path.indexOf('appt.') === 0) {
+        var ak = path.slice(5);
+        state.editAppt = Object.assign({}, state.editAppt || newAppt(), defObj(ak, val));
       }
     };
     el.addEventListener('input', modelHandler);
@@ -2320,6 +2395,29 @@ root.addEventListener('click', function (e) {
     case 'sig-done': sigDone(); break;
     case 'clients': state.view = 'clients'; render(); break;
     case 'message-start': state.msg = { channel: 'whatsapp', text: '', off: {}, busy: false, err: null }; state.view = 'message'; render(); break;
+    case 'schedule': state.view = 'schedule'; render(); break;
+    case 'appt-new': state.editAppt = newAppt(); state.view = 'appt'; render(); break;
+    case 'appt-open':
+      var founda = loadSched().find(function (a) { return a.id === arg; });
+      state.editAppt = Object.assign({ _existing: true }, founda || newAppt());
+      state.view = 'appt'; render();
+      break;
+    case 'appt-save':
+      var apSave = Object.assign({}, state.editAppt || newAppt()); delete apSave._existing;
+      upsertAppt(apSave);
+      state.editAppt = null; state.view = 'schedule'; render();
+      break;
+    case 'appt-del':
+      if (confirm('Delete this job?')) { removeAppt(arg); state.editAppt = null; state.view = 'schedule'; render(); }
+      break;
+    case 'appt-done':
+      (function () {
+        var l = loadSched(), it = null;
+        for (var i = 0; i < l.length; i++) { if (l[i].id === arg) { it = l[i]; break; } }
+        if (it) { it.status = it.status === 'done' ? 'scheduled' : 'done'; saveSched(l); if (state.editAppt && state.editAppt.id === arg) state.editAppt.status = it.status; }
+        render();
+      })();
+      break;
     case 'msg-channel': if (state.msg) { state.msg.channel = arg; render(); } break;
     case 'msg-toggle': if (state.msg) { state.msg.off[arg] = !state.msg.off[arg]; render(); } break;
     case 'msg-draft': msgDraft(arg); break;
