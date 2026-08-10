@@ -1570,10 +1570,12 @@ function chatReport() {
     + '"appliance":{"type":"","fuel":"","makeModel":"","dateCode":"","facingMaterial":"","openingSize":"","flueCollar":""},'
     + '"levelOfInspection":"one plain sentence describing the level performed",'
     + '"summary":"2-4 plain sentences on the overall condition and whether it is safe to use",'
-    + '"components":[{"name":"e.g. Firebox / Damper & throat / Smoke chamber / Flue & liner / Chimney exterior (flashing, chase, crown, cricket) / Hearth & clearances","status":"ok|monitor|defect","condition":"plain-language what was found","recommended":"recommended action, or empty"}],'
+    + '"components":[{"name":"e.g. Firebox / Damper & throat / Smoke chamber / Flue & liner / Chimney exterior (flashing, chase, crown, cricket) / Hearth & clearances","status":"ok|monitor|defect","condition":"plain-language what was found","recommended":"recommended action, or empty","photos":[]}],'
     + '"conclusion":"one clear verdict: is the system safe to use as-is, or should use be discontinued until repairs are made",'
     + '"limitations":"short plain note on what was and was not accessible in this inspection"}. '
-    + 'Cover every part you discussed as its own component, including the chimney exterior. Plain homeowner language, no code section numbers.';
+    + 'Cover every part you discussed as its own component, including the chimney exterior. '
+    + 'In each component\'s "photos" array, list the numbers of the photos that show that component. Photos are numbered starting at 1 in the exact order they were sent in our conversation; do NOT list photo 1 or 2 (those are the cover photos). '
+    + 'Plain homeowner language, no code section numbers.';
   chatCall(instr, true).then(function (text) {
     var parsed = parseAiJson(text);
     if (!parsed) throw new Error('Could not read the AI report - try again.');
@@ -1637,6 +1639,7 @@ function buildChatReport(data, images, settings, modeName) {
   var doc = new jsPDF({ unit: 'pt', format: 'letter' });
   var BLUE = [23, 105, 170];
   var y = M;
+  var used = {};
   function drawHeader() {
     if (settings.logo) { try { doc.addImage(settings.logo, 'JPEG', M, y, 96, 96 * 0.42, undefined, 'FAST'); } catch (e) {} }
     doc.setFont('helvetica', 'bold').setFontSize(14).setTextColor(INK[0], INK[1], INK[2]);
@@ -1668,7 +1671,7 @@ function buildChatReport(data, images, settings, modeName) {
 
   var c = data.customer || {};
   head('Customer information');
-  if (images[0]) { var iw = CONTENT, ih = iw * 0.5; ensure(ih + 6); try { doc.addImage(images[0], 'JPEG', M, y, iw, ih, undefined, 'FAST'); } catch (e) {} y += ih + 8; }
+  if (images[0]) { var iw = CONTENT, ih = iw * 0.5; ensure(ih + 6); try { doc.addImage(images[0], 'JPEG', M, y, iw, ih, undefined, 'FAST'); } catch (e) {} y += ih + 8; used[0] = true; }
   kv([['Customer', c.name], ['Service address', c.address], ['City, State, Zip', c.cityStateZip], ['Phone', c.phone], ['Email', c.email], ['Prepared by', c.preparedBy], ['Date', new Date().toLocaleDateString()]]);
   y += 6;
 
@@ -1677,7 +1680,7 @@ function buildChatReport(data, images, settings, modeName) {
   var p = data.property || {};
   if (p.stories || p.roof || p.systemLocation || p.roomLocation || images[1]) {
     head('Property information');
-    if (images[1]) { var iw2 = CONTENT * 0.62, ih2 = iw2 * 0.72; ensure(ih2 + 6); try { doc.addImage(images[1], 'JPEG', M, y, iw2, ih2, undefined, 'FAST'); } catch (e) {} y += ih2 + 8; }
+    if (images[1]) { var iw2 = CONTENT * 0.62, ih2 = iw2 * 0.72; ensure(ih2 + 6); try { doc.addImage(images[1], 'JPEG', M, y, iw2, ih2, undefined, 'FAST'); } catch (e) {} y += ih2 + 8; used[1] = true; }
     kv([['Stories', p.stories], ['Roof material & pitch', p.roof], ['System location', p.systemLocation], ['Room location', p.roomLocation]]);
     y += 6;
   }
@@ -1707,6 +1710,16 @@ function buildChatReport(data, images, settings, modeName) {
       y += 14;
       if (comp.condition) y = wrapped(doc, String(comp.condition), M, y, CONTENT, 9.5, INK) + 2;
       if (comp.recommended) y = wrapped(doc, 'Recommended: ' + comp.recommended, M, y, CONTENT, 9, MUTED) + 2;
+      if (comp.photos && comp.photos.length) {
+        var cp = comp.photos.map(function (n) { return images[n - 1]; }).filter(Boolean);
+        var cpw = (CONTENT - 12) / 3, cph = cpw * 0.62;
+        for (var ci = 0; ci < cp.length; ci += 3) {
+          ensure(cph + 6);
+          for (var cj = 0; cj < 3 && ci + cj < cp.length; cj++) { try { doc.addImage(cp[ci + cj], 'JPEG', M + cj * (cpw + 6), y, cpw, cph, undefined, 'FAST'); } catch (e) {} }
+          y += cph + 6;
+        }
+        comp.photos.forEach(function (n) { used[n - 1] = true; });
+      }
       y += 8;
     });
   }
@@ -1721,9 +1734,9 @@ function buildChatReport(data, images, settings, modeName) {
   ensure(24); doc.setFont('helvetica', 'bold').setFontSize(9).setTextColor(MUTED[0], MUTED[1], MUTED[2]); doc.text('Hearth extension clearances', M, y); y += 12;
   ensure(140); y += drawDiagram(doc, 'clearance', M, y, CONTENT) + 12;
 
-  var rest = images.slice(2);
+  var rest = images.filter(function (src, i) { return src && !used[i]; });
   if (rest.length) {
-    head('Photos');
+    head('Additional photos');
     var pw = (CONTENT - 16) / 3, ph = pw * 0.72;
     for (var i = 0; i < rest.length; i += 3) {
       ensure(ph + 8);
