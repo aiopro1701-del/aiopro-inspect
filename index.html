@@ -969,7 +969,7 @@ function deleteJob(id) {
 
 var SETTINGS_KEY = 'aiopro-settings';
 function defaultSettings() {
-  return { company: 'AIO Pro Chimney', phone: '', email: '', address: 'Greater St. Louis, MO', license: '', logo: null, aiKey: '', aiModel: 'claude-sonnet-5' };
+  return { company: 'AIO Pro Chimney', phone: '', email: '', address: 'Greater St. Louis, MO', license: '', logo: null, aiKey: '', aiModel: 'claude-haiku-4-5-20251001' };
 }
 function loadSettings() { try { return JSON.parse(localStorage.getItem(SETTINGS_KEY)) || defaultSettings(); } catch (e) { return defaultSettings(); } }
 function saveSettings(s) { localStorage.setItem(SETTINGS_KEY, JSON.stringify(s)); return s; }
@@ -1300,6 +1300,8 @@ function viewSettings() {
         '<div style="color:var(--muted);font-size:14px;margin-bottom:12px">Create a key at console.anthropic.com (separate from your Claude subscription). Paste it here and press <b>Save</b>. Stored only on this device.</div>' +
         '<div class="field"><label>Anthropic API key</label><input data-model="settings.aiKey" autocapitalize="off" autocorrect="off" spellcheck="false" value="' + esc(s.aiKey || '') + '" placeholder="sk-ant-..."></div>' +
         fld('Model', 'aiModel') +
+        '<div class="row" style="gap:6px;margin-top:4px"><button class="btn btn-ghost" data-act="set-model" data-arg="claude-haiku-4-5-20251001">Cheapest (Haiku)</button><button class="btn btn-ghost" data-act="set-model" data-arg="claude-sonnet-5">Stronger (Sonnet)</button></div>' +
+        '<div style="color:var(--muted);font-size:12px;margin-top:6px">Haiku is the cheapest and fine for most inspections. After picking, press Save.</div>' +
       '</div>' +
       '<div class="card"><div class="eyebrow">Backup</div>' +
         '<div style="color:var(--muted);font-size:14px;margin-bottom:12px">Everything is stored on this device only. Export a backup file now and then — and use Import to move all your jobs onto a new phone.</div>' +
@@ -1507,22 +1509,31 @@ function chatSystem(mode) {
     + 'Red drawing on a photo marks the spots the technician is flagging as problems - address those. '
     + 'Keep each reply to 1-3 short sentences. When you have enough to produce the customer ' + m.out + ', tell the technician to tap Create report.';
 }
-function chatApiMessages(chat) {
-  return chat.messages.map(function (msg) {
+function chatApiMessages(chat, keepAllImages) {
+  var msgs = chat.messages, lastUserIdx = -1;
+  for (var k = msgs.length - 1; k >= 0; k--) { if (msgs[k].role === 'user') { lastUserIdx = k; break; } }
+  return msgs.map(function (msg, idx) {
     if (msg.role === 'assistant') return { role: 'assistant', content: msg.text || '(...)' };
     var content = [];
     if (msg.text) content.push({ type: 'text', text: msg.text });
-    (msg.images || []).forEach(function (src) {
-      var mm = /^data:(image\/[\w.+-]+);base64,(.*)$/.exec(src);
-      if (mm) content.push({ type: 'image', source: { type: 'base64', media_type: mm[1], data: mm[2] } });
-    });
+    // Cost saver: only attach raw images for the latest turn (or all of them for
+    // the final report). Older photos stay in the transcript as a short note, and
+    // the AI's own earlier descriptions already carry the visual context.
+    if (keepAllImages || idx === lastUserIdx) {
+      (msg.images || []).forEach(function (src) {
+        var mm = /^data:(image\/[\w.+-]+);base64,(.*)$/.exec(src);
+        if (mm) content.push({ type: 'image', source: { type: 'base64', media_type: mm[1], data: mm[2] } });
+      });
+    } else if (msg.images && msg.images.length) {
+      content.push({ type: 'text', text: '[' + msg.images.length + ' photo(s) shared earlier]' });
+    }
     if (!content.length) content.push({ type: 'text', text: '(no message)' });
     return { role: 'user', content: content };
   });
 }
 function chatCall(extraUserText, isReport) {
   var chat = state.chat, s = state.settings;
-  var msgs = chatApiMessages(chat);
+  var msgs = chatApiMessages(chat, isReport);
   if (extraUserText) msgs = msgs.concat([{ role: 'user', content: [{ type: 'text', text: extraUserText }] }]);
   return fetch('https://api.anthropic.com/v1/messages', {
     method: 'POST',
@@ -2114,6 +2125,7 @@ root.addEventListener('click', function (e) {
       pickImage().then(function (data) { state.settings = Object.assign({}, state.settings, { logo: data }); render(); }).catch(function () {});
       break;
     case 'remove-logo': state.settings = Object.assign({}, state.settings, { logo: null }); render(); break;
+    case 'set-model': state.settings = Object.assign({}, state.settings, { aiModel: arg }); render(); break;
     case 'save-settings': saveSettings(state.settings); render(); break;
     case 'export-data': exportData(); break;
     case 'import-data': importData(); break;
