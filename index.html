@@ -1843,10 +1843,10 @@ function buildChatReport(data, images, settings, modeName) {
   }
 
   drawHeader(true);
-  doc.setFont('helvetica', 'bold').setFontSize(22).setTextColor(INK[0], INK[1], INK[2]);
-  doc.text(String(data.title || modeName || 'Chimney Inspection Report'), M, y); y += 10;
+  doc.setFont('helvetica', 'bold').setFontSize(20).setTextColor(INK[0], INK[1], INK[2]);
+  doc.text(String(data.title || modeName || 'Chimney Inspection Report'), M, y); y += 22;
   doc.setFont('helvetica', 'normal').setFontSize(10).setTextColor(MUTED[0], MUTED[1], MUTED[2]);
-  doc.text(modeName + '  ·  ' + new Date().toLocaleDateString(), M, y); y += 20;
+  doc.text(modeName + '  ·  ' + new Date().toLocaleDateString(), M, y); y += 22;
 
   var c = data.customer || {};
   head('Customer information');
