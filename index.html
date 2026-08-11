@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1" />
-<meta name="theme-color" content="#14110F" />
+<meta name="theme-color" content="#0F1D30" />
 <meta name="apple-mobile-web-app-capable" content="yes" />
 <meta name="apple-mobile-web-app-status-bar-style" content="black" />
 <meta name="mobile-web-app-capable" content="yes" />
@@ -19,18 +19,26 @@
    severity colours are the only saturated things on screen.
    ──────────────────────────────────────────────────────────── */
 :root {
-  --mortar:   #F2EFE9;
-  --mortar-2: #E7E2D9;
-  --soot:     #14110F;
-  --soot-2:   #2A2521;
-  --ink:      #1A1614;
+  --mortar:   #F3EEE4;   /* warm paper: page surface + light text on navy */
+  --mortar-2: #E8E2D6;   /* light fill inside white cards */
+  --soot:     #0F1D30;   /* deep navy: topbar, primary buttons */
+  --soot-2:   #1B2E48;   /* navy active state */
+  --ink:      #1A1614;   /* dark text on white cards */
   --muted:    #7A746E;
-  --rule:     #D6D0C8;
+  --rule:     #DAD3C7;
 
-  --ok:       #4A7658;
-  --monitor:  #BA862A;
-  --defect:   #B03D27;
-  --ember:    #C25A2E;
+  --ok:       #3E7D57;
+  --monitor:  #C0912E;
+  --defect:   #B23A28;
+  --ember:    #C9A24B;   /* gold accent (focus, highlights) */
+
+  --navy:      #0F1D30;  /* dark hero background */
+  --navy-card: #16202E;  /* dashboard tiles / stat cards */
+  --gold:      #C9A24B;
+  --gold-ink:  #0F1D30;  /* text on gold */
+  --ivory:     #F1EAD9;  /* light text on navy */
+  --steel:     #9AA7B4;  /* muted text on navy */
+  --serif:     Georgia, 'Times New Roman', serif;
 
   --tap: 52px;
   --pad: 16px;
@@ -59,6 +67,7 @@ input, textarea, select { font-family: inherit; font-size: 16px; }
   background: var(--soot); color: var(--mortar);
   padding: calc(env(safe-area-inset-top, 0px) + 10px) var(--pad) 10px;
   display: flex; align-items: center; gap: 12px;
+  border-bottom: 1px solid rgba(201,162,75,0.35);
 }
 .topbar h1 { font-size: 16px; font-weight: 700; margin: 0; letter-spacing: -0.01em; flex: 1; }
 .topbar .sub { font-family: var(--mono); font-size: 11px; color: #9C948C; }
@@ -95,6 +104,29 @@ input, textarea, select { font-family: inherit; font-size: 16px; }
   padding: var(--pad); margin-bottom: 12px;
 }
 .card-tap:active { background: var(--mortar-2); }
+
+/* ── Premium home dashboard (navy + gold) ──────────────── */
+.hero {
+  background: var(--navy);
+  margin: calc(var(--pad) * -1) calc(var(--pad) * -1) 18px;
+  padding: 18px var(--pad) 22px;
+}
+.hero .greet { color: var(--ivory); font-family: var(--serif); font-size: 22px; line-height: 1.2; }
+.hero .date { color: var(--steel); font-size: 12px; margin-top: 2px; }
+.hero .lbl { color: #7C8894; font-size: 10px; letter-spacing: 0.18em; margin: 4px 0 10px; }
+.stat { background: var(--navy-card); border-radius: 12px; padding: 12px 14px; }
+.stat .k { color: var(--steel); font-size: 11px; }
+.stat .v { color: var(--gold); font-family: var(--serif); font-size: 24px; line-height: 1.1; margin-top: 3px; }
+.tiles { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.tile {
+  background: var(--navy-card); border: 0.5px solid #2A3A4A; border-radius: 12px;
+  padding: 15px 12px; text-align: left; width: 100%; display: block; color: var(--ivory);
+}
+.tile:active { background: #1C2838; }
+.tile .ico { color: var(--gold); display: block; height: 22px; }
+.tile .lbl2 { font-size: 13px; margin-top: 9px; }
+.btn-gold { background: var(--gold); color: var(--gold-ink); }
+.btn-gold:active { background: #B68E3A; }
 
 .eyebrow {
   font-family: var(--mono); font-size: 10.5px; letter-spacing: 0.14em;
@@ -1267,22 +1299,52 @@ function viewHome() {
       '</div>';
     }).join('');
 
-    function q(act, label) { return '<button class="card card-tap" style="flex:1;min-width:44%;text-align:center;font-weight:650;font-size:15px;padding:18px 8px" data-act="' + act + '">' + label + '</button>'; }
-    var quick = '<div class="row" style="gap:8px;flex-wrap:wrap;margin-bottom:16px">' +
-      q('ai-start', 'New inspection') + q('appt-new', 'New job') + q('clients', 'Clients') + q('message-start', 'Message clients') + '</div>';
+    var hr = new Date().getHours();
+    var greet = hr < 12 ? 'Good morning' : hr < 18 ? 'Good afternoon' : 'Good evening';
+    var openJobs = (state.jobs || []).filter(function (j) { return !j.done; }).length;
+    function tico(p) { return '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">' + p + '</svg>'; }
+    function tile(act, label, path) { return '<button class="tile" data-act="' + act + '"><span class="ico">' + tico(path) + '</span><span class="lbl2">' + label + '</span></button>'; }
+    var ICO = {
+      inspect: '<rect x="5" y="3" width="14" height="18" rx="2"/><path d="M9 3h6v3H9z"/><path d="M8.5 12.5l2 2 4-4.5"/>',
+      clients: '<circle cx="12" cy="8" r="3.4"/><path d="M5.5 20c0-3.4 2.9-5.6 6.5-5.6S18.5 16.6 18.5 20"/>',
+      schedule: '<rect x="4" y="5" width="16" height="15" rx="2"/><path d="M4 9.5h16M8.5 3v4M15.5 3v4"/>',
+      message: '<path d="M4.5 5.5h15v9h-9l-4 3.5z"/>',
+      checklist: '<path d="M10 6h9M10 12h9M10 18h9"/><path d="M4.5 6l1 1 1.8-2M4.5 12l1 1 1.8-2M4.5 18l1 1 1.8-2"/>',
+      settings: '<circle cx="12" cy="12" r="3"/><path d="M12 3.5v2.5M12 18v2.5M4.4 7.5l2.2 1.3M17.4 15.2l2.2 1.3M19.6 7.5l-2.2 1.3M6.6 15.2l-2.2 1.3"/>'
+    };
+    var tiles = '<div class="tiles">' +
+      tile('ai-start', 'Inspections', ICO.inspect) +
+      tile('clients', 'Customers', ICO.clients) +
+      tile('schedule', 'Schedule', ICO.schedule) +
+      tile('message-start', 'Messages', ICO.message) +
+      tile('start-pick', 'Checklist', ICO.checklist) +
+      tile('settings', 'Settings', ICO.settings) +
+      '</div>';
+    var hero = '<div class="hero">' +
+      '<div class="greet">' + greet + '</div>' +
+      '<div class="date">' + esc(new Date().toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric' })) + '</div>' +
+      '<div class="row" style="gap:10px;margin:16px 0 18px">' +
+        '<div class="stat"><div class="k">Jobs today</div><div class="v">' + todays.length + '</div></div>' +
+        '<div class="stat"><div class="k">Open jobs</div><div class="v">' + openJobs + '</div></div>' +
+      '</div>' +
+      '<div class="lbl">WORKSPACE</div>' + tiles +
+      '</div>';
     var todayBlk = '<div class="eyebrow">Today · ' + esc(fmtDay(today)) + '</div>' +
-      (todays.length ? todays.map(apptCard).join('') : '<div class="empty" style="padding:14px">No jobs today. Tap "New job" to add one.</div>');
+      (todays.length ? todays.map(apptCard).join('') : '<div class="empty" style="padding:14px">No jobs today. Tap Schedule to add one.</div>');
     var tomBlk = toms.length ? ('<div class="eyebrow">Tomorrow · ' + esc(fmtDay(tom)) + '</div>' + toms.map(apptCard).join('')) : '';
     var dueBlk = due.length ? ('<div class="eyebrow">Follow-ups due</div>' + due.map(function (c) { return '<button class="card card-tap" style="display:block;width:100%;text-align:left" data-act="client-open" data-arg="' + esc(c.id) + '"><div style="font-weight:650">' + esc(c.name || 'Unnamed') + '</div><div style="color:var(--muted);font-size:13px">next service: ' + esc(c.nextServiceDue) + '</div></button>'; }).join('')) : '';
     var recentBlk = recent ? ('<div class="eyebrow">Recent inspections</div>' + recent) : '';
-    body = quick + todayBlk + tomBlk + dueBlk + recentBlk;
+    body = hero + todayBlk + tomBlk + dueBlk + recentBlk;
   }
 
   return '<div class="app">' +
-    '<div class="topbar"><div style="flex:1"><h1>AIO Pro Chimney</h1><div class="sub">' + esc(new Date().toLocaleDateString(undefined, { weekday: 'long', month: 'short', day: 'numeric' })) + '</div></div>' +
-    (state.picking ? '' : '<button class="iconbtn" data-act="schedule" aria-label="Schedule">CAL</button><button class="iconbtn" data-act="clients" aria-label="Clients">CLI</button><button class="iconbtn" data-act="settings" aria-label="Settings">SET</button>') + '</div>' +
+    (state.picking
+      ? '<div class="topbar"><h1>Checklist</h1></div>'
+      : '<div class="topbar"><div style="width:34px;height:34px;border-radius:50%;border:1.5px solid var(--gold);display:grid;place-items:center;color:var(--gold);font-family:var(--serif);font-size:16px;flex:none">A</div>' +
+        '<div style="flex:1"><h1 style="font-family:var(--serif);letter-spacing:1px">A.I.O PRO</h1><div class="sub" style="color:var(--gold);letter-spacing:0.18em;font-size:9px">CHIMNEY · ROOFING</div></div>' +
+        '<button class="iconbtn" data-act="settings" aria-label="Settings">SET</button></div>') +
     '<div class="screen">' + body + '</div>' +
-    (state.picking ? '' : '<div class="bottombar" style="gap:6px"><button class="btn btn-primary" data-act="ai-start">New inspection</button><button class="btn btn-ghost" data-act="start-pick">Checklist</button></div>') +
+    (state.picking ? '' : '<div class="bottombar" style="gap:8px"><button class="btn btn-gold btn-primary" data-act="ai-start">New inspection</button><button class="btn btn-ghost" data-act="start-pick">Checklist</button></div>') +
     '</div>';
 }
 
