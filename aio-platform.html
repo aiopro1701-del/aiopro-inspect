@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<title>AIO Pro — Platform</title>
+<style>
+:root{--bg:#F4F1EA;--ink:#1a1614;--muted:#7a746e;--rule:#d6d0c8;--ember:#b03d27;--card:#fff;--ok:#4a7658}
+*{box-sizing:border-box}
+body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;background:var(--bg);color:var(--ink)}
+.wrap{max-width:720px;margin:0 auto;padding:16px}
+.card{background:var(--card);border:0.5px solid var(--rule);border-radius:12px;padding:14px 16px;margin-bottom:12px}
+h1{font-size:20px;margin:0 0 4px}
+.sub{color:var(--muted);font-size:13px}
+label{display:block;font-size:13px;color:var(--muted);margin:8px 0 4px}
+input{width:100%;padding:10px;border:0.5px solid var(--rule);border-radius:8px;font-size:15px}
+button{padding:10px 14px;border-radius:8px;border:0.5px solid var(--rule);background:#fff;font-size:15px;cursor:pointer}
+button.primary{background:var(--ember);color:#fff;border:none}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.err{color:var(--ember);font-size:13px;margin-top:8px}
+.muted{color:var(--muted);font-size:13px}
+.item{padding:10px 0;border-top:0.5px solid var(--rule)}
+</style>
+</head>
+<body>
+<div id="app"><div class="wrap"><div class="card">Loading…</div></div></div>
+<script type="module">
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+
+var DEFAULT_URL = 'https://frxjedjcfzybflorlyvp.supabase.co';
+var DEFAULT_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZyeGplZGpjZnp5YmZsb3JseXZwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODYzMzUzNTAsImV4cCI6MjEwMTkxMTM1MH0.shcVYA8vhN8NzYl4KosH5Qn62r1loxSi3uITxOgjPR0';
+var app = document.getElementById('app');
+function h(html){ app.innerHTML = '<div class="wrap">' + html + '</div>'; }
+function esc(s){ return String(s == null ? '' : s).replace(/[&<>"']/g, function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]; }); }
+function $(id){ return document.getElementById(id); }
+
+var url = localStorage.getItem('aio-sb-url') || DEFAULT_URL;
+var key = localStorage.getItem('aio-sb-key') || DEFAULT_KEY;
+var sb = null, session = null;
+
+function setup(){
+  h('<div class="card"><h1>Connect to your cloud</h1><div class="sub">One-time: paste your Supabase details.</div>'
+    + '<label>Project URL</label><input id="u" value="' + esc(url) + '">'
+    + '<label>Anon public key</label><input id="k" value="' + esc(key) + '" placeholder="eyJ...">'
+    + '<div class="row" style="margin-top:12px"><button class="primary" id="save">Save &amp; connect</button></div>'
+    + '<div class="muted" style="margin-top:8px">Supabase &rarr; Project Settings &rarr; API.</div></div>');
+  $('save').onclick = function(){
+    var u = $('u').value.trim(), k = $('k').value.trim();
+    if(!u || !k) return;
+    localStorage.setItem('aio-sb-url', u); localStorage.setItem('aio-sb-key', k);
+    url = u; key = k; init();
+  };
+}
+
+function authView(mode){
+  var m = mode || 'signin';
+  h('<div class="card"><h1>AIO Pro</h1><div class="sub">' + (m === 'signup' ? 'Create your account' : 'Sign in') + '</div>'
+    + '<label>Email</label><input id="email" type="email" autocomplete="username">'
+    + '<label>Password</label><input id="pw" type="password" autocomplete="current-password">'
+    + '<div class="row" style="margin-top:12px"><button class="primary" id="go">' + (m === 'signup' ? 'Sign up' : 'Sign in') + '</button>'
+    + '<button id="toggle">' + (m === 'signup' ? 'Have an account? Sign in' : 'New? Create account') + '</button></div>'
+    + '<div class="err" id="err"></div></div>'
+    + '<div class="card"><button id="reset" style="font-size:13px">Change cloud connection</button></div>');
+  $('toggle').onclick = function(){ authView(m === 'signup' ? 'signin' : 'signup'); };
+  $('reset').onclick = function(){ setup(); };
+  $('go').onclick = async function(){
+    var email = $('email').value.trim(), pw = $('pw').value;
+    var errEl = $('err'); errEl.textContent = '…';
+    try {
+      var res = m === 'signup'
+        ? await sb.auth.signUp({ email: email, password: pw })
+        : await sb.auth.signInWithPassword({ email: email, password: pw });
+      if(res.error) throw res.error;
+      if(m === 'signup' && !res.data.session){ errEl.textContent = 'Account created. Check your email to confirm, then sign in.'; return; }
+      await loadSession();
+    } catch(e){ errEl.textContent = (e && e.message) || 'Failed'; }
+  };
+}
+
+async function loadSession(){
+  var r = await sb.auth.getSession();
+  session = r.data.session;
+  if(session) home(); else authView('signin');
+}
+
+async function home(){
+  h('<div class="card"><div class="row" style="justify-content:space-between"><div><h1>AIO Pro</h1><div class="sub">' + esc(session.user.email) + '</div></div><button id="out">Sign out</button></div></div>'
+    + '<div class="card"><h1 style="font-size:16px">Customers</h1><div id="clist" class="muted">Loading…</div></div>'
+    + '<div class="card"><h1 style="font-size:16px">Add customer</h1>'
+      + '<label>First name</label><input id="fn"><label>Last name</label><input id="ln"><label>Phone</label><input id="ph" inputmode="tel"><label>Email</label><input id="em" inputmode="email">'
+      + '<div class="row" style="margin-top:12px"><button class="primary" id="add">Add customer</button></div><div class="err" id="aerr"></div></div>'
+    + '<div class="muted">This is the new cloud platform (foundation). The existing inspection app is untouched.</div>');
+  $('out').onclick = async function(){ await sb.auth.signOut(); loadSession(); };
+  $('add').onclick = async function(){
+    var c = { first_name: $('fn').value.trim(), last_name: $('ln').value.trim(), phone: $('ph').value.trim(), email: $('em').value.trim() };
+    var e = $('aerr'); e.textContent = '…';
+    var res = await sb.from('customers').insert(c);
+    if(res.error){ e.textContent = res.error.message; return; }
+    home();
+  };
+  var res = await sb.from('customers').select('*').order('created_at', { ascending: false });
+  var el = $('clist');
+  if(res.error){ el.innerHTML = '<span class="err">' + esc(res.error.message) + '</span><div class="muted" style="margin-top:6px">If this says the table is missing, run the schema SQL in Supabase first.</div>'; return; }
+  var data = res.data || [];
+  el.innerHTML = data.length
+    ? data.map(function(c){ return '<div class="item"><b>' + esc(((c.first_name||'') + ' ' + (c.last_name||'')).trim() || 'Unnamed') + '</b><div class="muted">' + esc([c.phone, c.email].filter(Boolean).join(' · ')) + '</div></div>'; }).join('')
+    : 'No customers yet. Add your first one below.';
+}
+
+function init(){
+  if(!key){ setup(); return; }
+  try { sb = createClient(url, key); } catch(e){ setup(); return; }
+  loadSession();
+}
+init();
+</script>
+</body>
+</html>
