@@ -127,6 +127,10 @@ input, textarea, select { font-family: inherit; font-size: 16px; }
 .tile .lbl2 { font-size: 13px; margin-top: 9px; }
 .btn-gold { background: var(--gold); color: var(--gold-ink); }
 .btn-gold:active { background: #B68E3A; }
+/* Buttons on the dark top bar must stay readable (ivory text, gold outline). */
+.topbar .btn-ghost { color: var(--ivory); border: 1px solid rgba(201,162,75,0.55); background: transparent; }
+.topbar .btn-ghost:active { background: rgba(255,255,255,0.10); }
+.topbar .iconbtn { color: var(--ivory); }
 
 .eyebrow {
   font-family: var(--mono); font-size: 10.5px; letter-spacing: 0.14em;
@@ -1025,7 +1029,7 @@ var JOB_TYPES = [
 function jobTypeName(id) { var t = JOB_TYPES.find(function (j) { return j.id === id; }); return t ? t.name : ''; }
 
 /* ── Camera: file input + downscale (works on iPhone & Android) ── */
-var MAX_EDGE = 1400, QUALITY = 0.72;
+var MAX_EDGE = 2000, QUALITY = 0.88;
 function downscale(dataUrl) {
   return new Promise(function (resolve) {
     var img = new Image();
@@ -1370,6 +1374,10 @@ function viewSettings() {
         fld('Company name', 'company') + fld('Phone', 'phone', 'tel') + fld('Email', 'email', 'email') +
         fld('Service area or address', 'address') + fld('Licence number', 'license') +
       '</div>' +
+      '<div class="card"><div class="eyebrow">Terms &amp; conditions (prints on every report)</div>' +
+        '<div style="color:var(--muted);font-size:13px;margin-bottom:8px">Leave blank to use the standard text. What you type here replaces it.</div>' +
+        '<div class="field" style="margin-bottom:0"><textarea data-model="settings.terms" style="min-height:130px" placeholder="Your terms and conditions...">' + esc(s.terms || '') + '</textarea></div>' +
+      '</div>' +
       '<div class="card"><div class="eyebrow">AI (Claude) — powers the app</div>' +
         '<div style="font-size:15px;font-weight:650;margin-bottom:10px;color:' + (s.aiKey ? 'var(--ok)' : 'var(--defect)') + '">' + (s.aiKey ? 'AI key saved ✓' : 'No AI key yet — paste it below and press Save') + '</div>' +
         '<div style="color:var(--muted);font-size:14px;margin-bottom:12px">Create a key at console.anthropic.com (separate from your Claude subscription). Paste it here and press <b>Save</b>. Stored only on this device.</div>' +
@@ -1622,9 +1630,12 @@ function chatCall(extraUserText, isReport) {
     return t;
   });
 }
-function chatStartMode(mode) {
+function chatStartMode(mode, customer) {
   if (!state.settings.aiKey) { state.chat = null; state.view = 'settings'; render(); return; }
-  state.chat = { mode: mode, messages: [{ role: 'user', text: 'I am here to do ' + CHAT_MODES[mode].name + '.', images: [] }], pending: { photos: [] }, pendingText: '', busy: true, err: null, reportBusy: false, draw: null };
+  var cust = customer && (customer.name || customer.phone || customer.email || customer.address) ? customer : null;
+  var intro = 'I am here to do ' + CHAT_MODES[mode].name + '.';
+  if (cust) intro += ' The customer details are already collected: ' + [cust.name && ('name ' + cust.name), cust.address && ('address ' + cust.address), cust.phone && ('phone ' + cust.phone), cust.email && ('email ' + cust.email)].filter(Boolean).join(', ') + '. Do NOT ask me for the customer name, address, phone, or email again — go straight to the inspection.';
+  state.chat = { mode: mode, customer: cust, messages: [{ role: 'user', text: intro, images: [] }], pending: { photos: [] }, pendingText: '', busy: true, err: null, reportBusy: false, draw: null };
   state.view = 'chat'; render();
   chatCall(null, false).then(function (text) {
     state.chat.messages.push({ role: 'assistant', text: text });
@@ -1658,14 +1669,28 @@ function chatReport() {
     + '"summary":"2-4 plain sentences on the overall condition and whether it is safe to use",'
     + '"components":[{"name":"e.g. Firebox / Damper & throat / Smoke chamber / Flue & liner / Chimney exterior (flashing, chase, crown, cricket) / Hearth & clearances","status":"ok|monitor|defect","condition":"plain-language what was found","recommended":"recommended action, or empty","photos":[]}],'
     + '"conclusion":"one clear verdict: is the system safe to use as-is, or should use be discontinued until repairs are made",'
+    + '"lineItems":[{"description":"repair or service","qty":1,"unitPrice":0,"amount":0}],'
+    + '"subtotal":0,"tax":0,"total":0,"deposit":0,'
     + '"limitations":"short plain note on what was and was not accessible in this inspection"}. '
     + 'Cover every part you discussed as its own component, including the chimney exterior. '
+    + (chat.mode === 'estimate' || chat.mode === 'invoice'
+        ? 'This is a PRICED document: fill lineItems with each repair or service and a fair market price for the Greater St. Louis area (labor plus materials). Set qty and unitPrice, amount = qty*unitPrice, then compute subtotal, tax (0 unless taxes were discussed), and total. Prices must be realistic and itemized so the customer sees exactly what they are paying for. '
+        : 'Leave lineItems empty (this is a plain inspection, no prices). ')
     + 'In each component\'s "photos" array, list the numbers of the photos that show that component. Photos are numbered starting at 1 in the exact order they were sent in our conversation; do NOT list photo 1 or 2 (those are the cover photos). '
     + 'Plain homeowner language, no code section numbers.';
   chatCall(instr, true).then(function (text) {
     var parsed = parseAiJson(text);
     if (!parsed) throw new Error('Could not read the AI report - try again.');
     parsed._signature = chat.signature; parsed._signedAt = chat.signedAt;
+    if (chat.customer) {
+      var pc = parsed.customer || {};
+      parsed.customer = Object.assign({}, pc, {
+        name: chat.customer.name || pc.name || '',
+        address: chat.customer.address || pc.address || '',
+        phone: chat.customer.phone || pc.phone || '',
+        email: chat.customer.email || pc.email || ''
+      });
+    }
     var imgs = [];
     chat.messages.forEach(function (m) { if (m.role === 'user' && m.images) imgs = imgs.concat(m.images); });
     var blob = buildChatReport(parsed, imgs, state.settings, CHAT_MODES[chat.mode].name);
@@ -1825,7 +1850,7 @@ function buildChatReport(data, images, settings, modeName) {
     for (var i = 0; i < list.length; i += 2) {
       ensure(ph + 8);
       for (var j = 0; j < 2 && i + j < list.length; j++) {
-        try { doc.addImage(list[i + j], 'JPEG', M + j * (pw + gap), y, pw, ph, undefined, 'FAST'); } catch (e) {}
+        try { doc.addImage(list[i + j], 'JPEG', M + j * (pw + gap), y, pw, ph, undefined, 'SLOW'); } catch (e) {}
         doc.setDrawColor(RULE[0], RULE[1], RULE[2]).setLineWidth(0.5); doc.rect(M + j * (pw + gap), y, pw, ph);
       }
       y += ph + 8;
@@ -1852,7 +1877,7 @@ function buildChatReport(data, images, settings, modeName) {
   head('Customer information');
   if (images[0]) {
     var iw = CONTENT, ih = iw * 0.56; ensure(ih + 8);
-    try { doc.addImage(images[0], 'JPEG', M, y, iw, ih, undefined, 'FAST'); } catch (e) {}
+    try { doc.addImage(images[0], 'JPEG', M, y, iw, ih, undefined, 'SLOW'); } catch (e) {}
     doc.setDrawColor(RULE[0], RULE[1], RULE[2]).setLineWidth(0.5); doc.rect(M, y, iw, ih);
     y += ih + 10; used[0] = true;
   }
@@ -1864,7 +1889,7 @@ function buildChatReport(data, images, settings, modeName) {
   var p = data.property || {};
   if (p.stories || p.roof || p.systemLocation || p.roomLocation || images[1]) {
     head('Property information');
-    if (images[1]) { var iw2 = CONTENT * 0.62, ih2 = iw2 * 0.72; ensure(ih2 + 6); try { doc.addImage(images[1], 'JPEG', M, y, iw2, ih2, undefined, 'FAST'); } catch (e) {} y += ih2 + 8; used[1] = true; }
+    if (images[1]) { var iw2 = CONTENT * 0.62, ih2 = iw2 * 0.72; ensure(ih2 + 6); try { doc.addImage(images[1], 'JPEG', M, y, iw2, ih2, undefined, 'SLOW'); } catch (e) {} y += ih2 + 8; used[1] = true; }
     kv([['Stories', p.stories], ['Roof material & pitch', p.roof], ['System location', p.systemLocation], ['Room location', p.roomLocation]]);
     y += 6;
   }
@@ -1905,6 +1930,56 @@ function buildChatReport(data, images, settings, modeName) {
 
   if (data.conclusion) { head('Inspection conclusion & recommendations'); y = wrapped(doc, String(data.conclusion), M, y, CONTENT, 11, INK) + 10; }
 
+  var li = (data.lineItems || []).filter(function (it) { return it && (String(it.description || '').trim() || Number(it.amount) || Number(it.unitPrice)); });
+  if (li.length) {
+    head(/invoice/i.test(modeName) ? 'Invoice' : 'Estimate — price breakdown');
+    var cQ = 46, cU = 74, cA = 84, colD = CONTENT - cQ - cU - cA;
+    ensure(20);
+    doc.setFillColor(15, 29, 48); doc.rect(M, y, CONTENT, 20, 'F');
+    doc.setFont('helvetica', 'bold').setFontSize(9.5).setTextColor(255, 255, 255);
+    doc.text('Description', M + 7, y + 13);
+    doc.text('Qty', M + colD + cQ - 6, y + 13, { align: 'right' });
+    doc.text('Unit', M + colD + cQ + cU - 6, y + 13, { align: 'right' });
+    doc.text('Amount', M + CONTENT - 6, y + 13, { align: 'right' });
+    y += 20;
+    var sub = 0;
+    li.forEach(function (it) {
+      var q = Number(it.qty || 1), up = Number(it.unitPrice || 0);
+      var amt = (it.amount != null && it.amount !== '') ? Number(it.amount) : q * up;
+      sub += amt;
+      doc.setFont('helvetica', 'normal').setFontSize(9.5);
+      var dLines = doc.splitTextToSize(String(it.description || ''), colD - 14);
+      var rowH = Math.max(1, dLines.length) * 12 + 8;
+      ensure(rowH);
+      doc.setDrawColor(RULE[0], RULE[1], RULE[2]).setLineWidth(0.5); doc.rect(M, y, CONTENT, rowH, 'D');
+      doc.setTextColor(INK[0], INK[1], INK[2]);
+      doc.text(dLines, M + 7, y + 13);
+      doc.text(String(q), M + colD + cQ - 6, y + 13, { align: 'right' });
+      doc.text(up ? money(up) : '', M + colD + cQ + cU - 6, y + 13, { align: 'right' });
+      doc.text(money(amt), M + CONTENT - 6, y + 13, { align: 'right' });
+      y += rowH;
+    });
+    function totalRow(lbl, val, strong) {
+      ensure(18);
+      doc.setDrawColor(RULE[0], RULE[1], RULE[2]).setLineWidth(0.5);
+      if (strong) { doc.setFillColor(244, 242, 238); doc.rect(M + colD, y, cQ + cU + cA, 18, 'FD'); } else { doc.rect(M + colD, y, cQ + cU + cA, 18, 'D'); }
+      doc.setFont('helvetica', strong ? 'bold' : 'normal').setFontSize(strong ? 10.5 : 9.5).setTextColor(INK[0], INK[1], INK[2]);
+      doc.text(lbl, M + colD + 7, y + 12);
+      doc.text(money(val), M + CONTENT - 6, y + 12, { align: 'right' });
+      y += 18;
+    }
+    var subtotal = (data.subtotal != null && data.subtotal !== '') ? Number(data.subtotal) : sub;
+    var tax = Number(data.tax || 0);
+    var total = (data.total != null && data.total !== '') ? Number(data.total) : subtotal + tax;
+    totalRow('Subtotal', subtotal, false);
+    if (tax) totalRow('Tax', tax, false);
+    totalRow(/invoice/i.test(modeName) ? 'Total due' : 'Estimated total', total, true);
+    if (Number(data.deposit || 0)) totalRow('Deposit to schedule', Number(data.deposit), false);
+    y += 8;
+    doc.setFont('helvetica', 'italic').setFontSize(8.5).setTextColor(MUTED[0], MUTED[1], MUTED[2]);
+    y = wrapped(doc, 'Prices reflect the conditions visible at the time of inspection. Concealed damage found once work begins may change the final price and will be reviewed with you before proceeding.', M, y, CONTENT, 8.5, MUTED) + 8;
+  }
+
   head('Reference diagrams');
   y = wrapped(doc, 'Standard code diagrams for this system type, included for the homeowner\'s reference.', M, y, CONTENT, 9.5, MUTED) + 8;
   var DIAG_H = { draft: 210, clearance: 175, anatomy: 240, factory: 240, termination: 185 };
@@ -1923,6 +1998,14 @@ function buildChatReport(data, images, settings, modeName) {
   if (rest.length) { head('Additional photos'); photos2(rest, 0.7); }
 
   if (data.limitations) { head('Inspection limitations'); y = wrapped(doc, String(data.limitations), M, y, CONTENT, 9.5, MUTED) + 6; }
+
+  var isQuote = /estimate|invoice/i.test(modeName);
+  var terms = (settings.terms && settings.terms.trim()) ? settings.terms
+    : isQuote
+      ? 'This estimate is valid for 30 days from the date above. Prices are based on the conditions visible at the time of inspection; concealed damage found once work begins may change the final price and will be reviewed with you before we proceed. A deposit may be required to schedule work, with the balance due on completion unless otherwise agreed. All work is performed to the NFPA 211 standard and applicable local codes. Workmanship is warranted for one year unless stated otherwise. ' + (settings.company || 'AIO Pro Chimney') + ' is not responsible for pre-existing conditions or for damage caused by continued use of a system reported as unsafe.'
+      : 'This report reflects the readily accessible areas visible at the time of inspection, to the NFPA 211 standard for the level performed. It is not a warranty or guarantee of future performance. Recommendations are provided as a service and are not a contract for work; a separate written proposal will be provided for any repairs.';
+  head('Terms & conditions');
+  y = wrapped(doc, terms, M, y, CONTENT, 9, MUTED) + 12;
 
   head('Acknowledgment & signature');
   y = wrapped(doc, 'This inspection covered the readily accessible areas of the chimney and connected appliance visible at the time of service, to the NFPA 211 standard for the level performed. Areas that cannot be seen without removing parts of the chimney or the structure are not included. No warranty is given as to the future safe use of the system, as use and conditions can change after the inspection. By signing, the customer acknowledges receipt of this report.', M, y, CONTENT, 9.5, MUTED) + 16;
@@ -1994,6 +2077,21 @@ function viewChatStart() {
       opts.map(function (o) { return '<button class="card card-tap" style="display:block;width:100%;text-align:left;font-weight:650;font-size:17px" data-act="chat-mode" data-arg="' + o[0] + '">' + esc(o[1]) + '</button>'; }).join('') +
     '</div></div>';
 }
+function viewCustForm() {
+  var c = state.editClient || newClient();
+  var modeName = CHAT_MODES[state.pendingMode] ? CHAT_MODES[state.pendingMode].name : 'Inspection';
+  function f(label, key, im) { return '<div class="field"><label>' + label + '</label><input data-model="client.' + key + '"' + (im ? ' inputmode="' + im + '"' : '') + ' value="' + esc(c[key] || '') + '"></div>'; }
+  return '<div class="app">' +
+    '<div class="topbar"><button class="iconbtn" data-act="ai-start">‹</button><div style="flex:1"><h1>' + esc(modeName) + '</h1><div class="sub">Customer details</div></div></div>' +
+    '<div class="screen">' +
+      '<div class="card"><div style="font-size:16px;line-height:1.5">Who is this job for? This saves the customer in your system for follow-ups and prints on the report.</div></div>' +
+      '<div class="card">' +
+        f('Customer name', 'name') + f('Phone', 'phone', 'tel') + f('Email (report is sent here)', 'email', 'email') + f('Service address', 'address') +
+      '</div>' +
+    '</div>' +
+    '<div class="bottombar" style="gap:8px"><button class="btn btn-gold btn-primary" data-act="cust-start">Start</button><button class="btn btn-ghost" data-act="cust-skip">Skip for now</button></div>' +
+  '</div>';
+}
 function viewChat() {
   var chat = state.chat;
   if (!chat) return viewChatStart();
@@ -2002,7 +2100,7 @@ function viewChat() {
     var mine = m.role === 'user';
     var imgs = (m.images || []).map(function (src) { return '<img src="' + src + '" style="max-width:130px;border-radius:8px;margin:4px 4px 0 0">'; }).join('');
     return '<div style="display:flex;justify-content:' + (mine ? 'flex-end' : 'flex-start') + ';margin-bottom:10px">' +
-      '<div style="max-width:82%;padding:9px 12px;border-radius:12px;background:' + (mine ? 'var(--ember)' : '#fff') + ';color:' + (mine ? '#fff' : 'var(--ink)') + ';border:0.5px solid var(--rule)">' +
+      '<div style="max-width:82%;padding:9px 12px;border-radius:12px;background:' + (mine ? 'var(--soot)' : '#fff') + ';color:' + (mine ? 'var(--ivory)' : 'var(--ink)') + ';border:0.5px solid var(--rule)">' +
       (m.text ? '<div style="font-size:14px;line-height:1.5;white-space:pre-wrap">' + esc(m.text) + '</div>' : '') + imgs + '</div></div>';
   }).join('');
   var pend = (chat.pending && chat.pending.photos || []).map(function (src, idx) {
@@ -2282,6 +2380,7 @@ function render() {
   else if (state.view === 'inspect' && state.job) html = viewInspect();
   else if (state.view === 'report' && state.job) html = viewReport();
   else if (state.view === 'chatstart') html = viewChatStart();
+  else if (state.view === 'custform') html = viewCustForm();
   else if (state.view === 'chat') html = viewChat();
   else if (state.view === 'clients') html = viewClients();
   else if (state.view === 'client') html = viewClient();
@@ -2522,7 +2621,14 @@ root.addEventListener('click', function (e) {
     case 'ai-step': aiStep(); break;
     case 'ai-apply': aiApply(); break;
     case 'ai-start': state.chat = null; state.view = 'chatstart'; render(); break;
-    case 'chat-mode': chatStartMode(arg); break;
+    case 'chat-mode': state.editClient = newClient(); state.pendingMode = arg; state.view = 'custform'; render(); break;
+    case 'cust-start': {
+      var cc = state.editClient || newClient();
+      if ((cc.name || cc.phone || cc.email || cc.address)) { if (!cc.nextServiceDue) { var d1 = new Date(); d1.setFullYear(d1.getFullYear() + 1); cc.nextServiceDue = d1.toISOString().slice(0, 10); } upsertClient(cc); }
+      chatStartMode(state.pendingMode || 'level1', cc);
+      break;
+    }
+    case 'cust-skip': chatStartMode(state.pendingMode || 'level1', null); break;
     case 'chat-cam':
     case 'chat-gal':
       (function () {
