@@ -1315,14 +1315,15 @@ function viewHome() {
       schedule: '<rect x="4" y="5" width="16" height="15" rx="2"/><path d="M4 9.5h16M8.5 3v4M15.5 3v4"/>',
       message: '<path d="M4.5 5.5h15v9h-9l-4 3.5z"/>',
       checklist: '<path d="M10 6h9M10 12h9M10 18h9"/><path d="M4.5 6l1 1 1.8-2M4.5 12l1 1 1.8-2M4.5 18l1 1 1.8-2"/>',
+      estimate: '<rect x="5" y="3" width="14" height="18" rx="2"/><path d="M9 8h6M9 12h6M9 16h3"/><circle cx="16.5" cy="16.5" r="0"/>',
       settings: '<circle cx="12" cy="12" r="3"/><path d="M12 3.5v2.5M12 18v2.5M4.4 7.5l2.2 1.3M17.4 15.2l2.2 1.3M19.6 7.5l-2.2 1.3M6.6 15.2l-2.2 1.3"/>'
     };
     var tiles = '<div class="tiles">' +
       tile('ai-start', 'Inspections', ICO.inspect) +
+      tile('estimate-new', 'Estimates', ICO.estimate) +
       tile('clients', 'Customers', ICO.clients) +
       tile('schedule', 'Schedule', ICO.schedule) +
       tile('message-start', 'Messages', ICO.message) +
-      tile('start-pick', 'Checklist', ICO.checklist) +
       tile('settings', 'Settings', ICO.settings) +
       '</div>';
     var hero = '<div class="hero">' +
@@ -2416,6 +2417,142 @@ function viewAppt() {
   '</div>';
 }
 
+/* ── Estimate builder (catalog + 3 options) ───────────────── */
+var CATALOG = [
+{name:"Inspection",price:99,description:"NFPA 211 inspection of accessible portions of the chimney — firebox, smoke chamber, flue liner/clay tile, visual from attic or basement; examine bricks, siding, flashing, cricket, crown, cap."},
+{name:"Chimney sweep",price:279,description:"Top-to-bottom clean using a rotary brush to remove dust, dirt, and creosote; brush the flue, clean smoke chamber, cap, and firebox."},
+{name:"Chimney Deep Cleaning Service",price:0,description:"Full deep clean: flue swept, smoke chamber, cap, firebox; clean gas logs, clear pilot exhaust tube, replace ember material."},
+{name:"Animal removal",price:979,description:"Nesting debris and biological waste removed; full sanitize; deodorize/anti-fungus; dust repulsion; full system disinfection."},
+{name:"Brick Cleaning – Fireplace Interior",price:500,description:"Hand-scrubbing of firebox bricks; professional soot/residue removal; vacuuming and debris cleanup."},
+{name:"Brick tuck pointing",price:1999,description:"Remove damaged mortar to 3/8-1/2 inch; match existing mortar; finish tuck-points to match. 3-year warranty."},
+{name:"Water Sealant for Chimney Brickwork",price:229,description:"Clean brick, then apply breathable water-repellent sealant to brick and mortar joints to prevent water penetration and freeze-thaw damage."},
+{name:"Cap replacement",price:1499,description:"Measure and install a high-quality cap; protects from rain, keeps out birds/animals, stops downdrafts. 1-year parts & labor."},
+{name:"Damper cap",price:1099,description:"Top damper cap with energy-tight seal; stainless rain cap with spark arrestor. 1-year labor warranty."},
+{name:"Damper repair",price:699,description:"Clean debris and creosote from the damper, remove the damper plate and reinstall properly. 1-year labor warranty."},
+{name:"Chase cover replacement",price:1999,description:"Stainless steel chase cover; inspect and measure, remove existing, install new. 10-year parts / 1-year labor."},
+{name:"Chimney Crown Coat Waterproofing",price:700,description:"Elastomeric Crown Coat seals cracks and creates a flexible waterproof barrier. Prep, application, materials, labor, cleanup. 5-year warranty."},
+{name:"Crown repair",price:0,description:"Fill small cracks with masonry sealant or crown repair mortar for a smooth watertight surface. 1-year warranty."},
+{name:"Crown replacement",price:0,description:"Remove severely damaged crown and construct a new crown from durable concrete or stone."},
+{name:"Top clay flue repair",price:399,description:"Repair clay at the top of the chimney with high-heat mortar for proper ventilation. 3-year warranty."},
+{name:"Install New Clay Tile + Seal Crown + Chimney Cap",price:590,description:"Install a new clay-tile flue section where missing; set, level, secure with high-strength mortar; seal base; install UL-listed cap."},
+{name:"Chimney Rebuild from Roofline",price:3500,description:"Dismantle to roofline and rebuild to original height with proper masonry, new mortar joints, weather-resistant construction. 3-year workmanship."},
+{name:"Custom Roof Cricket Installation",price:1400,description:"Custom-built cricket behind the chimney to redirect water; integrated with roofing and flashed. 3-year workmanship warranty."},
+{name:"Flashing repair",price:599,description:"Pull step flashing, clean joints, apply tar-seal flashing with two coats of sealant for a waterproof seal."},
+{name:"Flashing replacement",price:1299,description:"Remove old flashing; install step flashing, chimney saddle, corner and base flashing; seal to the roof."},
+{name:"Siding repair",price:2999,description:"Caulk and paint siding to prevent rot; install kick-out flashing where needed to divert water. 1-year warranty."},
+{name:"Firebox panel replacement",price:799,description:"Heat-resistant panels; tarp area, remove grill, clean firebox, remove clamp and panel, install new panels. 1-year parts & labor."},
+{name:"Fireplace mortar repair",price:399,description:"Remove loose mortar, seal firebox cracks, fill tuck points, apply high-heat mortar. 1-year labor warranty."},
+{name:"Smoke chamber parging",price:1499,description:"Parge the smoke chamber to a smooth funnel so smoke flows freely and creosote buildup is minimized."},
+{name:"Heat shield",price:2999,description:"HeatShield sealant restores the flue's integrity; eliminates gaps, cracks, and spalling. Repair System or CeCure Sleeve."},
+{name:"Stainless liner installation",price:2999,description:"Measure, sweep flue, remove protruding joints, insert 30-ft stainless liner, connect to appliance, install B-vent cap. 3-year parts / 1-year labor."},
+{name:"Full clay tile flue replacement with stainless liner",price:7900,description:"Remove clay tile flue; install sized stainless liner with connectors and top-plate; insulate; rebuild/seal smoke chamber; new top-mount damper/cap; waterproof top; test draft."},
+{name:"Chimney Liner Replacement & Smoke Chamber Rebuild",price:8000,description:"Remove clay tiles bottom-to-top; install insulated 304/316 stainless liner to NFPA-211 with top-plate, storm collar, cap; rebuild smoke chamber with code-approved material."},
+{name:"Clay-to-Stainless Liner for Wood Fireplace (+ Smoke Chamber + Damper Cap)",price:8200,description:"Break/remove clay-tile liner; sweep flue; install stainless flexible liner sized for wood with insulation; connect and seal at smoke chamber; restore smoke chamber; new top-mount damper cap."},
+{name:"Fireplace Insert System with Stainless Liner",price:8700,description:"High-efficiency insert with full stainless liner, fittings, insulation, chase cover, rain cap per NFPA/IRC; UL-listed 316Ti insulated liner; connect with high-temp sealant."},
+{name:"Fireplace Insert Installation – Full Setup",price:0,description:"Install sized wood or gas insert to code; stainless liner(s) to top with adapters, top-plate, cap, insulation; connect, level, secure; surround/trim; seal; test."},
+{name:"Wood Stove Insert-Style Unit Installation",price:9500,description:"Wood stove set inside the fireplace with full stainless liner from stove to top; insulated liner, top-plate, cap, storm collar; set and level stove; faceplate; seal smoke chamber; test."},
+{name:"Convert gas system to wood",price:699,description:"Check construction for wood-burning safety; remove gas burner, logs, supply lines; seal off gas lines."},
+{name:"Convert Furnace Liner to Electric Power Vent (PVC)",price:5000,description:"Remove 6-inch liner; convert to power vent with side-wall PVC; draft inducer fan, PVC piping, weather cap, supports, sealants; electrical and testing."},
+{name:"Gas line installation",price:1999,description:"Run a gas line from the main supply to the fireplace with proper connections and safety checks."},
+{name:"Gas log system",price:2800,description:"Gas Log Set with hand-painted ceramic logs and Ventless Contour Burner; fits fireboxes from 12 inches; three sizes; manual/millivolt/thermostatic."},
+{name:"Gas Valve Replacement",price:929,description:"Replace defective millivolt gas valve with new inline valve; disconnect supply, reconnect pilot/thermopile, leak test, verify ignition, full test."},
+{name:"Gas Burner & Fireplace Maintenance",price:249,description:"Replace burner media/sand and embers, clean burner ports, remove residue from gas logs; clean, inspect, and test operation."},
+{name:"Fireplace door replacement",price:2799,description:"Custom door and size; installation included. 2-year warranty."},
+{name:"Fireplace Blower Installation",price:799,description:"Install a high-efficiency blower; mount, secure brackets, route wiring, install control, full test and cleanup."},
+{name:"Wood Stove Cleaning",price:239,description:"Remove ash and debris; clean interior walls and components; check air intakes. Improves efficiency and safety."},
+{name:"Deep Air Duct Cleaning",price:50,description:"Deep clean supply and return vents with rotary brush and compressed air; sanitizing treatment; seal and restore access openings."},
+{name:"Return Vent Cleaning",price:150,description:"Deep clean return air vents and grilles with rotary brush and compressed air to improve airflow."},
+{name:"HVAC System Sanitizing Treatment",price:250,description:"Apply HVAC-approved sanitizer throughout the duct system to reduce bacteria, mold spores, mildew, and odors."},
+{name:"Dryer Vent Cleaning",price:100,description:"Clean the dryer vent from the dryer to the exterior cap; remove lint and debris; verify airflow. Reduces fire hazard."}
+];
+function newEstimate() { return { customer: { name: '', phone: '', email: '', addr: '' }, tax: 0, active: 0, options: [ { name: 'Good', items: [], disc: 0 }, { name: 'Better', items: [], disc: 0 }, { name: 'Best', items: [], disc: 0 } ] }; }
+function estLine(it) { return (Number(it.qty) || 0) * (Number(it.price) || 0); }
+function estTotals(o, tax) { var sub = o.items.reduce(function (a, it) { return a + estLine(it); }, 0); var disc = Number(o.disc) || 0; var taxed = Math.max(0, sub - disc); var t = taxed * (Number(tax) || 0) / 100; return { sub: sub, disc: disc, tax: t, total: taxed + t }; }
+function renderEstCatHTML(q) { q = (q || '').toLowerCase(); var list = CATALOG.filter(function (s) { return !q || s.name.toLowerCase().indexOf(q) >= 0; }); return list.map(function (s) { return '<button class="est-add" data-name="' + esc(s.name) + '" style="display:flex;width:100%;justify-content:space-between;gap:10px;text-align:left;padding:10px;border:none;border-bottom:1px solid var(--rule);background:#fff"><span><b>' + esc(s.name) + '</b><br><span style="color:var(--muted);font-size:12px">' + esc((s.description || '').slice(0, 80)) + '…</span></span><span style="color:var(--ember);white-space:nowrap;font-weight:650">' + money(s.price) + '</span></button>'; }).join('') || '<div style="padding:10px;color:var(--muted)">No match.</div>'; }
+function renderEstTabsHTML() { var e = state.estimate; return e.options.map(function (o, i) { var n = o.items.reduce(function (a, it) { return a + estLine(it); }, 0); return '<button class="est-tab btn ' + (i === e.active ? 'btn-gold btn-primary' : 'btn-ghost') + '" data-i="' + i + '" style="flex:1;min-width:30%;padding:8px 6px;font-size:13px;line-height:1.3">' + esc(o.name) + '<br>' + money(n) + '</button>'; }).join(''); }
+function renderEstPanelHTML() { var e = state.estimate; var o = e.options[e.active]; var h = '<div class="field"><label>Option name</label><input id="est_oname" value="' + esc(o.name) + '"></div>'; if (!o.items.length) h += '<div style="color:var(--muted);font-size:13px;margin-bottom:6px">No items yet — add from the catalog above, or "+ Blank line".</div>'; o.items.forEach(function (it, idx) { h += '<div class="card" style="padding:10px;margin-bottom:8px"><div class="row" style="gap:8px"><input class="est-f" data-f="name" data-i="' + idx + '" value="' + esc(it.name) + '" style="flex:1;font-weight:650"><button class="btn btn-ghost est-del" data-i="' + idx + '" style="min-height:38px;padding:0 12px">✕</button></div><textarea class="est-f" data-f="desc" data-i="' + idx + '" style="width:100%;min-height:44px;margin-top:6px;border:1px solid var(--rule);border-radius:8px;padding:8px">' + esc(it.desc || '') + '</textarea><div class="row" style="gap:8px;margin-top:6px;align-items:center"><span style="color:var(--muted);font-size:12px;flex:1">Qty × Price</span><input class="est-f" data-f="qty" data-i="' + idx + '" inputmode="decimal" value="' + it.qty + '" style="width:60px"><input class="est-f" data-f="price" data-i="' + idx + '" inputmode="decimal" value="' + it.price + '" style="width:92px"><span class="est-lt" data-i="' + idx + '" style="min-width:82px;text-align:right;font-weight:650">' + money(estLine(it)) + '</span></div></div>'; }); return h; }
+function renderEstTotalsHTML() { var e = state.estimate; var o = e.options[e.active]; var t = estTotals(o, e.tax); return '<div class="tally" style="margin-top:8px">' + '<div><div class="l">Subtotal</div><div class="n" style="font-size:15px">' + money(t.sub) + '</div></div>' + (t.disc ? '<div><div class="l">Discount</div><div class="n" style="font-size:15px">-' + money(t.disc) + '</div></div>' : '') + (t.tax ? '<div><div class="l">Tax</div><div class="n" style="font-size:15px">' + money(t.tax) + '</div></div>' : '') + '<div><div class="l">' + esc(o.name) + ' total</div><div class="n" style="font-size:17px;color:var(--ember)">' + money(t.total) + '</div></div></div>'; }
+function estRefreshDOM() { var e = state.estimate; var o = e.options[e.active]; o.items.forEach(function (it, idx) { var el = root.querySelector('.est-lt[data-i="' + idx + '"]'); if (el) el.textContent = money(estLine(it)); }); var tt = root.querySelector('#est_totals'); if (tt) tt.innerHTML = renderEstTotalsHTML(); var tb = root.querySelector('#est_tabs'); if (tb) tb.innerHTML = renderEstTabsHTML(); }
+function viewEstimate() {
+  var e = state.estimate || (state.estimate = newEstimate());
+  var o = e.options[e.active];
+  function cf(label, key, mode) { return '<div class="field"><label>' + label + '</label><input id="est_' + key + '"' + (mode ? ' inputmode="' + mode + '"' : '') + ' value="' + esc(e.customer[key] || '') + '"></div>'; }
+  return '<div class="app">' +
+    '<div class="topbar"><button class="iconbtn" data-act="home">‹</button><div style="flex:1"><h1>Estimate</h1><div class="sub">3 options · your catalog</div></div></div>' +
+    '<div class="screen">' +
+      '<div class="card"><div class="eyebrow">Customer</div>' + cf('Name', 'name') + cf('Phone', 'phone', 'tel') + cf('Email', 'email', 'email') + cf('Service address', 'addr') + '</div>' +
+      '<div class="card"><div class="eyebrow">Add from your catalog</div><input id="est_search" placeholder="Search: liner, sweep, damper, flashing…" style="width:100%;min-height:46px;padding:11px;border:1px solid var(--rule);border-radius:8px"><div id="est_cat" style="max-height:250px;overflow:auto;border:1px solid var(--rule);border-radius:8px;margin-top:8px">' + renderEstCatHTML('') + '</div></div>' +
+      '<div class="card"><div class="eyebrow">Your 3 options</div><div id="est_tabs" class="row" style="gap:6px;flex-wrap:wrap;margin-bottom:10px">' + renderEstTabsHTML() + '</div><div id="est_panel">' + renderEstPanelHTML() + '</div>' +
+        '<div class="row" style="gap:10px;margin-top:8px"><div class="field" style="flex:1;margin-bottom:0"><label>Tax %</label><input id="est_tax" inputmode="decimal" value="' + (e.tax || 0) + '"></div><div class="field" style="flex:1;margin-bottom:0"><label>' + esc(o.name) + ' discount ($)</label><input id="est_disc" inputmode="decimal" value="' + (o.disc || 0) + '"></div></div>' +
+        '<div id="est_totals">' + renderEstTotalsHTML() + '</div>' +
+      '</div>' +
+    '</div>' +
+    '<div class="bottombar" style="gap:8px"><button class="btn btn-gold btn-primary" id="est_pdf">Create estimate PDF</button><button class="btn btn-ghost" id="est_blank">+ Blank line</button></div>' +
+  '</div>';
+}
+function wireEstimate() {
+  if (state.view !== 'estimate' || !state.estimate) return;
+  var e = state.estimate;
+  ['name', 'phone', 'email', 'addr'].forEach(function (k) { var el = root.querySelector('#est_' + k); if (el) el.addEventListener('input', function () { e.customer[k] = el.value; }); });
+  var search = root.querySelector('#est_search'); if (search) search.addEventListener('input', function () { var c = root.querySelector('#est_cat'); if (c) c.innerHTML = renderEstCatHTML(search.value); });
+  var cat = root.querySelector('#est_cat'); if (cat) cat.addEventListener('click', function (ev) { var b = ev.target.closest('.est-add'); if (!b) return; var s = CATALOG.filter(function (x) { return x.name === b.getAttribute('data-name'); })[0]; if (!s) return; e.options[e.active].items.push({ name: s.name, desc: s.description || '', qty: 1, price: s.price }); render(); });
+  var tabs = root.querySelector('#est_tabs'); if (tabs) tabs.addEventListener('click', function (ev) { var b = ev.target.closest('.est-tab'); if (!b) return; e.active = Number(b.getAttribute('data-i')); render(); });
+  var oname = root.querySelector('#est_oname'); if (oname) oname.addEventListener('input', function () { e.options[e.active].name = oname.value; var tb = root.querySelector('#est_tabs'); if (tb) tb.innerHTML = renderEstTabsHTML(); });
+  var panel = root.querySelector('#est_panel');
+  if (panel) {
+    panel.addEventListener('input', function (ev) { var f = ev.target.getAttribute && ev.target.getAttribute('data-f'); if (!f) return; var i = Number(ev.target.getAttribute('data-i')); var it = e.options[e.active].items[i]; if (!it) return; it[f] = ev.target.value; if (f === 'qty' || f === 'price') estRefreshDOM(); });
+    panel.addEventListener('click', function (ev) { var d = ev.target.closest('.est-del'); if (!d) return; e.options[e.active].items.splice(Number(d.getAttribute('data-i')), 1); render(); });
+  }
+  var tax = root.querySelector('#est_tax'); if (tax) tax.addEventListener('input', function () { e.tax = tax.value; estRefreshDOM(); });
+  var disc = root.querySelector('#est_disc'); if (disc) disc.addEventListener('input', function () { e.options[e.active].disc = disc.value; estRefreshDOM(); });
+  var pdf = root.querySelector('#est_pdf'); if (pdf) pdf.addEventListener('click', buildEstimatePdf);
+  var blank = root.querySelector('#est_blank'); if (blank) blank.addEventListener('click', function () { e.options[e.active].items.push({ name: '', desc: '', qty: 1, price: 0 }); render(); });
+}
+function buildEstimatePdf() {
+  var e = state.estimate, s = state.settings, jsPDF = window.jspdf.jsPDF, doc = new jsPDF({ unit: 'pt', format: 'letter' });
+  var y = M, W = CONTENT;
+  if (s.logo) { try { doc.addImage(s.logo, 'JPEG', M, y, 100, 42, undefined, 'FAST'); } catch (_) {} }
+  var tx = M + (s.logo ? 112 : 0);
+  doc.setFont('helvetica', 'bold').setFontSize(16).setTextColor(NAVY[0], NAVY[1], NAVY[2]); doc.text(s.company || 'AIO Pro Chimney', tx, y + 14);
+  doc.setFont('helvetica', 'normal').setFontSize(9).setTextColor(MUTED[0], MUTED[1], MUTED[2]); doc.text([s.phone, s.email, s.address].filter(Boolean).join('   ·   '), tx, y + 28);
+  y += s.logo ? 50 : 38; doc.setDrawColor(GOLD[0], GOLD[1], GOLD[2]).setLineWidth(2).line(M, y, PW - M, y); y += 22;
+  doc.setFont('helvetica', 'bold').setFontSize(22).setTextColor(INK[0], INK[1], INK[2]); doc.text('Estimate', M, y);
+  doc.setFont('helvetica', 'normal').setFontSize(10).setTextColor(MUTED[0], MUTED[1], MUTED[2]); doc.text(new Date().toLocaleDateString(), PW - M, y, { align: 'right' }); y += 22;
+  var cu = e.customer;
+  doc.setFont('helvetica', 'bold').setFontSize(10).setTextColor(NAVY[0], NAVY[1], NAVY[2]); doc.text('PREPARED FOR', M, y); y += 14;
+  doc.setFont('helvetica', 'normal').setFontSize(11).setTextColor(INK[0], INK[1], INK[2]);
+  [cu.name, cu.addr, [cu.phone, cu.email].filter(Boolean).join('   ·   ')].filter(Boolean).forEach(function (t) { doc.text(String(t), M, y); y += 15; }); y += 6;
+  y = wrapped(doc, 'Below are three options so you can choose what fits you best. Prices reflect conditions visible at the time of inspection; concealed damage found once work begins will be reviewed with you before we proceed.', M, y, W, 10.5, MUTED) + 12;
+  function ens(h) { if (y + h > PH - 70) { doc.addPage(); y = M; } }
+  e.options.forEach(function (o, oi) {
+    var items = o.items.filter(function (it) { return it.name || it.desc || Number(it.price); }); if (!items.length) return;
+    var t = estTotals(o, e.tax); ens(64);
+    doc.setFillColor(NAVY[0], NAVY[1], NAVY[2]); doc.rect(M, y, W, 26, 'F');
+    doc.setFont('helvetica', 'bold').setFontSize(12).setTextColor(255, 255, 255); doc.text('Option ' + (oi + 1) + ' — ' + (o.name || ''), M + 10, y + 17);
+    if (oi === 1) { var bw = doc.getTextWidth('RECOMMENDED') + 14; doc.setFillColor(GOLD[0], GOLD[1], GOLD[2]); doc.rect(PW - M - bw - 72, y + 6, bw, 14, 'F'); doc.setTextColor(15, 29, 48).setFontSize(8.5); doc.text('RECOMMENDED', PW - M - bw - 72 + 7, y + 16); }
+    doc.setTextColor(255, 255, 255).setFont('helvetica', 'bold').setFontSize(11); doc.text(money(t.total), PW - M - 10, y + 17, { align: 'right' }); y += 26;
+    items.forEach(function (it) {
+      ens(32); doc.setFont('helvetica', 'bold').setFontSize(10.5).setTextColor(INK[0], INK[1], INK[2]);
+      var nl = doc.splitTextToSize(String(it.name || 'Item'), W - 150); doc.text(nl, M + 8, y + 14);
+      doc.setFont('helvetica', 'normal').setFontSize(9.5); doc.text((Number(it.qty) || 1) + ' × ' + money(it.price), PW - M - 92, y + 14, { align: 'right' });
+      doc.setFont('helvetica', 'bold'); doc.text(money(estLine(it)), PW - M - 8, y + 14, { align: 'right' });
+      var yy = y + 14 + nl.length * 12;
+      if (it.desc) { doc.setFont('helvetica', 'normal').setFontSize(8.5).setTextColor(MUTED[0], MUTED[1], MUTED[2]); var dl = doc.splitTextToSize(String(it.desc), W - 16); doc.text(dl, M + 8, yy); yy += dl.length * 10; }
+      y = yy + 6; doc.setDrawColor(235, 233, 228).setLineWidth(0.5).line(M, y - 2, PW - M, y - 2);
+    });
+    ens(48); function tr(l, v, b) { doc.setFont('helvetica', b ? 'bold' : 'normal').setFontSize(b ? 11 : 9.5).setTextColor(INK[0], INK[1], INK[2]); doc.text(l, PW - M - 150, y); doc.text(v, PW - M - 8, y, { align: 'right' }); y += 15; }
+    if (t.disc) tr('Discount', '-' + money(t.disc)); if (t.tax) tr('Tax', '+' + money(t.tax)); tr((o.name || 'Option') + ' total', money(t.total), true); y += 12;
+  });
+  ens(120); doc.setFont('helvetica', 'bold').setFontSize(11).setTextColor(NAVY[0], NAVY[1], NAVY[2]); doc.text('TERMS', M, y); y += 6; doc.setDrawColor(NAVY[0], NAVY[1], NAVY[2]).setLineWidth(1).line(M, y, PW - M, y); y += 14;
+  var terms = (s.terms && s.terms.trim()) ? s.terms : 'This estimate is valid for 30 days. A deposit may be required to schedule work, with the balance due on completion unless otherwise agreed. All work is performed to NFPA 211 and local codes. Workmanship warranted for one year unless stated. ' + (s.company || 'AIO Pro Chimney') + ' is not responsible for pre-existing conditions or damage from continued use of a system reported as unsafe.';
+  y = wrapped(doc, terms, M, y, W, 9, MUTED) + 18; ens(60);
+  doc.setDrawColor(INK[0], INK[1], INK[2]).setLineWidth(0.6).line(M, y + 28, M + 230, y + 28); doc.line(PW - M - 180, y + 28, PW - M, y + 28);
+  doc.setFont('helvetica', 'normal').setFontSize(9).setTextColor(MUTED[0], MUTED[1], MUTED[2]); doc.text('Customer signature', M, y + 42); doc.text('Date', PW - M - 180, y + 42);
+  var pages = doc.getNumberOfPages(); for (var p = 1; p <= pages; p++) { doc.setPage(p); doc.setDrawColor(RULE[0], RULE[1], RULE[2]).setLineWidth(0.5).line(M, PH - 40, PW - M, PH - 40); doc.setFont('helvetica', 'normal').setFontSize(8).setTextColor(MUTED[0], MUTED[1], MUTED[2]); doc.text([s.company, s.phone].filter(Boolean).join('   ·   '), M, PH - 26); doc.text('Page ' + p + ' of ' + pages, PW - M, PH - 26, { align: 'right' }); }
+  var fn = 'estimate-' + ((e.customer.name || 'customer').replace(/[^\w ]+/g, '').trim() || 'customer') + '-' + new Date().toISOString().slice(0, 10) + '.pdf';
+  savePdf(fn, doc.output('blob'));
+}
+
 /* ── Render + wiring ───────────────────────────────────────── */
 function render() {
   var html;
@@ -2424,6 +2561,7 @@ function render() {
   else if (state.view === 'report' && state.job) html = viewReport();
   else if (state.view === 'chatstart') html = viewChatStart();
   else if (state.view === 'custform') html = viewCustForm();
+  else if (state.view === 'estimate') html = viewEstimate();
   else if (state.view === 'chat') html = viewChat();
   else if (state.view === 'clients') html = viewClients();
   else if (state.view === 'client') html = viewClient();
@@ -2436,6 +2574,7 @@ function render() {
   wireInputs();
   wirePhotoMarks();
   chatWire();
+  wireEstimate();
   wireClients();
   wireMsg();
   var af = root.querySelector('[autofocus]');
@@ -2664,6 +2803,7 @@ root.addEventListener('click', function (e) {
     case 'ai-step': aiStep(); break;
     case 'ai-apply': aiApply(); break;
     case 'ai-start': state.chat = null; state.view = 'chatstart'; render(); break;
+    case 'estimate-new': state.estimate = newEstimate(); state.view = 'estimate'; render(); break;
     case 'chat-mode': state.editClient = newClient(); state.pendingMode = arg; state.view = 'custform'; render(); break;
     case 'cust-start': {
       var cc = state.editClient || newClient();
