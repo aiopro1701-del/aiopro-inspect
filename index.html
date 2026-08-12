@@ -1587,10 +1587,12 @@ function chatSystem(mode) {
   var m = CHAT_MODES[mode] || CHAT_MODES.level1;
   return 'You are the master chimney inspector and estimator for ' + (state.settings.company || 'AIO Pro Chimney') + ' (Greater St. Louis), guiding a technician in the field through ' + m.focus + '. '
     + 'Talk like a sharp, friendly expert: ONE short step at a time, plain language, no code jargon. '
-    + 'Begin by asking the technician for a photo of the FRONT of the house. Then ask for a photo facing the fireplace, water heater, or the problem being addressed. '
-    + 'Then ask focused questions and request photos as needed. Judge conditions using NFPA 211 and the 2021 IRC chapter 10, but never quote section numbers to the technician. '
+    + 'LEAD the inspection — do not wait for the technician to know what to do. At each step tell them exactly what to look at and what to check (clearances, cracks, gaps, blockage, rust, missing parts), then request the specific photo you need. '
+    + 'Work the system IN ORDER, from the bottom up: first the appliance / firebox and hearth, then the damper and throat, then the smoke chamber, then the flue and liner, then the chimney exterior and termination on the roof. '
+    + 'Begin by asking the technician for a photo of the FRONT of the house, then a photo facing the fireplace or water heater. '
+    + 'Judge conditions using NFPA 211 and the 2021 IRC chapter 10, but never quote section numbers to the technician. '
     + 'Red drawing on a photo marks the spots the technician is flagging as problems - address those. '
-    + 'Keep each reply to 1-3 short sentences. When you have enough to produce the customer ' + m.out + ', tell the technician to tap Create report.';
+    + 'Keep each reply to 1-3 short sentences. When you have covered the system top to bottom and have enough to produce the customer ' + m.out + ', tell the technician to tap Create report.';
 }
 function chatApiMessages(chat, keepAllImages) {
   var msgs = chat.messages, lastUserIdx = -1;
@@ -1903,13 +1905,36 @@ function buildChatReport(data, images, settings, modeName) {
 
   if (data.summary) { head('Overall diagnosis'); y = wrapped(doc, String(data.summary), M, y, CONTENT, 11, INK) + 10; }
 
+  var isQuote0 = /estimate|invoice/i.test(modeName);
   var comps = data.components || [];
   if (comps.length) {
-    head('Findings by component');
-    var order = { defect: 0, monitor: 1, ok: 2 };
-    comps.sort(function (x, z) { return (order[String(x.status).toLowerCase()] == null ? 3 : order[String(x.status).toLowerCase()]) - (order[String(z.status).toLowerCase()] == null ? 3 : order[String(z.status).toLowerCase()]); });
+    head('System inspection');
+    doc.setFont('helvetica', 'italic').setFontSize(9).setTextColor(MUTED[0], MUTED[1], MUTED[2]);
+    y = wrapped(doc, 'The system is presented in order, from the appliance up to the top of the chimney.', M, y, CONTENT, 9, MUTED) + 8;
+    function rank(name) {
+      var n = String(name || '').toLowerCase();
+      if (/hearth|firebox|facing|mantel|clearance|appliance/.test(n)) return 1;
+      if (/damper|throat/.test(n)) return 2;
+      if (/smoke/.test(n)) return 3;
+      if (/flue|liner|vent/.test(n)) return 4;
+      if (/exterior|flashing|chase|crown|cricket|\bcap\b|roof|termination/.test(n)) return 5;
+      return 4;
+    }
+    comps = comps.slice().sort(function (a, b) { return rank(a.name) - rank(b.name); });
+    var applText = ((data.appliance && (data.appliance.type + ' ' + data.appliance.fuel)) || '').toLowerCase() + ' ' + (modeName || '').toLowerCase();
+    var isWH = /water heater|furnace|boiler|b-?vent|gas vent/.test(applText);
+    var isFactory = /prefab|factory|zero.?clear|air.?cooled|metal/.test(applText);
+    var DIAG_H = { draft: 210, clearance: 175, anatomy: 240, factory: 240, termination: 185 };
+    function diagFor(name) {
+      var n = String(name || '').toLowerCase();
+      if (/hearth|firebox|facing|clearance/.test(n)) return ['clearance', 'Firebox clearance to combustibles'];
+      if (/flue|liner|vent/.test(n)) return isWH ? ['draft', 'Gas appliance venting & draft'] : (isFactory ? ['factory', 'Factory-built fireplace anatomy'] : ['anatomy', 'Masonry chimney anatomy']);
+      if (/exterior|flashing|chase|crown|cricket|cap|roof/.test(n)) return ['termination', 'Termination — the 3-2-10 rule'];
+      return null;
+    }
+    var shownDiag = {};
     comps.forEach(function (comp) {
-      ensure(42);
+      ensure(46);
       var st = String(comp.status || '').toLowerCase();
       var col = SEV[st] || INK;
       doc.setFont('helvetica', 'bold').setFontSize(12.5).setTextColor(INK[0], INK[1], INK[2]);
@@ -1918,17 +1943,29 @@ function buildChatReport(data, images, settings, modeName) {
       if (label) { doc.setFont('helvetica', 'bold').setFontSize(9).setTextColor(255, 255, 255); var lw = doc.getTextWidth(label) + 14; doc.setFillColor(col[0], col[1], col[2]); doc.roundedRect(PW - M - lw, y - 9, lw, 14, 3, 3, 'F'); doc.text(label, PW - M - lw + 7, y + 1); }
       y += 17;
       if (comp.condition) y = wrapped(doc, String(comp.condition), M, y, CONTENT, 10.5, INK) + 3;
-      if (comp.recommended) y = wrapped(doc, 'Recommended: ' + comp.recommended, M, y, CONTENT, 10, SEV.defect) + 3;
+      if (isQuote0 && comp.recommended) y = wrapped(doc, 'Recommended: ' + comp.recommended, M, y, CONTENT, 10, SEV.defect) + 3;
       if (comp.photos && comp.photos.length) {
         var cp = comp.photos.map(function (n) { return images[n - 1]; }).filter(Boolean);
         photos2(cp, 0.66);
         comp.photos.forEach(function (n) { used[n - 1] = true; });
       }
+      var dg = diagFor(comp.name);
+      if (dg && !shownDiag[dg[0]]) {
+        shownDiag[dg[0]] = true;
+        var boxH = DIAG_H[dg[0]] || 200;
+        ensure(boxH + 26);
+        doc.setFont('helvetica', 'italic').setFontSize(9).setTextColor(MUTED[0], MUTED[1], MUTED[2]);
+        doc.text(dg[1], M, y); y += 6;
+        doc.setDrawColor(RULE[0], RULE[1], RULE[2]).setLineWidth(0.5).setFillColor(250, 249, 246);
+        doc.rect(M, y, CONTENT, boxH, 'FD');
+        drawDiagram(doc, dg[0], M + 12, y + 6, CONTENT - 24);
+        y += boxH + 14;
+      }
       y += 10;
     });
   }
 
-  if (data.conclusion) { head('Inspection conclusion & recommendations'); y = wrapped(doc, String(data.conclusion), M, y, CONTENT, 11, INK) + 10; }
+  if (data.conclusion) { head(isQuote0 ? 'Conclusion & recommendations' : 'Conclusion'); y = wrapped(doc, String(data.conclusion), M, y, CONTENT, 11, INK) + 10; }
 
   var li = (data.lineItems || []).filter(function (it) { return it && (String(it.description || '').trim() || Number(it.amount) || Number(it.unitPrice)); });
   if (li.length) {
@@ -1980,32 +2017,36 @@ function buildChatReport(data, images, settings, modeName) {
     y = wrapped(doc, 'Prices reflect the conditions visible at the time of inspection. Concealed damage found once work begins may change the final price and will be reviewed with you before proceeding.', M, y, CONTENT, 8.5, MUTED) + 8;
   }
 
-  head('Reference diagrams');
-  y = wrapped(doc, 'Standard code diagrams for this system type, included for the homeowner\'s reference.', M, y, CONTENT, 9.5, MUTED) + 8;
-  var DIAG_H = { draft: 210, clearance: 175, anatomy: 240, factory: 240, termination: 185 };
-  pickDiagrams().forEach(function (d) {
-    var boxH = DIAG_H[d[0]] || 200;
-    ensure(boxH + 30);
-    doc.setFont('helvetica', 'bold').setFontSize(10).setTextColor(INK[0], INK[1], INK[2]);
-    doc.text(d[1], M, y); y += 8;
-    doc.setDrawColor(RULE[0], RULE[1], RULE[2]).setLineWidth(0.5).setFillColor(250, 249, 246);
-    doc.rect(M, y, CONTENT, boxH, 'FD');
-    drawDiagram(doc, d[0], M + 12, y + 6, CONTENT - 24);
-    y += boxH + 16;
-  });
-
   var rest = images.filter(function (src, i) { return src && !used[i]; });
   if (rest.length) { head('Additional photos'); photos2(rest, 0.7); }
 
   if (data.limitations) { head('Inspection limitations'); y = wrapped(doc, String(data.limitations), M, y, CONTENT, 9.5, MUTED) + 6; }
 
   var isQuote = /estimate|invoice/i.test(modeName);
-  var terms = (settings.terms && settings.terms.trim()) ? settings.terms
-    : isQuote
-      ? 'This estimate is valid for 30 days from the date above. Prices are based on the conditions visible at the time of inspection; concealed damage found once work begins may change the final price and will be reviewed with you before we proceed. A deposit may be required to schedule work, with the balance due on completion unless otherwise agreed. All work is performed to the NFPA 211 standard and applicable local codes. Workmanship is warranted for one year unless stated otherwise. ' + (settings.company || 'AIO Pro Chimney') + ' is not responsible for pre-existing conditions or for damage caused by continued use of a system reported as unsafe.'
-      : 'This report reflects the readily accessible areas visible at the time of inspection, to the NFPA 211 standard for the level performed. It is not a warranty or guarantee of future performance. Recommendations are provided as a service and are not a contract for work; a separate written proposal will be provided for any repairs.';
   head('Terms & conditions');
-  y = wrapped(doc, terms, M, y, CONTENT, 9, MUTED) + 12;
+  if (settings.terms && settings.terms.trim()) {
+    y = wrapped(doc, settings.terms, M, y, CONTENT, 9, MUTED) + 12;
+  } else {
+    var clauses = [
+      ['Scope of inspection', 'This report reflects a visual inspection of the readily accessible portions of the chimney, venting, and connected appliance to the NFPA 211 standard for the level performed. Areas that cannot be viewed without dismantling part of the chimney or the structure are excluded.'],
+      ['Inaccessible areas', 'Attic space, hearth support, concealed areas between floors and walls, and areas not safely accessible at the time of service are not included. Hidden flaws may exist that are not visible from the available angle of inspection. ' + (settings.company || 'AIO Pro Chimney') + ' makes no representation and is not responsible for deficiencies in inaccessible areas.'],
+      ['No warranty of future use', 'Conditions change over time through use, weather, vegetation, age, and alterations. No warranty or guarantee is given as to the ongoing safety, usability, or functionality of the system after the date of this inspection.'],
+      ['Recommendations', 'Any recommendations are provided as a service to the customer and are not a contract or proposal for repairs. A separate written proposal is provided for any work requested.']
+    ];
+    if (isQuote) clauses = clauses.concat([
+      ['Estimate validity', 'This estimate is valid for 30 days from the date shown. Prices are based on the conditions visible at the time of inspection and standard material and labor rates for the service area.'],
+      ['Concealed conditions', 'Concealed damage discovered once work begins may change the final price. Any change will be reviewed with and approved by the customer before work continues.'],
+      ['Payment and deposit', 'A deposit may be required to schedule work, with the balance due upon completion unless otherwise agreed in writing. Returned payments and past-due balances may incur fees.'],
+      ['Workmanship warranty', 'Workmanship is warranted for one year from completion unless a different term is stated on the proposal. Manufacturer warranties apply to installed materials.']
+    ]);
+    clauses.forEach(function (cl) {
+      ensure(30);
+      doc.setFont('helvetica', 'bold').setFontSize(9).setTextColor(INK[0], INK[1], INK[2]);
+      doc.text(cl[0] + ':', M, y); y += 12;
+      y = wrapped(doc, cl[1], M, y, CONTENT, 9, MUTED) + 8;
+    });
+    y += 4;
+  }
 
   head('Acknowledgment & signature');
   y = wrapped(doc, 'This inspection covered the readily accessible areas of the chimney and connected appliance visible at the time of service, to the NFPA 211 standard for the level performed. Areas that cannot be seen without removing parts of the chimney or the structure are not included. No warranty is given as to the future safe use of the system, as use and conditions can change after the inspection. By signing, the customer acknowledges receipt of this report.', M, y, CONTENT, 9.5, MUTED) + 16;
@@ -2104,10 +2145,12 @@ function viewChat() {
       (m.text ? '<div style="font-size:14px;line-height:1.5;white-space:pre-wrap">' + esc(m.text) + '</div>' : '') + imgs + '</div></div>';
   }).join('');
   var pend = (chat.pending && chat.pending.photos || []).map(function (src, idx) {
-    return '<div style="position:relative;display:inline-block;margin:0 8px 6px 0">' +
-      '<img src="' + src + '" style="height:56px;border-radius:6px">' +
-      '<button data-act="chat-del-pending" data-arg="' + idx + '" aria-label="Remove" style="position:absolute;top:-6px;right:-6px;width:20px;height:20px;border-radius:50%;border:none;background:#000;color:#fff;font-size:11px;padding:0">✕</button>' +
-      '<button data-act="chat-draw" data-arg="' + idx + '" style="position:absolute;bottom:-2px;left:-2px;border:none;border-radius:4px;background:rgba(0,0,0,.65);color:#fff;font-size:9px;padding:1px 5px">draw</button>' +
+    return '<div style="display:inline-block;vertical-align:top;margin:0 8px 8px 0;text-align:center">' +
+      '<img src="' + src + '" style="display:block;height:82px;border-radius:8px;border:0.5px solid var(--rule)">' +
+      '<div style="display:flex;gap:4px;margin-top:5px">' +
+        '<button class="btn btn-gold" data-act="chat-draw" data-arg="' + idx + '" style="flex:1;min-height:36px;padding:0 10px;font-size:13px;font-weight:650;border-radius:7px">✎ Mark</button>' +
+        '<button class="btn btn-ghost" data-act="chat-del-pending" data-arg="' + idx + '" aria-label="Remove photo" style="min-height:36px;padding:0 10px;font-size:14px;border-radius:7px;border:1px solid var(--rule)">✕</button>' +
+      '</div>' +
     '</div>';
   }).join('');
   var modal = chat.draw ? (
