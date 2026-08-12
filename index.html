@@ -1320,7 +1320,7 @@ function viewHome() {
     };
     var tiles = '<div class="tiles">' +
       tile('ai-start', 'Inspections', ICO.inspect) +
-      tile('estimate-new', 'Estimates', ICO.estimate) +
+      tile('estimates', 'Estimates', ICO.estimate) +
       tile('clients', 'Customers', ICO.clients) +
       tile('schedule', 'Schedule', ICO.schedule) +
       tile('message-start', 'Messages', ICO.message) +
@@ -1586,14 +1586,19 @@ var CHAT_MODES = {
 };
 function chatSystem(mode) {
   var m = CHAT_MODES[mode] || CHAT_MODES.level1;
-  return 'You are the master chimney inspector and estimator for ' + (state.settings.company || 'AIO Pro Chimney') + ' (Greater St. Louis), guiding a technician in the field through ' + m.focus + '. '
+  var depth = (state.chat && state.chat.depth) || 'full';
+  var who = depth === 'pro' ? 'the owner (an experienced professional)' : 'a technician';
+  var lead = depth === 'pro'
+    ? 'Keep it efficient — this is an experienced pro. Ask ONLY what you truly need, accept short answers, do not over-explain or hand-hold, and move quickly toward the report. Still make sure the key parts of the system are covered so the report has no holes. '
+    : 'LEAD the inspection — do not wait for the technician to know what to do. At each step tell them exactly what to look at and what to check (clearances, cracks, gaps, blockage, rust, missing parts), then request the specific photo you need. Do not assume they know what to look for; make sure every part of the system is covered before the report. ';
+  return 'You are the master chimney inspector and estimator for ' + (state.settings.company || 'AIO Pro Chimney') + ' (Greater St. Louis), guiding ' + who + ' in the field through ' + m.focus + '. '
     + 'Talk like a sharp, friendly expert: ONE short step at a time, plain language, no code jargon. '
-    + 'LEAD the inspection — do not wait for the technician to know what to do. At each step tell them exactly what to look at and what to check (clearances, cracks, gaps, blockage, rust, missing parts), then request the specific photo you need. '
+    + lead
     + 'Work the system IN ORDER, from the bottom up: first the appliance / firebox and hearth, then the damper and throat, then the smoke chamber, then the flue and liner, then the chimney exterior and termination on the roof. '
-    + 'Begin by asking the technician for a photo of the FRONT of the house, then a photo facing the fireplace or water heater. '
-    + 'Judge conditions using NFPA 211 and the 2021 IRC chapter 10, but never quote section numbers to the technician. '
-    + 'Red drawing on a photo marks the spots the technician is flagging as problems - address those. '
-    + 'Keep each reply to 1-3 short sentences. When you have covered the system top to bottom and have enough to produce the customer ' + m.out + ', tell the technician to tap Create report.';
+    + 'Begin by asking for a photo of the FRONT of the house, then a photo facing the fireplace or water heater. '
+    + 'Judge conditions using NFPA 211 and the 2021 IRC chapter 10, but never quote section numbers. '
+    + 'Red drawing on a photo marks the spots being flagged as problems - address those. '
+    + 'Keep each reply to 1-3 short sentences. When you have covered the system and have enough to produce the customer ' + m.out + ', tell them to tap Create report.';
 }
 function chatApiMessages(chat, keepAllImages) {
   var msgs = chat.messages, lastUserIdx = -1;
@@ -1633,12 +1638,12 @@ function chatCall(extraUserText, isReport) {
     return t;
   });
 }
-function chatStartMode(mode, customer) {
+function chatStartMode(mode, customer, depth) {
   if (!state.settings.aiKey) { state.chat = null; state.view = 'settings'; render(); return; }
   var cust = customer && (customer.name || customer.phone || customer.email || customer.address) ? customer : null;
   var intro = 'I am here to do ' + CHAT_MODES[mode].name + '.';
   if (cust) intro += ' The customer details are already collected: ' + [cust.name && ('name ' + cust.name), cust.address && ('address ' + cust.address), cust.phone && ('phone ' + cust.phone), cust.email && ('email ' + cust.email)].filter(Boolean).join(', ') + '. Do NOT ask me for the customer name, address, phone, or email again — go straight to the inspection.';
-  state.chat = { mode: mode, customer: cust, messages: [{ role: 'user', text: intro, images: [] }], pending: { photos: [] }, pendingText: '', busy: true, err: null, reportBusy: false, draw: null };
+  state.chat = { mode: mode, customer: cust, depth: depth || 'full', messages: [{ role: 'user', text: intro, images: [] }], pending: { photos: [] }, pendingText: '', busy: true, err: null, reportBusy: false, draw: null };
   state.view = 'chat'; render();
   chatCall(null, false).then(function (text) {
     state.chat.messages.push({ role: 'assistant', text: text });
@@ -2130,6 +2135,13 @@ function viewCustForm() {
       '<div class="card">' +
         f('Customer name', 'name') + f('Phone', 'phone', 'tel') + f('Email (report is sent here)', 'email', 'email') + f('Service address', 'address') +
       '</div>' +
+      '<div class="card"><div class="eyebrow">Who is doing this inspection?</div>' +
+        '<div class="row" style="gap:8px">' +
+          '<button class="btn ' + (state.pendingDepth === 'pro' ? 'btn-gold btn-primary' : 'btn-ghost') + '" data-act="cust-depth" data-arg="pro" style="flex:1">I\'m the pro — keep it short</button>' +
+          '<button class="btn ' + (state.pendingDepth !== 'pro' ? 'btn-gold btn-primary' : 'btn-ghost') + '" data-act="cust-depth" data-arg="full" style="flex:1">Guide the technician fully</button>' +
+        '</div>' +
+        '<div style="color:var(--muted);font-size:13px;margin-top:8px">' + (state.pendingDepth === 'pro' ? 'Fewer questions — the app trusts you and moves fast to the report.' : 'The app leads step by step so a newer tech never misses anything.') + '</div>' +
+      '</div>' +
     '</div>' +
     '<div class="bottombar" style="gap:8px"><button class="btn btn-gold btn-primary" data-act="cust-start">Start</button><button class="btn btn-ghost" data-act="cust-skip">Skip for now</button></div>' +
   '</div>';
@@ -2466,6 +2478,20 @@ var CATALOG = [
 {name:"Dryer Vent Cleaning",price:100,description:"Clean the dryer vent from the dryer to the exterior cap; remove lint and debris; verify airflow. Reduces fire hazard."}
 ];
 function newEstimate() { return { customer: { name: '', phone: '', email: '', addr: '' }, tax: 0, active: 0, options: [ { name: 'Good', items: [], disc: 0 }, { name: 'Better', items: [], disc: 0 }, { name: 'Best', items: [], disc: 0 } ] }; }
+var EST_KEY = 'aio-estimates';
+function loadEstimates() { try { return JSON.parse(localStorage.getItem(EST_KEY)) || []; } catch (e) { return []; } }
+function saveEstimates(l) { try { localStorage.setItem(EST_KEY, JSON.stringify(l)); } catch (e) {} }
+function estHeadline(e) { for (var i = 1; i >= 0; i--) { var o = e.options[i]; if (o && o.items && o.items.length) return estTotals(o, e.tax).total; } for (var j = 0; j < e.options.length; j++) { if (e.options[j].items.length) return estTotals(e.options[j], e.tax).total; } return 0; }
+function upsertEstimate(e) { if (!e.id) e.id = 'es-' + Date.now() + '-' + Math.random().toString(36).slice(2, 6); e.updatedAt = Date.now(); var l = loadEstimates(); var i = l.findIndex(function (x) { return x.id === e.id; }); if (i >= 0) l[i] = e; else l.unshift(e); saveEstimates(l); return e; }
+function removeEstimate(id) { saveEstimates(loadEstimates().filter(function (e) { return e.id !== id; })); }
+function viewEstimatesList() {
+  var list = loadEstimates();
+  var rows = list.length ? list.map(function (e) {
+    var nItems = e.options.reduce(function (a, o) { return a + (o.items ? o.items.length : 0); }, 0);
+    return '<div class="card joblist-item"><button class="meta" style="text-align:left" data-act="est-open" data-arg="' + esc(e.id) + '"><div class="name">' + esc((e.customer && e.customer.name) || 'Unnamed') + '</div><div class="sub">' + money(estHeadline(e)) + ' · ' + nItems + ' items · ' + new Date(e.updatedAt || Date.now()).toLocaleDateString() + '</div></button><button class="iconbtn" style="color:var(--muted)" data-act="est-del" data-arg="' + esc(e.id) + '" aria-label="Delete">DEL</button></div>';
+  }).join('') : '<div class="empty">No estimates yet. Tap New estimate to build one.</div>';
+  return '<div class="app"><div class="topbar"><button class="iconbtn" data-act="home">‹</button><div style="flex:1"><h1>Estimates</h1></div></div><div class="screen">' + rows + '</div><div class="bottombar"><button class="btn btn-gold btn-primary" data-act="estimate-new">New estimate</button></div></div>';
+}
 function estLine(it) { return (Number(it.qty) || 0) * (Number(it.price) || 0); }
 function estTotals(o, tax) { var sub = o.items.reduce(function (a, it) { return a + estLine(it); }, 0); var disc = Number(o.disc) || 0; var taxed = Math.max(0, sub - disc); var t = taxed * (Number(tax) || 0) / 100; return { sub: sub, disc: disc, tax: t, total: taxed + t }; }
 function renderEstCatHTML(q) { q = (q || '').toLowerCase(); var list = CATALOG.filter(function (s) { return !q || s.name.toLowerCase().indexOf(q) >= 0; }); return list.map(function (s) { return '<button class="est-add" data-name="' + esc(s.name) + '" style="display:flex;width:100%;justify-content:space-between;gap:10px;text-align:left;padding:10px;border:none;border-bottom:1px solid var(--rule);background:#fff"><span><b>' + esc(s.name) + '</b><br><span style="color:var(--muted);font-size:12px">' + esc((s.description || '').slice(0, 80)) + '…</span></span><span style="color:var(--ember);white-space:nowrap;font-weight:650">' + money(s.price) + '</span></button>'; }).join('') || '<div style="padding:10px;color:var(--muted)">No match.</div>'; }
@@ -2478,7 +2504,7 @@ function viewEstimate() {
   var o = e.options[e.active];
   function cf(label, key, mode) { return '<div class="field"><label>' + label + '</label><input id="est_' + key + '"' + (mode ? ' inputmode="' + mode + '"' : '') + ' value="' + esc(e.customer[key] || '') + '"></div>'; }
   return '<div class="app">' +
-    '<div class="topbar"><button class="iconbtn" data-act="home">‹</button><div style="flex:1"><h1>Estimate</h1><div class="sub">3 options · your catalog</div></div></div>' +
+    '<div class="topbar"><button class="iconbtn" data-act="est-back">‹</button><div style="flex:1"><h1>Estimate</h1><div class="sub">3 options · your catalog</div></div></div>' +
     '<div class="screen">' +
       '<div class="card"><div class="eyebrow">Customer</div>' + cf('Name', 'name') + cf('Phone', 'phone', 'tel') + cf('Email', 'email', 'email') + cf('Service address', 'addr') + '</div>' +
       '<div class="card"><div class="eyebrow">Add from your catalog</div><input id="est_search" placeholder="Search: liner, sweep, damper, flashing…" style="width:100%;min-height:46px;padding:11px;border:1px solid var(--rule);border-radius:8px"><div id="est_cat" style="max-height:250px;overflow:auto;border:1px solid var(--rule);border-radius:8px;margin-top:8px">' + renderEstCatHTML('') + '</div></div>' +
@@ -2550,6 +2576,7 @@ function buildEstimatePdf() {
   doc.setFont('helvetica', 'normal').setFontSize(9).setTextColor(MUTED[0], MUTED[1], MUTED[2]); doc.text('Customer signature', M, y + 42); doc.text('Date', PW - M - 180, y + 42);
   var pages = doc.getNumberOfPages(); for (var p = 1; p <= pages; p++) { doc.setPage(p); doc.setDrawColor(RULE[0], RULE[1], RULE[2]).setLineWidth(0.5).line(M, PH - 40, PW - M, PH - 40); doc.setFont('helvetica', 'normal').setFontSize(8).setTextColor(MUTED[0], MUTED[1], MUTED[2]); doc.text([s.company, s.phone].filter(Boolean).join('   ·   '), M, PH - 26); doc.text('Page ' + p + ' of ' + pages, PW - M, PH - 26, { align: 'right' }); }
   var fn = 'estimate-' + ((e.customer.name || 'customer').replace(/[^\w ]+/g, '').trim() || 'customer') + '-' + new Date().toISOString().slice(0, 10) + '.pdf';
+  try { upsertEstimate(e); } catch (_) {}
   savePdf(fn, doc.output('blob'));
 }
 
@@ -2561,6 +2588,7 @@ function render() {
   else if (state.view === 'report' && state.job) html = viewReport();
   else if (state.view === 'chatstart') html = viewChatStart();
   else if (state.view === 'custform') html = viewCustForm();
+  else if (state.view === 'estimates') html = viewEstimatesList();
   else if (state.view === 'estimate') html = viewEstimate();
   else if (state.view === 'chat') html = viewChat();
   else if (state.view === 'clients') html = viewClients();
@@ -2803,15 +2831,20 @@ root.addEventListener('click', function (e) {
     case 'ai-step': aiStep(); break;
     case 'ai-apply': aiApply(); break;
     case 'ai-start': state.chat = null; state.view = 'chatstart'; render(); break;
+    case 'estimates': state.view = 'estimates'; render(); break;
     case 'estimate-new': state.estimate = newEstimate(); state.view = 'estimate'; render(); break;
-    case 'chat-mode': state.editClient = newClient(); state.pendingMode = arg; state.view = 'custform'; render(); break;
+    case 'est-open': { var eo = loadEstimates().filter(function (x) { return x.id === arg; })[0]; if (eo) { state.estimate = eo; state.view = 'estimate'; render(); } break; }
+    case 'est-del': removeEstimate(arg); render(); break;
+    case 'est-back': { var eb = state.estimate; if (eb && eb.options.some(function (o) { return o.items.length; })) upsertEstimate(eb); state.view = 'estimates'; render(); break; }
+    case 'chat-mode': state.editClient = newClient(); state.pendingMode = arg; state.pendingDepth = 'full'; state.view = 'custform'; render(); break;
+    case 'cust-depth': state.pendingDepth = arg; render(); break;
     case 'cust-start': {
       var cc = state.editClient || newClient();
       if ((cc.name || cc.phone || cc.email || cc.address)) { if (!cc.nextServiceDue) { var d1 = new Date(); d1.setFullYear(d1.getFullYear() + 1); cc.nextServiceDue = d1.toISOString().slice(0, 10); } upsertClient(cc); }
-      chatStartMode(state.pendingMode || 'level1', cc);
+      chatStartMode(state.pendingMode || 'level1', cc, state.pendingDepth);
       break;
     }
-    case 'cust-skip': chatStartMode(state.pendingMode || 'level1', null); break;
+    case 'cust-skip': chatStartMode(state.pendingMode || 'level1', null, state.pendingDepth); break;
     case 'chat-cam':
     case 'chat-gal':
       (function () {
