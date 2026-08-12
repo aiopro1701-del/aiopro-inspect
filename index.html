@@ -2192,6 +2192,7 @@ function viewChat() {
   ) : '';
   return '<div class="app">' +
     '<div class="topbar"><button class="iconbtn" data-act="home">‹</button><div style="flex:1"><h1>' + esc(CHAT_MODES[chat.mode].name) + '</h1></div>' +
+      '<button class="btn btn-ghost" data-act="chat-estimate" style="padding:6px 8px">Estimate</button>' +
       '<button class="btn btn-ghost" data-act="chat-sign" style="padding:6px 8px">Sign' + (chat.signature ? ' ✓' : '') + '</button>' +
       '<button class="btn btn-ghost" data-act="chat-report" style="padding:6px 10px"' + (chat.reportBusy ? ' disabled' : '') + '>' + (chat.reportBusy ? 'Building…' : 'Create report') + '</button></div>' +
     '<div class="screen" id="chatScroll">' + bubbles +
@@ -2833,6 +2834,7 @@ root.addEventListener('click', function (e) {
     case 'ai-start': state.chat = null; state.view = 'chatstart'; render(); break;
     case 'estimates': state.view = 'estimates'; render(); break;
     case 'estimate-new': state.estimate = newEstimate(); state.view = 'estimate'; render(); break;
+    case 'chat-estimate': { var ee = newEstimate(); if (state.chat && state.chat.customer) { var c2 = state.chat.customer; ee.customer = { name: c2.name || '', phone: c2.phone || '', email: c2.email || '', addr: c2.address || '' }; } state.estimate = ee; state.view = 'estimate'; render(); break; }
     case 'est-open': { var eo = loadEstimates().filter(function (x) { return x.id === arg; })[0]; if (eo) { state.estimate = eo; state.view = 'estimate'; render(); } break; }
     case 'est-del': removeEstimate(arg); render(); break;
     case 'est-back': { var eb = state.estimate; if (eb && eb.options.some(function (o) { return o.items.length; })) upsertEstimate(eb); state.view = 'estimates'; render(); break; }
