@@ -2384,6 +2384,20 @@ function fmtDay(iso) { var d = new Date(iso + 'T00:00:00'); if (isNaN(d.getTime(
 function newAppt() { return { id: 'ap-' + Date.now() + '-' + Math.random().toString(36).slice(2, 6), clientName: '', phone: '', address: '', date: isoToday(), time: '09:00', type: 'Inspection', assignedTo: '', notes: '', status: 'scheduled', createdAt: Date.now() }; }
 function upsertAppt(a) { var l = loadSched(); var i = l.findIndex(function (x) { return x.id === a.id; }); if (i >= 0) l[i] = a; else l.push(a); saveSched(l); return a; }
 function removeAppt(id) { saveSched(loadSched().filter(function (a) { return a.id !== id; })); }
+function gcalLink(a) {
+  function pad(n) { return (n < 10 ? '0' : '') + n; }
+  function fmt(x) { return x.getFullYear() + pad(x.getMonth() + 1) + pad(x.getDate()) + 'T' + pad(x.getHours()) + pad(x.getMinutes()) + '00'; }
+  var dt = new Date((a.date || isoToday()) + 'T' + (a.time || '09:00'));
+  if (isNaN(dt.getTime())) dt = new Date();
+  var end = new Date(dt.getTime() + 90 * 60000);
+  var title = ((a.type || 'Job') + ' — ' + (a.clientName || '')).trim().replace(/ — $/, '');
+  var details = [a.phone && ('Phone: ' + a.phone), a.assignedTo && ('Tech: ' + a.assignedTo), a.notes].filter(Boolean).join('\n');
+  return 'https://calendar.google.com/calendar/render?action=TEMPLATE'
+    + '&text=' + encodeURIComponent(title)
+    + '&dates=' + fmt(dt) + '/' + fmt(end)
+    + '&details=' + encodeURIComponent(details)
+    + '&location=' + encodeURIComponent(a.address || '');
+}
 function apptCard(a) {
   var badge = a.status === 'done' ? '<span class="pill done">DONE</span>' : '';
   return '<div class="card joblist-item">' +
@@ -2393,19 +2407,60 @@ function apptCard(a) {
     '</button>' + badge +
   '</div>';
 }
+/* ── Google Calendar (read-only view of the owner's calendar) ── */
+var GCAL_CLIENT_ID = '112953969499-jeeods2h5i465pqnnpcp09iig9ua32j5.apps.googleusercontent.com';
+var GCAL_SCOPE = 'https://www.googleapis.com/auth/calendar.readonly';
+function gcalToken() { try { var t = JSON.parse(localStorage.getItem('aio-gcal-tok')); if (t && t.exp > Date.now() + 60000) return t.token; } catch (e) {} return null; }
+function gcalSaveToken(tok, expiresIn) { try { localStorage.setItem('aio-gcal-tok', JSON.stringify({ token: tok, exp: Date.now() + (Number(expiresIn) || 3600) * 1000 })); } catch (e) {} }
+function gcalLoadGIS() { return new Promise(function (res, rej) { if (window.google && google.accounts && google.accounts.oauth2) return res(); var s = document.createElement('script'); s.src = 'https://accounts.google.com/gsi/client'; s.async = true; s.onload = res; s.onerror = rej; document.head.appendChild(s); }); }
+function gcalConnect() {
+  gcalLoadGIS().then(function () {
+    var client = google.accounts.oauth2.initTokenClient({
+      client_id: GCAL_CLIENT_ID, scope: GCAL_SCOPE,
+      callback: function (resp) { if (resp && resp.access_token) { gcalSaveToken(resp.access_token, resp.expires_in); gcalFetch(); } else { alert('Google connection was cancelled.'); } }
+    });
+    client.requestAccessToken();
+  }).catch(function () { alert('Could not load Google. Check your internet and try again.'); });
+}
+function gcalFetch() {
+  var tok = gcalToken(); if (!tok) { gcalConnect(); return; }
+  var min = new Date(Date.now() - 24 * 3600 * 1000).toISOString();
+  fetch('https://www.googleapis.com/calendar/v3/calendars/primary/events?timeMin=' + encodeURIComponent(min) + '&maxResults=50&singleEvents=true&orderBy=startTime', { headers: { Authorization: 'Bearer ' + tok } })
+    .then(function (r) { if (r.status === 401) { localStorage.removeItem('aio-gcal-tok'); throw new Error('reauth'); } return r.json(); })
+    .then(function (data) {
+      state.gcalEvents = (data.items || []).map(function (ev) {
+        var s = (ev.start && (ev.start.dateTime || ev.start.date)) || '';
+        var tm = ev.start && ev.start.dateTime ? new Date(ev.start.dateTime).toTimeString().slice(0, 5) : '';
+        return { title: ev.summary || '(no title)', date: String(s).slice(0, 10), time: tm, location: ev.location || '', google: true };
+      });
+      state.gcalConnected = true; state.gcalErr = null; if (state.view === 'schedule') render();
+    })
+    .catch(function (err) { if (err && err.message === 'reauth') gcalConnect(); else { state.gcalErr = 'Could not read your Google Calendar.'; if (state.view === 'schedule') render(); } });
+}
+function gEventCard(ev) {
+  return '<div class="card joblist-item" style="background:#fbf7ee"><div class="meta"><div class="name">' + esc(((ev.time || '') + '  ' + ev.title).trim()) + '</div><div class="sub">' + esc(ev.location || 'From Google Calendar') + '</div></div><span class="pill" style="background:#e8dcc0;color:#7c6220">GOOGLE</span></div>';
+}
 function viewSchedule() {
-  var list = loadSched().slice().sort(function (a, b) { return (a.date + (a.time || '')).localeCompare(b.date + (b.time || '')); });
+  var appts = loadSched().slice();
+  var gev = state.gcalEvents || [];
   var byDate = {};
-  list.forEach(function (a) { (byDate[a.date] = byDate[a.date] || []).push(a); });
+  appts.forEach(function (a) { (byDate[a.date] = byDate[a.date] || { a: [], g: [] }).a.push(a); });
+  gev.forEach(function (e) { if (!e.date) return; (byDate[e.date] = byDate[e.date] || { a: [], g: [] }).g.push(e); });
   var dates = Object.keys(byDate).sort();
   var today = isoToday(), tom = isoAddDays(today, 1);
+  var bar = state.gcalConnected
+    ? '<div class="row" style="gap:8px;margin-bottom:12px"><div style="flex:1;align-self:center;font-size:13px;color:var(--muted)">Google Calendar connected ✓</div><button class="btn btn-ghost" data-act="gcal-refresh" style="padding:8px 12px">Refresh</button></div>'
+    : '<button class="btn btn-gold btn-wide" data-act="gcal-connect" style="margin-bottom:12px">Connect Google Calendar</button>';
+  if (state.gcalErr) bar += '<div style="color:var(--defect);font-size:13px;margin-bottom:10px">' + esc(state.gcalErr) + '</div>';
   var body = dates.length ? dates.map(function (d) {
     var label = d === today ? 'Today · ' + fmtDay(d) : (d === tom ? 'Tomorrow · ' + fmtDay(d) : fmtDay(d));
-    return '<div class="eyebrow">' + esc(label) + '</div>' + byDate[d].map(apptCard).join('');
-  }).join('') : '<div class="empty">No jobs scheduled. Add your first one.</div>';
+    var g = byDate[d];
+    var appsSorted = g.a.sort(function (x, y) { return (x.time || '').localeCompare(y.time || ''); });
+    return '<div class="eyebrow">' + esc(label) + '</div>' + appsSorted.map(apptCard).join('') + g.g.map(gEventCard).join('');
+  }).join('') : '<div class="empty">No jobs yet. Add one, or connect your Google Calendar above.</div>';
   return '<div class="app">' +
     '<div class="topbar"><button class="iconbtn" data-act="home">‹</button><div style="flex:1"><h1>Schedule</h1></div></div>' +
-    '<div class="screen">' + body + '</div>' +
+    '<div class="screen">' + bar + body + '</div>' +
     '<div class="bottombar"><button class="btn btn-primary" data-act="appt-new">Add job</button></div>' +
   '</div>';
 }
@@ -2421,6 +2476,7 @@ function viewAppt() {
         '<div class="field" style="margin-bottom:0"><label>Notes</label><textarea data-model="appt.notes">' + esc(a.notes || '') + '</textarea></div></div>' +
       '<div class="card"><div class="eyebrow">Actions</div><div class="row" style="gap:6px;flex-wrap:wrap">' +
         '<button class="btn btn-ghost" data-act="ai-start">Start inspection</button>' +
+        '<a class="btn btn-gold" href="' + gcalLink(a) + '" target="_blank" rel="noopener">Add to calendar</a>' +
         (waLink ? '<a class="btn btn-ghost" href="' + waLink + '" target="_blank" rel="noopener">Message customer</a>' : '') +
         '<button class="btn btn-ghost" data-act="appt-done" data-arg="' + esc(a.id) + '">' + (a.status === 'done' ? 'Mark not done' : 'Mark done') + '</button>' +
       '</div></div>' +
@@ -2918,7 +2974,9 @@ root.addEventListener('click', function (e) {
     case 'sig-done': sigDone(); break;
     case 'clients': state.view = 'clients'; render(); break;
     case 'message-start': state.msg = { channel: 'whatsapp', text: '', off: {}, busy: false, err: null }; state.view = 'message'; render(); break;
-    case 'schedule': state.view = 'schedule'; render(); break;
+    case 'schedule': state.view = 'schedule'; render(); if (gcalToken() && !(state.gcalEvents && state.gcalEvents.length)) gcalFetch(); break;
+    case 'gcal-connect': gcalConnect(); break;
+    case 'gcal-refresh': gcalFetch(); break;
     case 'appt-new': state.editAppt = newAppt(); state.view = 'appt'; render(); break;
     case 'appt-open':
       var founda = loadSched().find(function (a) { return a.id === arg; });
