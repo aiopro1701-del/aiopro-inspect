@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Your Estimate — AIO Pro Chimney</title>
+<style>
+:root{--bg:#0F1D30;--card:#16202E;--ink:#F1EAD9;--muted:#9AA7B4;--gold:#C9A24B;--line:#2A3A4A;--paper:#F3EEE4;--dark:#1a1614}
+*{box-sizing:border-box}
+body{margin:0;background:var(--paper);color:var(--dark);font-family:-apple-system,Segoe UI,Roboto,sans-serif;font-size:16px;line-height:1.5}
+.wrap{max-width:720px;margin:0 auto;padding:0 0 40px}
+.top{background:var(--bg);color:var(--ink);padding:20px 18px;border-bottom:2px solid var(--gold)}
+.top .co{font-family:Georgia,serif;font-size:20px}
+.top .sub{color:var(--gold);font-size:12px;letter-spacing:1px;margin-top:2px}
+.pad{padding:18px}
+h1{font-family:Georgia,serif;font-size:24px;margin:10px 0 2px}
+.meta{color:#6b6b6b;font-size:14px;margin-bottom:14px}
+.forwho{background:#fff;border:0.5px solid #e0dacf;border-radius:12px;padding:14px;margin-bottom:16px}
+.forwho .lbl{color:#8a8a8a;font-size:12px;letter-spacing:1px}
+.opt{background:#fff;border:0.5px solid #e0dacf;border-radius:12px;overflow:hidden;margin-bottom:14px}
+.opt.rec{border:2px solid var(--gold)}
+.opt .hd{background:var(--bg);color:#fff;padding:12px 14px;display:flex;justify-content:space-between;align-items:center}
+.opt .hd .nm{font-weight:600;font-size:16px}
+.opt .hd .tot{font-family:Georgia,serif;font-size:18px;color:var(--gold)}
+.badge{display:inline-block;background:var(--gold);color:#0F1D30;font-size:11px;font-weight:700;padding:2px 8px;border-radius:20px;margin-left:8px;vertical-align:middle}
+.li{padding:10px 14px;border-top:0.5px solid #eee}
+.li .r{display:flex;justify-content:space-between;gap:10px}
+.li .nm{font-weight:600}
+.li .amt{white-space:nowrap;font-weight:600}
+.li .d{color:#777;font-size:13px;margin-top:2px}
+.li .qp{color:#999;font-size:12px}
+.terms{background:#fff;border:0.5px solid #e0dacf;border-radius:12px;padding:14px;color:#555;font-size:13px;margin-bottom:16px}
+.signbox{background:#fff;border:0.5px solid #e0dacf;border-radius:12px;padding:16px}
+.signbox h2{font-size:17px;margin:0 0 10px}
+input{width:100%;padding:11px;border:1px solid #d8d2c7;border-radius:8px;font-size:15px;margin-bottom:10px}
+canvas{width:100%;height:180px;background:#faf8f3;border:1px dashed #c9c2b5;border-radius:8px;touch-action:none;display:block}
+button{width:100%;padding:14px;border:none;border-radius:10px;background:var(--gold);color:#0F1D30;font-size:16px;font-weight:700;cursor:pointer;margin-top:12px}
+button.ghost{background:transparent;color:#555;border:1px solid #d8d2c7;font-weight:500;margin-top:8px}
+.done{background:#eaf3ee;border:1px solid #b9dcc7;color:#2b6a45;border-radius:12px;padding:16px;text-align:center;font-size:16px}
+.msg{color:#b03d27;font-size:14px;margin-top:8px}
+.center{text-align:center;padding:60px 20px;color:#777}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="top"><div class="co" id="co">AIO Pro Chimney</div><div class="sub" id="cosub">CHIMNEY · ROOFING</div></div>
+  <div id="app" class="pad"><div class="center">Loading your estimate…</div></div>
+</div>
+<script type="module">
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+var URL='https://frxjedjcfzybflorlyvp.supabase.co';
+var KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZyeGplZGpjZnp5YmZsb3JseXZwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODYzMzUzNTAsImV4cCI6MjEwMTkxMTM1MH0.shcVYA8vhN8NzYl4KosH5Qn62r1loxSi3uITxOgjPR0';
+var sb=createClient(URL,KEY);
+var app=document.getElementById('app');
+function esc(s){return String(s==null?'':s).replace(/[&<>"]/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];});}
+function money(n){n=Number(n)||0;return '$'+n.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g,',');}
+function line(it){return (Number(it.qty)||0)*(Number(it.price)||0);}
+function totals(o,tax){var sub=(o.items||[]).reduce(function(a,it){return a+line(it);},0);var disc=Number(o.disc)||0;var taxed=Math.max(0,sub-disc);var t=taxed*(Number(tax)||0)/100;return {sub:sub,disc:disc,tax:t,total:taxed+t};}
+var params=new URLSearchParams(location.search);
+var id=params.get('id');
+
+function render(row){
+  var e=row.payload||{}; var c=e.company||{}; var cu=e.customer||{};
+  if(c.name) document.getElementById('co').textContent=c.name;
+  var opts=(e.options||[]).filter(function(o){return (o.items||[]).some(function(it){return it.name||it.price;});});
+  var body='<h1>Your Estimate</h1><div class="meta">'+esc(c.name||'AIO Pro Chimney')+(c.phone?(' · '+esc(c.phone)):'')+' · '+new Date(row.created_at||Date.now()).toLocaleDateString()+'</div>';
+  body+='<div class="forwho"><div class="lbl">PREPARED FOR</div><div style="font-size:17px;font-weight:600;margin-top:3px">'+esc(cu.name||'')+'</div><div style="color:#666;font-size:14px">'+esc(cu.addr||'')+'</div><div style="color:#666;font-size:14px">'+esc([cu.phone,cu.email].filter(Boolean).join(' · '))+'</div></div>';
+  body+='<div class="meta">Choose the option that fits you best:</div>';
+  opts.forEach(function(o,i){
+    var t=totals(o,e.tax);
+    body+='<div class="opt'+(i===1?' rec':'')+'"><div class="hd"><div class="nm">Option '+(i+1)+': '+esc(o.name||'')+(i===1?'<span class="badge">RECOMMENDED</span>':'')+'</div><div class="tot">'+money(t.total)+'</div></div>';
+    (o.items||[]).forEach(function(it){
+      body+='<div class="li"><div class="r"><div class="nm">'+esc(it.name||'Item')+'</div><div class="amt">'+money(line(it))+'</div></div>'+(it.desc?('<div class="d">'+esc(it.desc)+'</div>'):'')+'<div class="qp">'+(Number(it.qty)||1)+' × '+money(it.price)+'</div></div>';
+    });
+    if(t.disc||t.tax){body+='<div class="li"><div class="r"><div style="color:#777">'+(t.disc?('Discount -'+money(t.disc)):'')+(t.tax?('  Tax '+money(t.tax)):'')+'</div><div></div></div></div>';}
+    body+='</div>';
+  });
+  var terms=(c.terms&&c.terms.trim())?c.terms:'This estimate is valid for 30 days. A deposit may be required to schedule work, with the balance due on completion unless otherwise agreed. All work is performed to NFPA 211 and local codes. Workmanship warranted for one year unless stated otherwise.';
+  body+='<div class="terms"><b>Terms &amp; conditions:</b><br>'+esc(terms)+'</div>';
+
+  if(row.status==='signed'){
+    body+='<div class="done">✓ Accepted and signed'+(row.signer_name?(' by '+esc(row.signer_name)):'')+'<br><span style="font-size:14px;color:#4a7658">'+new Date(row.signed_at).toLocaleString()+'</span></div>';
+    if(row.signature) body+='<div style="text-align:center;margin-top:10px"><img src="'+row.signature+'" style="max-width:240px;border:1px solid #e0dacf;border-radius:8px;background:#fff"></div>';
+  } else {
+    body+='<div class="signbox"><h2>Accept &amp; sign</h2><input id="signer" placeholder="Your full name"><div style="color:#888;font-size:13px;margin:2px 0 6px">Sign below with your finger or mouse:</div><canvas id="pad"></canvas><button class="ghost" id="clear">Clear signature</button><button id="accept">Accept &amp; sign this estimate</button><div class="msg" id="err"></div></div>';
+  }
+  app.innerHTML=body;
+  if(row.status!=='signed') setupSign(row);
+}
+
+function setupSign(row){
+  var canvas=document.getElementById('pad');
+  var rect=canvas.getBoundingClientRect();
+  canvas.width=Math.round(rect.width); canvas.height=180;
+  var ctx=canvas.getContext('2d'); ctx.lineWidth=2.5; ctx.lineCap='round'; ctx.strokeStyle='#14110f';
+  var drawing=false, has=false;
+  function pos(e){var r=canvas.getBoundingClientRect();var t=(e.touches&&e.touches[0])||e;return{x:t.clientX-r.left,y:t.clientY-r.top};}
+  canvas.addEventListener('pointerdown',function(e){e.preventDefault();drawing=true;has=true;var p=pos(e);ctx.beginPath();ctx.moveTo(p.x,p.y);});
+  canvas.addEventListener('pointermove',function(e){if(!drawing)return;e.preventDefault();var p=pos(e);ctx.lineTo(p.x,p.y);ctx.stroke();});
+  window.addEventListener('pointerup',function(){drawing=false;});
+  document.getElementById('clear').onclick=function(){ctx.clearRect(0,0,canvas.width,canvas.height);has=false;};
+  document.getElementById('accept').onclick=async function(){
+    var name=document.getElementById('signer').value.trim();
+    var err=document.getElementById('err');
+    if(!name){err.textContent='Please enter your name.';return;}
+    if(!has){err.textContent='Please sign in the box.';return;}
+    err.textContent='Saving…';
+    var sig=canvas.toDataURL('image/png');
+    var res=await sb.from('shared_estimates').update({status:'signed',signed_at:new Date().toISOString(),signer_name:name,signature:sig}).eq('id',row.id);
+    if(res.error){err.textContent='Error: '+res.error.message;return;}
+    row.status='signed';row.signed_at=new Date().toISOString();row.signer_name=name;row.signature=sig;
+    render(row);
+  };
+}
+
+(async function(){
+  if(!id){app.innerHTML='<div class="center">This link is missing an estimate id.</div>';return;}
+  var res=await sb.from('shared_estimates').select('*').eq('id',id).maybeSingle();
+  if(res.error||!res.data){app.innerHTML='<div class="center">Sorry, we couldn\'t find this estimate. Please check the link.</div>';return;}
+  var row=res.data;
+  if(row.status==='sent'){ try{ await sb.from('shared_estimates').update({status:'viewed',viewed_at:new Date().toISOString()}).eq('id',id); row.status='viewed'; }catch(e){} }
+  render(row);
+})();
+</script>
+</body>
+</html>

@@ -2512,9 +2512,10 @@ function viewEstimate() {
       '<div class="card"><div class="eyebrow">Your 3 options</div><div id="est_tabs" class="row" style="gap:6px;flex-wrap:wrap;margin-bottom:10px">' + renderEstTabsHTML() + '</div><div id="est_panel">' + renderEstPanelHTML() + '</div>' +
         '<div class="row" style="gap:10px;margin-top:8px"><div class="field" style="flex:1;margin-bottom:0"><label>Tax %</label><input id="est_tax" inputmode="decimal" value="' + (e.tax || 0) + '"></div><div class="field" style="flex:1;margin-bottom:0"><label>' + esc(o.name) + ' discount ($)</label><input id="est_disc" inputmode="decimal" value="' + (o.disc || 0) + '"></div></div>' +
         '<div id="est_totals">' + renderEstTotalsHTML() + '</div>' +
+        '<div class="row" style="gap:8px;margin-top:10px"><button class="btn btn-ghost" id="est_blank" style="flex:1">+ Blank line</button><button class="btn btn-ghost" id="est_status" style="flex:1">' + (e.shareId ? 'Check status' : 'Check status') + '</button></div>' +
       '</div>' +
     '</div>' +
-    '<div class="bottombar" style="gap:8px"><button class="btn btn-gold btn-primary" id="est_pdf">Create estimate PDF</button><button class="btn btn-ghost" id="est_blank">+ Blank line</button></div>' +
+    '<div class="bottombar" style="gap:8px"><button class="btn btn-gold btn-primary" id="est_pdf">Create PDF</button><button class="btn btn-ghost" id="est_share">' + (e.shareId ? 'Shared ✓ — copy link' : 'Share to sign') + '</button></div>' +
   '</div>';
 }
 function wireEstimate() {
@@ -2533,6 +2534,8 @@ function wireEstimate() {
   var tax = root.querySelector('#est_tax'); if (tax) tax.addEventListener('input', function () { e.tax = tax.value; estRefreshDOM(); });
   var disc = root.querySelector('#est_disc'); if (disc) disc.addEventListener('input', function () { e.options[e.active].disc = disc.value; estRefreshDOM(); });
   var pdf = root.querySelector('#est_pdf'); if (pdf) pdf.addEventListener('click', buildEstimatePdf);
+  var share = root.querySelector('#est_share'); if (share) share.addEventListener('click', shareEstimate);
+  var stat = root.querySelector('#est_status'); if (stat) stat.addEventListener('click', checkEstimateStatus);
   var blank = root.querySelector('#est_blank'); if (blank) blank.addEventListener('click', function () { e.options[e.active].items.push({ name: '', desc: '', qty: 1, price: 0 }); render(); });
 }
 function buildEstimatePdf() {
@@ -2579,6 +2582,47 @@ function buildEstimatePdf() {
   var fn = 'estimate-' + ((e.customer.name || 'customer').replace(/[^\w ]+/g, '').trim() || 'customer') + '-' + new Date().toISOString().slice(0, 10) + '.pdf';
   try { upsertEstimate(e); } catch (_) {}
   savePdf(fn, doc.output('blob'));
+}
+var CLOUD_URL = 'https://frxjedjcfzybflorlyvp.supabase.co';
+var CLOUD_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZyeGplZGpjZnp5YmZsb3JseXZwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODYzMzUzNTAsImV4cCI6MjEwMTkxMTM1MH0.shcVYA8vhN8NzYl4KosH5Qn62r1loxSi3uITxOgjPR0';
+var CLOUD_BASE = 'https://aiopro1701-del.github.io/aiopro-inspect/estimate-sign.html';
+function shareEstimate() {
+  var e = state.estimate; var s = state.settings;
+  if (!e || !e.options.some(function (o) { return o.items.length; })) { alert('Add at least one item first.'); return; }
+  var id = e.shareId || ('e' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6));
+  var payload = { customer: e.customer, tax: e.tax, options: e.options, company: { name: s.company, phone: s.phone, email: s.email, address: s.address, terms: s.terms } };
+  var link = CLOUD_BASE + '?id=' + id;
+  var btn = root.querySelector('#est_share'); if (btn) { btn.textContent = 'Sharing…'; btn.disabled = true; }
+  import('https://esm.sh/@supabase/supabase-js@2').then(function (mod) {
+    var sb = mod.createClient(CLOUD_URL, CLOUD_KEY);
+    return e.shareId
+      ? sb.from('shared_estimates').update({ payload: payload }).eq('id', id)
+      : sb.from('shared_estimates').insert({ id: id, payload: payload, status: 'sent' });
+  }).then(function (res) {
+    if (res.error) throw res.error;
+    e.shareId = id; e.shareLink = link; try { upsertEstimate(e); } catch (_) {}
+    if (btn) { btn.textContent = 'Shared ✓ — copy link'; btn.disabled = false; }
+    window.prompt('Send this link to your customer. They can view all 3 options and sign — and you\'ll see when they open and sign it:', link);
+  }).catch(function (err) {
+    if (btn) { btn.textContent = 'Share to sign'; btn.disabled = false; }
+    alert('Could not share: ' + ((err && err.message) || err) + '\n(Check your internet.)');
+  });
+}
+function checkEstimateStatus() {
+  var e = state.estimate; if (!e || !e.shareId) { alert('Share this estimate first, then you can check its status.'); return; }
+  var btn = root.querySelector('#est_status'); if (btn) { btn.textContent = 'Checking…'; btn.disabled = true; }
+  import('https://esm.sh/@supabase/supabase-js@2').then(function (mod) {
+    var sb = mod.createClient(CLOUD_URL, CLOUD_KEY);
+    return sb.from('shared_estimates').select('status,viewed_at,signed_at,signer_name').eq('id', e.shareId).maybeSingle();
+  }).then(function (res) {
+    if (btn) { btn.textContent = 'Check status'; btn.disabled = false; }
+    var d = res.data;
+    if (!d) { alert('Not found.'); return; }
+    var msg = d.status === 'signed' ? ('Signed by ' + (d.signer_name || 'customer') + ' on ' + new Date(d.signed_at).toLocaleString())
+      : d.status === 'viewed' ? ('Customer opened it on ' + new Date(d.viewed_at).toLocaleString() + ' — not signed yet.')
+      : 'Sent — customer has not opened it yet.';
+    alert(msg);
+  }).catch(function (err) { if (btn) { btn.textContent = 'Check status'; btn.disabled = false; } alert('Could not check: ' + ((err && err.message) || err)); });
 }
 
 /* ── Render + wiring ───────────────────────────────────────── */
