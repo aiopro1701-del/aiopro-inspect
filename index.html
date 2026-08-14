@@ -127,6 +127,14 @@ input, textarea, select { font-family: inherit; font-size: 16px; }
 .tile .lbl2 { font-size: 13px; margin-top: 9px; }
 .btn-gold { background: var(--gold); color: var(--gold-ink); }
 .btn-gold:active { background: #B68E3A; }
+.calgrid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 3px; }
+.calwk { text-align: center; color: var(--muted); font-size: 11px; font-weight: 600; padding: 2px 0; }
+.calcell { min-height: 66px; background: #fff; border: 0.5px solid var(--rule); border-radius: 6px; padding: 3px; overflow: hidden; }
+.calcell.empty { background: transparent; border: none; min-height: 0; }
+.calcell.today { border: 1.5px solid var(--gold); }
+.caldnum { font-size: 12px; color: var(--muted); text-align: right; margin-bottom: 2px; }
+.calchip { background: var(--soot); color: var(--ivory); font-size: 10px; line-height: 1.3; border-radius: 3px; padding: 1px 3px; margin-bottom: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.calmore { font-size: 10px; color: var(--muted); }
 /* Buttons on the dark top bar must stay readable (ivory text, gold outline). */
 .topbar .btn-ghost { color: var(--ivory); border: 1px solid rgba(201,162,75,0.55); background: transparent; }
 .topbar .btn-ghost:active { background: rgba(255,255,255,0.10); }
@@ -2407,61 +2415,132 @@ function apptCard(a) {
     '</button>' + badge +
   '</div>';
 }
-/* ── Google Calendar (read-only view of the owner's calendar) ── */
+/* ── Google Calendar (shared "AIO Pro Jobs" calendar — read/write) ── */
 var GCAL_CLIENT_ID = '112953969499-jeeods2h5i465pqnnpcp09iig9ua32j5.apps.googleusercontent.com';
-var GCAL_SCOPE = 'https://www.googleapis.com/auth/calendar.readonly';
-function gcalToken() { try { var t = JSON.parse(localStorage.getItem('aio-gcal-tok')); if (t && t.exp > Date.now() + 60000) return t.token; } catch (e) {} return null; }
-function gcalSaveToken(tok, expiresIn) { try { localStorage.setItem('aio-gcal-tok', JSON.stringify({ token: tok, exp: Date.now() + (Number(expiresIn) || 3600) * 1000 })); } catch (e) {} }
+var GCAL_SCOPE = 'https://www.googleapis.com/auth/calendar';
+var GCAL_ACCTS = [
+  { slot: 'A', label: 'AIO Pro', hint: 'aiopro1701@gmail.com', color: '#0F1D30' },
+  { slot: 'B', label: 'Refael', hint: 'refaelmaman6@gmail.com', color: '#3E7D57' }
+];
+var GMONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+var GWK = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
+function cpad(n) { return (n < 10 ? '0' : '') + n; }
+function gcalAcct(slot) { for (var i = 0; i < GCAL_ACCTS.length; i++) if (GCAL_ACCTS[i].slot === slot) return GCAL_ACCTS[i]; return GCAL_ACCTS[0]; }
+function gcalTok(slot) { try { var t = JSON.parse(localStorage.getItem('aio-gcal-' + slot)); if (t && t.exp > Date.now() + 60000) return t.token; } catch (e) {} return null; }
+function gcalSaveTok(slot, tok, expiresIn) { try { localStorage.setItem('aio-gcal-' + slot, JSON.stringify({ token: tok, exp: Date.now() + (Number(expiresIn) || 3600) * 1000 })); } catch (e) {} }
+function gcalForget(slot) { try { localStorage.removeItem('aio-gcal-' + slot); } catch (e) {} }
+function gcalConnectedSlots() { return GCAL_ACCTS.filter(function (a) { return gcalTok(a.slot); }); }
+function gcalApi() { return 'https://www.googleapis.com/calendar/v3/calendars/primary/events'; }
 function gcalLoadGIS() { return new Promise(function (res, rej) { if (window.google && google.accounts && google.accounts.oauth2) return res(); var s = document.createElement('script'); s.src = 'https://accounts.google.com/gsi/client'; s.async = true; s.onload = res; s.onerror = rej; document.head.appendChild(s); }); }
-function gcalConnect() {
+function gcalConnect(slot) {
+  var acct = gcalAcct(slot || 'A');
   gcalLoadGIS().then(function () {
     var client = google.accounts.oauth2.initTokenClient({
-      client_id: GCAL_CLIENT_ID, scope: GCAL_SCOPE,
-      callback: function (resp) { if (resp && resp.access_token) { gcalSaveToken(resp.access_token, resp.expires_in); gcalFetch(); } else { alert('Google connection was cancelled.'); } }
+      client_id: GCAL_CLIENT_ID, scope: GCAL_SCOPE, hint: acct.hint,
+      callback: function (resp) { if (resp && resp.access_token) { gcalSaveTok(acct.slot, resp.access_token, resp.expires_in); gcalFetch(); } else { alert('Google connection was cancelled.'); } }
     });
     client.requestAccessToken();
   }).catch(function () { alert('Could not load Google. Check your internet and try again.'); });
 }
-function gcalFetch() {
-  var tok = gcalToken(); if (!tok) { gcalConnect(); return; }
-  var min = new Date(Date.now() - 24 * 3600 * 1000).toISOString();
-  fetch('https://www.googleapis.com/calendar/v3/calendars/primary/events?timeMin=' + encodeURIComponent(min) + '&maxResults=50&singleEvents=true&orderBy=startTime', { headers: { Authorization: 'Bearer ' + tok } })
-    .then(function (r) { if (r.status === 401) { localStorage.removeItem('aio-gcal-tok'); throw new Error('reauth'); } return r.json(); })
-    .then(function (data) {
-      state.gcalEvents = (data.items || []).map(function (ev) {
-        var s = (ev.start && (ev.start.dateTime || ev.start.date)) || '';
-        var tm = ev.start && ev.start.dateTime ? new Date(ev.start.dateTime).toTimeString().slice(0, 5) : '';
-        return { title: ev.summary || '(no title)', date: String(s).slice(0, 10), time: tm, location: ev.location || '', google: true };
-      });
-      state.gcalConnected = true; state.gcalErr = null; if (state.view === 'schedule') render();
-    })
-    .catch(function (err) { if (err && err.message === 'reauth') gcalConnect(); else { state.gcalErr = 'Could not read your Google Calendar.'; if (state.view === 'schedule') render(); } });
+function calMonthRange() {
+  var c = state.calMonth || (state.calMonth = { y: new Date().getFullYear(), m: new Date().getMonth() });
+  return { min: new Date(c.y, c.m - 1, 20).toISOString(), max: new Date(c.y, c.m + 2, 10).toISOString() };
 }
-function gEventCard(ev) {
-  return '<div class="card joblist-item" style="background:#fbf7ee"><div class="meta"><div class="name">' + esc(((ev.time || '') + '  ' + ev.title).trim()) + '</div><div class="sub">' + esc(ev.location || 'From Google Calendar') + '</div></div><span class="pill" style="background:#e8dcc0;color:#7c6220">GOOGLE</span></div>';
+function gcalFetch() {
+  var slots = gcalConnectedSlots();
+  if (!slots.length) { state.gcalEvents = []; if (state.view === 'schedule') render(); return; }
+  var r = calMonthRange(), all = [], done = 0;
+  slots.forEach(function (a) {
+    var tok = gcalTok(a.slot);
+    fetch(gcalApi() + '?timeMin=' + encodeURIComponent(r.min) + '&timeMax=' + encodeURIComponent(r.max) + '&maxResults=250&singleEvents=true&orderBy=startTime', { headers: { Authorization: 'Bearer ' + tok } })
+      .then(function (res) { if (res.status === 401) { gcalForget(a.slot); throw new Error('reauth'); } return res.json(); })
+      .then(function (data) {
+        (data.items || []).forEach(function (ev) {
+          var sd = (ev.start && (ev.start.dateTime || ev.start.date)) || '';
+          var tm = ev.start && ev.start.dateTime ? new Date(ev.start.dateTime).toTimeString().slice(0, 5) : '';
+          all.push({ id: ev.id, acct: a.slot, color: a.color, title: ev.summary || '(no title)', date: String(sd).slice(0, 10), time: tm, location: ev.location || '', notes: ev.description || '' });
+        });
+      })
+      .catch(function () {})
+      .then(function () { done++; if (done === slots.length) { state.gcalEvents = all; state.gcalErr = null; if (state.view === 'schedule') render(); } });
+  });
+}
+function gcalEventBody(ev) {
+  var body = { summary: ev.title || 'Job', location: ev.location || '', description: ev.notes || '' };
+  var tz = 'America/Chicago'; try { tz = Intl.DateTimeFormat().resolvedOptions().timeZone || tz; } catch (e) {}
+  if (ev.time) {
+    var s = new Date(ev.date + 'T' + ev.time); var e2 = new Date(s.getTime() + 90 * 60000);
+    body.start = { dateTime: s.toISOString(), timeZone: tz }; body.end = { dateTime: e2.toISOString(), timeZone: tz };
+  } else {
+    var nd = new Date(ev.date + 'T00:00'); nd.setDate(nd.getDate() + 1);
+    body.start = { date: ev.date }; body.end = { date: nd.getFullYear() + '-' + cpad(nd.getMonth() + 1) + '-' + cpad(nd.getDate()) };
+  }
+  return body;
+}
+function gcalSaveEvent(ev, cb) {
+  var slot = ev.acct || 'A'; var tok = gcalTok(slot);
+  if (!tok) { alert('Connect the ' + gcalAcct(slot).label + ' calendar first.'); gcalConnect(slot); return; }
+  if (!ev.date) { alert('Pick a date first.'); return; }
+  var base = gcalApi(), url = ev.id ? (base + '/' + encodeURIComponent(ev.id)) : base;
+  fetch(url, { method: ev.id ? 'PUT' : 'POST', headers: { Authorization: 'Bearer ' + tok, 'Content-Type': 'application/json' }, body: JSON.stringify(gcalEventBody(ev)) })
+    .then(function (r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
+    .then(function () { gcalFetch(); if (cb) cb(); })
+    .catch(function (e) { alert('Could not save: ' + e.message + '. Try connecting that calendar again.'); });
+}
+function gcalDeleteEvent(id, slot) {
+  var tok = gcalTok(slot || 'A'); if (!tok) return;
+  fetch(gcalApi() + '/' + encodeURIComponent(id), { method: 'DELETE', headers: { Authorization: 'Bearer ' + tok } }).then(function () { gcalFetch(); });
 }
 function viewSchedule() {
-  var appts = loadSched().slice();
-  var gev = state.gcalEvents || [];
+  var c = state.calMonth || (state.calMonth = { y: new Date().getFullYear(), m: new Date().getMonth() });
+  var connBar = '<div class="row" style="gap:8px;margin-bottom:12px">' + GCAL_ACCTS.map(function (a) {
+    var on = !!gcalTok(a.slot);
+    return '<button class="btn ' + (on ? 'btn-ghost' : 'btn-gold') + '" data-act="gcal-connect" data-arg="' + a.slot + '" style="flex:1;padding:8px 6px;font-size:13px"><span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:' + a.color + ';margin-right:6px;vertical-align:middle"></span>' + esc(a.label) + (on ? ' ✓' : '') + '</button>';
+  }).join('') + '</div>';
+  if (!gcalConnectedSlots().length) {
+    return '<div class="app"><div class="topbar"><button class="iconbtn" data-act="home">‹</button><div style="flex:1"><h1>Schedule</h1></div></div>' +
+      '<div class="screen">' + connBar + '<div class="empty">Connect both your calendars above — AIO Pro and Refael. You will see both here in one place, color-coded, and can add or edit jobs on either one — all from the app.</div></div></div>';
+  }
   var byDate = {};
-  appts.forEach(function (a) { (byDate[a.date] = byDate[a.date] || { a: [], g: [] }).a.push(a); });
-  gev.forEach(function (e) { if (!e.date) return; (byDate[e.date] = byDate[e.date] || { a: [], g: [] }).g.push(e); });
-  var dates = Object.keys(byDate).sort();
-  var today = isoToday(), tom = isoAddDays(today, 1);
-  var bar = state.gcalConnected
-    ? '<div class="row" style="gap:8px;margin-bottom:12px"><div style="flex:1;align-self:center;font-size:13px;color:var(--muted)">Google Calendar connected ✓</div><button class="btn btn-ghost" data-act="gcal-refresh" style="padding:8px 12px">Refresh</button></div>'
-    : '<button class="btn btn-gold btn-wide" data-act="gcal-connect" style="margin-bottom:12px">Connect Google Calendar</button>';
-  if (state.gcalErr) bar += '<div style="color:var(--defect);font-size:13px;margin-bottom:10px">' + esc(state.gcalErr) + '</div>';
-  var body = dates.length ? dates.map(function (d) {
-    var label = d === today ? 'Today · ' + fmtDay(d) : (d === tom ? 'Tomorrow · ' + fmtDay(d) : fmtDay(d));
-    var g = byDate[d];
-    var appsSorted = g.a.sort(function (x, y) { return (x.time || '').localeCompare(y.time || ''); });
-    return '<div class="eyebrow">' + esc(label) + '</div>' + appsSorted.map(apptCard).join('') + g.g.map(gEventCard).join('');
-  }).join('') : '<div class="empty">No jobs yet. Add one, or connect your Google Calendar above.</div>';
+  (state.gcalEvents || []).forEach(function (e) { if (e.date) (byDate[e.date] = byDate[e.date] || []).push(e); });
+  var first = new Date(c.y, c.m, 1), startDow = first.getDay(), dim = new Date(c.y, c.m + 1, 0).getDate();
+  var todayStr = isoToday(), cells = '', dn = 1, total = Math.ceil((startDow + dim) / 7) * 7;
+  for (var i = 0; i < total; i++) {
+    if (i < startDow || dn > dim) { cells += '<div class="calcell empty"></div>'; }
+    else {
+      var ds = c.y + '-' + cpad(c.m + 1) + '-' + cpad(dn);
+      var evs = (byDate[ds] || []).sort(function (a, b) { return (a.time || '').localeCompare(b.time || ''); });
+      var chips = evs.slice(0, 3).map(function (e) { return '<div class="calchip" data-act="cal-open" data-arg="' + esc(e.acct + '|' + e.id) + '" style="background:' + (e.color || '#0F1D30') + '">' + esc((e.time ? e.time + ' ' : '') + e.title) + '</div>'; }).join('');
+      if (evs.length > 3) chips += '<div class="calmore">+' + (evs.length - 3) + ' more</div>';
+      cells += '<div class="calcell' + (ds === todayStr ? ' today' : '') + '" data-act="cal-day" data-arg="' + ds + '"><div class="caldnum">' + dn + '</div>' + chips + '</div>';
+      dn++;
+    }
+  }
+  var head = '<div class="row" style="align-items:center;margin-bottom:10px"><button class="iconbtn" data-act="cal-prev" style="color:var(--ink)">‹</button><div style="flex:1;text-align:center;font-family:var(--serif);font-size:19px">' + GMONTHS[c.m] + ' ' + c.y + '</div><button class="iconbtn" data-act="cal-next" style="color:var(--ink)">›</button></div>';
+  var wk = '<div class="calgrid" style="margin-bottom:3px">' + GWK.map(function (w) { return '<div class="calwk">' + w + '</div>'; }).join('') + '</div>';
   return '<div class="app">' +
-    '<div class="topbar"><button class="iconbtn" data-act="home">‹</button><div style="flex:1"><h1>Schedule</h1></div></div>' +
-    '<div class="screen">' + bar + body + '</div>' +
-    '<div class="bottombar"><button class="btn btn-primary" data-act="appt-new">Add job</button></div>' +
+    '<div class="topbar"><button class="iconbtn" data-act="home">‹</button><div style="flex:1"><h1>Schedule</h1><div class="sub">Both calendars</div></div><button class="iconbtn" data-act="gcal-refresh" aria-label="Refresh">⟳</button></div>' +
+    '<div class="screen">' + connBar + head + wk + '<div class="calgrid">' + cells + '</div>' +
+      '<div class="muted" style="margin-top:10px;font-size:13px">Tap a day to add a job, or a job to edit it. Colours show which calendar. Changes save straight to Google.</div>' +
+    '</div>' +
+    '<div class="bottombar"><button class="btn btn-gold btn-primary" data-act="cal-new">+ New job</button></div>' +
+  '</div>';
+}
+function viewCalEvent() {
+  var e = state.editEvent || (state.editEvent = { title: '', date: isoToday(), time: '09:00', location: '', notes: '', acct: 'A' });
+  if (!e.acct) e.acct = 'A';
+  var acctBtns = GCAL_ACCTS.map(function (a) { return '<button class="btn ' + (e.acct === a.slot ? 'btn-gold btn-primary' : 'btn-ghost') + '" data-act="cev-acct" data-arg="' + a.slot + '" style="flex:1"><span style="display:inline-block;width:9px;height:9px;border-radius:50%;background:' + a.color + ';margin-right:5px;vertical-align:middle"></span>' + esc(a.label) + '</button>'; }).join('');
+  return '<div class="app">' +
+    '<div class="topbar"><button class="iconbtn" data-act="schedule">‹</button><div style="flex:1"><h1>' + (e.id ? 'Edit job' : 'New job') + '</h1></div></div>' +
+    '<div class="screen"><div class="card">' +
+      '<label style="color:var(--muted);font-size:13px">Which calendar</label><div class="row" style="gap:8px;margin:4px 0 12px">' + acctBtns + '</div>' +
+      '<div class="field"><label>Title (e.g. Inspection — John Smith)</label><input data-model="cev.title" value="' + esc(e.title || '') + '" autofocus></div>' +
+      '<div class="row" style="gap:10px"><div class="field" style="flex:1"><label>Date (YYYY-MM-DD)</label><input data-model="cev.date" value="' + esc(e.date || '') + '"></div>' +
+        '<div class="field" style="flex:1"><label>Time (blank = all day)</label><input data-model="cev.time" value="' + esc(e.time || '') + '"></div></div>' +
+      '<div class="field"><label>Location</label><input data-model="cev.location" value="' + esc(e.location || '') + '"></div>' +
+      '<div class="field" style="margin-bottom:0"><label>Notes</label><textarea data-model="cev.notes">' + esc(e.notes || '') + '</textarea></div>' +
+    '</div></div>' +
+    '<div class="bottombar" style="gap:8px"><button class="btn btn-gold btn-primary" data-act="cal-save">Save to calendar</button>' + (e.id ? '<button class="btn btn-ghost" data-act="cal-del" data-arg="' + esc(e.acct + '|' + e.id) + '">Delete</button>' : '') + '</div>' +
   '</div>';
 }
 function viewAppt() {
@@ -2696,6 +2775,7 @@ function render() {
   else if (state.view === 'client') html = viewClient();
   else if (state.view === 'message') html = viewMessage();
   else if (state.view === 'schedule') html = viewSchedule();
+  else if (state.view === 'calevent') html = viewCalEvent();
   else if (state.view === 'appt') html = viewAppt();
   else if (state.view === 'settings') html = viewSettings();
   else html = viewHome();
@@ -2763,6 +2843,9 @@ function wireInputs() {
       } else if (path.indexOf('appt.') === 0) {
         var ak = path.slice(5);
         state.editAppt = Object.assign({}, state.editAppt || newAppt(), defObj(ak, val));
+      } else if (path.indexOf('cev.') === 0) {
+        var evk = path.slice(4);
+        state.editEvent = Object.assign({}, state.editEvent || {}, defObj(evk, val));
       }
     };
     el.addEventListener('input', modelHandler);
@@ -2974,9 +3057,17 @@ root.addEventListener('click', function (e) {
     case 'sig-done': sigDone(); break;
     case 'clients': state.view = 'clients'; render(); break;
     case 'message-start': state.msg = { channel: 'whatsapp', text: '', off: {}, busy: false, err: null }; state.view = 'message'; render(); break;
-    case 'schedule': state.view = 'schedule'; render(); if (gcalToken() && !(state.gcalEvents && state.gcalEvents.length)) gcalFetch(); break;
-    case 'gcal-connect': gcalConnect(); break;
+    case 'schedule': state.view = 'schedule'; render(); if (gcalConnectedSlots().length) gcalFetch(); break;
+    case 'gcal-connect': gcalConnect(arg || 'A'); break;
     case 'gcal-refresh': gcalFetch(); break;
+    case 'cal-prev': { var cp = state.calMonth; cp.m--; if (cp.m < 0) { cp.m = 11; cp.y--; } render(); gcalFetch(); break; }
+    case 'cal-next': { var cn = state.calMonth; cn.m++; if (cn.m > 11) { cn.m = 0; cn.y++; } render(); gcalFetch(); break; }
+    case 'cal-day': state.editEvent = { title: '', date: arg, time: '09:00', location: '', notes: '', acct: 'A' }; state.view = 'calevent'; render(); break;
+    case 'cal-new': state.editEvent = { title: '', date: isoToday(), time: '09:00', location: '', notes: '', acct: 'A' }; state.view = 'calevent'; render(); break;
+    case 'cev-acct': if (state.editEvent) { state.editEvent.acct = arg; render(); } break;
+    case 'cal-open': { var op = String(arg).split('|'), oSlot = op[0], oId = op[1]; var ce = (state.gcalEvents || []).filter(function (x) { return x.id === oId && x.acct === oSlot; })[0] || (state.gcalEvents || []).filter(function (x) { return x.id === oId; })[0]; if (ce) { state.editEvent = { id: ce.id, acct: ce.acct || 'A', title: ce.title, date: ce.date, time: ce.time, location: ce.location, notes: ce.notes }; state.view = 'calevent'; render(); } break; }
+    case 'cal-save': gcalSaveEvent(state.editEvent, function () { state.view = 'schedule'; render(); }); break;
+    case 'cal-del': if (confirm('Delete this job from the calendar?')) { var dp = String(arg).split('|'); gcalDeleteEvent(dp[1] || dp[0], dp[1] ? dp[0] : (state.editEvent && state.editEvent.acct) || 'A'); state.view = 'schedule'; render(); } break;
     case 'appt-new': state.editAppt = newAppt(); state.view = 'appt'; render(); break;
     case 'appt-open':
       var founda = loadSched().find(function (a) { return a.id === arg; });
