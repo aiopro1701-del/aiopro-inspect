@@ -2446,27 +2446,41 @@ function calMonthRange() {
   var c = state.calMonth || (state.calMonth = { y: new Date().getFullYear(), m: new Date().getMonth() });
   return { min: new Date(c.y, c.m - 1, 20).toISOString(), max: new Date(c.y, c.m + 2, 10).toISOString() };
 }
+function gcalDay(iso) { var d = new Date(iso); return d.getFullYear() + '-' + cpad(d.getMonth() + 1) + '-' + cpad(d.getDate()); }
+var gcalGen = {};
 function gcalFetch() {
   var slots = gcalConnectedSlots();
   if (!slots.length) { state.gcalEvents = []; if (state.view === 'schedule') render(); return; }
   var r = calMonthRange(), all = [], done = 0;
+  var range = { from: gcalDay(r.min), to: gcalDay(r.max) };
   slots.forEach(function (a) {
-    var tok = gcalTok(a.slot);
-    fetch(gcalApi() + '?timeMin=' + encodeURIComponent(r.min) + '&timeMax=' + encodeURIComponent(r.max) + '&maxResults=250&singleEvents=true&orderBy=startTime', { headers: { Authorization: 'Bearer ' + tok } })
-      .then(function (res) { if (res.status === 401) { gcalForget(a.slot); throw new Error('reauth'); } return res.json(); })
-      .then(function (data) {
-        (data.items || []).forEach(function (ev) {
-          var sd = (ev.start && (ev.start.dateTime || ev.start.date)) || '';
-          var tm = ev.start && ev.start.dateTime ? new Date(ev.start.dateTime).toTimeString().slice(0, 5) : '';
-          all.push({ id: ev.id, acct: a.slot, color: a.color, title: ev.summary || '(no title)', date: String(sd).slice(0, 10), time: tm, location: ev.location || '', notes: ev.description || '' });
+    var tok = gcalTok(a.slot), mine = [], complete = false;
+    var gen = gcalGen[a.slot] = (gcalGen[a.slot] || 0) + 1;
+    function page(pageToken, n) {
+      return fetch(gcalApi() + '?timeMin=' + encodeURIComponent(r.min) + '&timeMax=' + encodeURIComponent(r.max) + '&maxResults=250&singleEvents=true&orderBy=startTime' + (pageToken ? '&pageToken=' + encodeURIComponent(pageToken) : ''), { headers: { Authorization: 'Bearer ' + tok } })
+        .then(function (res) { if (res.status === 401) { gcalForget(a.slot); throw new Error('reauth'); } if (!res.ok) throw new Error('HTTP ' + res.status); return res.json(); })
+        .then(function (data) {
+          (data.items || []).forEach(function (ev) {
+            if (ev.status === 'cancelled') return;
+            var sd = (ev.start && (ev.start.dateTime || ev.start.date)) || '';
+            var tm = ev.start && ev.start.dateTime ? new Date(ev.start.dateTime).toTimeString().slice(0, 5) : '';
+            var et = ev.end && ev.end.dateTime ? new Date(ev.end.dateTime).toTimeString().slice(0, 5) : '';
+            var xp = (ev.extendedProperties && ev.extendedProperties.private) || {};
+            var dday = ev.start && ev.start.dateTime ? gcalDay(ev.start.dateTime) : String(sd).slice(0, 10);
+            mine.push({ id: ev.id, acct: a.slot, color: a.color, title: ev.summary || '(no title)', date: dday, time: tm, endTime: et, location: ev.location || '', notes: ev.description || '', worker: xp.aioWorker === '1' });
+          });
+          if (data.nextPageToken && n < 8) return page(data.nextPageToken, n + 1);
+          complete = !data.nextPageToken;
         });
-      })
+    }
+    page('', 1)
+      .then(function () { if (complete && gen === gcalGen[a.slot]) workerSync(a.slot, range, mine); })
       .catch(function () {})
-      .then(function () { done++; if (done === slots.length) { state.gcalEvents = all; state.gcalErr = null; if (state.view === 'schedule') render(); } });
+      .then(function () { all = all.concat(mine); done++; if (done === slots.length) { state.gcalEvents = all; state.gcalErr = null; if (state.view === 'schedule') render(); } });
   });
 }
 function gcalEventBody(ev) {
-  var body = { summary: ev.title || 'Job', location: ev.location || '', description: ev.notes || '' };
+  var body = { summary: ev.title || 'Job', location: ev.location || '', description: ev.notes || '', extendedProperties: { private: { aioWorker: ev.worker ? '1' : '0' } } };
   var tz = 'America/Chicago'; try { tz = Intl.DateTimeFormat().resolvedOptions().timeZone || tz; } catch (e) {}
   if (ev.time) {
     var s = new Date(ev.date + 'T' + ev.time); var e2 = new Date(s.getTime() + 90 * 60000);
@@ -2491,6 +2505,42 @@ function gcalDeleteEvent(id, slot) {
   var tok = gcalTok(slot || 'A'); if (!tok) return;
   fetch(gcalApi() + '/' + encodeURIComponent(id), { method: 'DELETE', headers: { Authorization: 'Bearer ' + tok } }).then(function () { gcalFetch(); });
 }
+/* ── Worker app sharing (owner decides which jobs the technician sees) ── */
+var WORKER_BASE = 'https://aiopro1701-del.github.io/aiopro-inspect/worker.html';
+function ownerKey() { try { return localStorage.getItem('aio-owner-key') || ''; } catch (e) { return ''; } }
+function cloudRpc(fn, args) {
+  return fetch(CLOUD_URL + '/rest/v1/rpc/' + fn, {
+    method: 'POST',
+    headers: { apikey: CLOUD_KEY, Authorization: 'Bearer ' + CLOUD_KEY, 'Content-Type': 'application/json' },
+    body: JSON.stringify(args || {})
+  }).then(function (r) {
+    return r.text().then(function (t) {
+      var d = null; try { d = t ? JSON.parse(t) : null; } catch (e) { d = t; }
+      if (!r.ok) throw new Error((d && d.message) || ('HTTP ' + r.status));
+      return d;
+    });
+  });
+}
+/* Copy one calendar's "worker can see" jobs (inside the loaded window) to the worker list. */
+function workerSync(slot, range, events) {
+  var key = ownerKey(); if (!key) return;
+  var jobs = events.filter(function (e) { return e.worker; }).map(function (e) {
+    return { event_id: e.id, title: e.title, day: (e.date < range.from ? range.from : e.date), start_time: e.time || '', end_time: e.endTime || '', location: e.location || '', notes: e.notes || '' };
+  });
+  cloudRpc('worker_jobs_sync', { p_owner: key, p_acct: slot, p_from: range.from, p_to: range.to, p_jobs: jobs })
+    .then(function () { var had = state.workerSyncErr; state.workerSyncErr = null; if (had && state.view === 'schedule') render(); })
+    .catch(function (err) { state.workerSyncErr = (err && err.message) || 'error'; if (state.view === 'schedule') render(); });
+}
+function workerLink(reset) {
+  var key = ownerKey();
+  if (!key) { alert('Worker sharing is not set up on this phone yet. Open the setup link once on this phone.'); return; }
+  if (reset && !confirm('Make a NEW worker link? The old link will stop working right away.')) return;
+  cloudRpc(reset ? 'worker_key_reset' : 'worker_key_get', { p_owner: key }).then(function (wk) {
+    if (!wk) throw new Error('not allowed');
+    var link = WORKER_BASE + '?k=' + encodeURIComponent(wk);
+    window.prompt((reset ? 'New link made. ' : '') + 'Send this link to your technician. He will see only the jobs you mark "Worker can see" — view only, he cannot change anything:', link);
+  }).catch(function (err) { alert('Could not get the worker link: ' + ((err && err.message) || err)); });
+}
 function viewSchedule() {
   var c = state.calMonth || (state.calMonth = { y: new Date().getFullYear(), m: new Date().getMonth() });
   var connBar = '<div class="row" style="gap:8px;margin-bottom:12px">' + GCAL_ACCTS.map(function (a) {
@@ -2510,7 +2560,7 @@ function viewSchedule() {
     else {
       var ds = c.y + '-' + cpad(c.m + 1) + '-' + cpad(dn);
       var evs = (byDate[ds] || []).sort(function (a, b) { return (a.time || '').localeCompare(b.time || ''); });
-      var chips = evs.slice(0, 3).map(function (e) { return '<div class="calchip" data-act="cal-open" data-arg="' + esc(e.acct + '|' + e.id) + '" style="background:' + (e.color || '#0F1D30') + '">' + esc((e.time ? e.time + ' ' : '') + e.title) + '</div>'; }).join('');
+      var chips = evs.slice(0, 3).map(function (e) { return '<div class="calchip" data-act="cal-open" data-arg="' + esc(e.acct + '|' + e.id) + '" style="background:' + (e.color || '#0F1D30') + (e.worker ? ';box-shadow:inset 4px 0 0 #C9A24B;padding-left:6px' : '') + '">' + esc((e.time ? e.time + ' ' : '') + e.title) + '</div>'; }).join('');
       if (evs.length > 3) chips += '<div class="calmore">+' + (evs.length - 3) + ' more</div>';
       cells += '<div class="calcell' + (ds === todayStr ? ' today' : '') + '" data-act="cal-day" data-arg="' + ds + '"><div class="caldnum">' + dn + '</div>' + chips + '</div>';
       dn++;
@@ -2521,9 +2571,20 @@ function viewSchedule() {
   return '<div class="app">' +
     '<div class="topbar"><button class="iconbtn" data-act="home">‹</button><div style="flex:1"><h1>Schedule</h1><div class="sub">Both calendars</div></div><button class="iconbtn" data-act="gcal-refresh" aria-label="Refresh">⟳</button></div>' +
     '<div class="screen">' + connBar + head + wk + '<div class="calgrid">' + cells + '</div>' +
-      '<div class="muted" style="margin-top:10px;font-size:13px">Tap a day to add a job, or a job to edit it. Colours show which calendar. Changes save straight to Google.</div>' +
+      '<div class="muted" style="margin-top:10px;font-size:13px">Tap a day to add a job, or a job to edit it. Colours show which calendar. Changes save straight to Google. A gold edge = your technician can see that job.</div>' +
+      viewWorkerCard() +
     '</div>' +
     '<div class="bottombar"><button class="btn btn-gold btn-primary" data-act="cal-new">+ New job</button></div>' +
+  '</div>';
+}
+function viewWorkerCard() {
+  var on = !!ownerKey();
+  return '<div class="card" style="margin-top:12px"><div class="eyebrow">Worker app (view only)</div>' +
+    (on
+      ? '<div class="muted" style="font-size:13px;margin:4px 0 10px">Your technician sees only the jobs you mark <b>Worker can see</b>. He cannot add, change or delete anything. The list updates every time you open this screen.</div>' +
+        (state.workerSyncErr ? '<div style="color:var(--defect);font-size:13px;margin-bottom:8px">Last update to the worker list failed: ' + esc(state.workerSyncErr) + '. Tap ⟳ to try again.</div>' : '') +
+        '<div class="row" style="gap:8px"><button class="btn btn-gold" data-act="worker-link" style="flex:1">Worker link</button><button class="btn btn-ghost" data-act="worker-reset" style="flex:1">New link</button></div>'
+      : '<div class="muted" style="font-size:13px;margin-top:4px">Worker sharing is not set up on this phone yet. Open the setup link once on this phone.</div>') +
   '</div>';
 }
 function viewCalEvent() {
@@ -2538,7 +2599,11 @@ function viewCalEvent() {
       '<div class="row" style="gap:10px"><div class="field" style="flex:1"><label>Date (YYYY-MM-DD)</label><input data-model="cev.date" value="' + esc(e.date || '') + '"></div>' +
         '<div class="field" style="flex:1"><label>Time (blank = all day)</label><input data-model="cev.time" value="' + esc(e.time || '') + '"></div></div>' +
       '<div class="field"><label>Location</label><input data-model="cev.location" value="' + esc(e.location || '') + '"></div>' +
-      '<div class="field" style="margin-bottom:0"><label>Notes</label><textarea data-model="cev.notes">' + esc(e.notes || '') + '</textarea></div>' +
+      '<div class="field"><label>Notes</label><textarea data-model="cev.notes">' + esc(e.notes || '') + '</textarea></div>' +
+      '<label style="color:var(--muted);font-size:13px">Worker can see this job?</label><div class="row" style="gap:8px;margin-top:4px">' +
+        '<button class="btn ' + (e.worker ? 'btn-gold btn-primary' : 'btn-ghost') + '" data-act="cev-worker" data-arg="1" style="flex:1">Yes, worker sees</button>' +
+        '<button class="btn ' + (!e.worker ? 'btn-gold btn-primary' : 'btn-ghost') + '" data-act="cev-worker" data-arg="0" style="flex:1">No, only me</button>' +
+      '</div>' +
     '</div></div>' +
     '<div class="bottombar" style="gap:8px"><button class="btn btn-gold btn-primary" data-act="cal-save">Save to calendar</button>' + (e.id ? '<button class="btn btn-ghost" data-act="cal-del" data-arg="' + esc(e.acct + '|' + e.id) + '">Delete</button>' : '') + '</div>' +
   '</div>';
@@ -3065,7 +3130,10 @@ root.addEventListener('click', function (e) {
     case 'cal-day': state.editEvent = { title: '', date: arg, time: '09:00', location: '', notes: '', acct: 'A' }; state.view = 'calevent'; render(); break;
     case 'cal-new': state.editEvent = { title: '', date: isoToday(), time: '09:00', location: '', notes: '', acct: 'A' }; state.view = 'calevent'; render(); break;
     case 'cev-acct': if (state.editEvent) { state.editEvent.acct = arg; render(); } break;
-    case 'cal-open': { var op = String(arg).split('|'), oSlot = op[0], oId = op[1]; var ce = (state.gcalEvents || []).filter(function (x) { return x.id === oId && x.acct === oSlot; })[0] || (state.gcalEvents || []).filter(function (x) { return x.id === oId; })[0]; if (ce) { state.editEvent = { id: ce.id, acct: ce.acct || 'A', title: ce.title, date: ce.date, time: ce.time, location: ce.location, notes: ce.notes }; state.view = 'calevent'; render(); } break; }
+    case 'cev-worker': if (state.editEvent) { state.editEvent.worker = arg === '1'; render(); } break;
+    case 'worker-link': workerLink(false); break;
+    case 'worker-reset': workerLink(true); break;
+    case 'cal-open': { var op = String(arg).split('|'), oSlot = op[0], oId = op[1]; var ce = (state.gcalEvents || []).filter(function (x) { return x.id === oId && x.acct === oSlot; })[0] || (state.gcalEvents || []).filter(function (x) { return x.id === oId; })[0]; if (ce) { state.editEvent = { id: ce.id, acct: ce.acct || 'A', title: ce.title, date: ce.date, time: ce.time, location: ce.location, notes: ce.notes, worker: !!ce.worker }; state.view = 'calevent'; render(); } break; }
     case 'cal-save': gcalSaveEvent(state.editEvent, function () { state.view = 'schedule'; render(); }); break;
     case 'cal-del': if (confirm('Delete this job from the calendar?')) { var dp = String(arg).split('|'); gcalDeleteEvent(dp[1] || dp[0], dp[1] ? dp[0] : (state.editEvent && state.editEvent.acct) || 'A'); state.view = 'schedule'; render(); } break;
     case 'appt-new': state.editAppt = newAppt(); state.view = 'appt'; render(); break;
@@ -3361,6 +3429,16 @@ function importData() {
 }
 
 /* ── Boot ──────────────────────────────────────────────────── */
+/* One-time setup link: ...?ownerkey=XXXX stores the worker-sharing owner key on this phone. */
+(function () {
+  try {
+    var ok = new URLSearchParams(location.search).get('ownerkey');
+    if (ok) {
+      localStorage.setItem('aio-owner-key', ok);
+      history.replaceState(null, '', location.pathname);
+    }
+  } catch (e) {}
+})();
 refresh();
 
 /* Register the service worker so the app keeps working offline once

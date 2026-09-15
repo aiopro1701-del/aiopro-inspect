@@ -2,7 +2,7 @@
    Network-first for the app HTML so a new deploy shows up immediately when
    online; the cache is only a fallback for offline. Other assets use
    cache-first with a background refresh. Bump CACHE when this file changes. */
-var CACHE = 'aiopro-inspect-v3';
+var CACHE = 'aiopro-inspect-v4';
 var ASSETS = [
   './',
   './index.html',
@@ -38,11 +38,17 @@ self.addEventListener('fetch', function (e) {
       fetch(req).then(function (res) {
         if (res && res.status === 200) {
           var copy = res.clone();
-          caches.open(CACHE).then(function (c) { c.put('./index.html', copy); });
+          /* Only the main app is stored as index.html; other pages
+             (worker.html, estimate-sign.html) are stored under their own URL. */
+          var p = new URL(req.url).pathname;
+          var isApp = /\/$/.test(p) || /\/index\.html$/.test(p);
+          caches.open(CACHE).then(function (c) { c.put(isApp ? './index.html' : req, copy); });
         }
         return res;
       }).catch(function () {
-        return caches.match(req).then(function (m) { return m || caches.match('./index.html'); });
+        var path = new URL(req.url).pathname;
+        var appPage = /\/$/.test(path) || /\/index\.html$/.test(path);
+        return caches.match(req, { ignoreSearch: true }).then(function (m) { return m || (appPage ? caches.match('./index.html') : undefined); });
       })
     );
     return;

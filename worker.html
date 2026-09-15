@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex,nofollow">
+<meta name="theme-color" content="#0F1D30">
+<meta name="mobile-web-app-capable" content="yes">
+<title>AIO Pro — My Jobs</title>
+<link rel="icon" href="icons/icon.svg">
+<style>
+:root{--navy:#0F1D30;--gold:#C9A24B;--ivory:#F1EAD9;--paper:#F3EEE4;--ink:#1a1614;--muted:#7a746b;--rule:#e0dacf;--a:#0F1D30;--b:#3E7D57}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--paper);color:var(--ink);font-family:-apple-system,Segoe UI,Roboto,sans-serif;font-size:16px;line-height:1.45;-webkit-text-size-adjust:100%}
+.top{position:sticky;top:0;z-index:5;background:var(--navy);color:var(--ivory);padding:calc(14px + env(safe-area-inset-top,0px)) 16px 12px;border-bottom:2px solid var(--gold);display:flex;align-items:center;gap:10px}
+.top .t{flex:1;min-width:0}
+.top .co{font-family:Georgia,serif;font-size:20px;line-height:1.2}
+.top .sub{color:var(--gold);font-size:11px;letter-spacing:1.2px;margin-top:2px;text-transform:uppercase}
+.top button{background:transparent;border:1px solid rgba(201,162,75,.6);color:var(--gold);border-radius:10px;padding:9px 12px;font-size:15px;font-weight:600;cursor:pointer;min-height:44px}
+.wrap{max-width:680px;margin:0 auto;padding:14px 16px calc(40px + env(safe-area-inset-bottom,0px))}
+.upd{color:var(--muted);font-size:12px;margin:0 0 12px}
+.day{font-family:Georgia,serif;font-size:18px;margin:18px 0 8px;display:flex;align-items:baseline;gap:8px}
+.day .n{font-family:-apple-system,Segoe UI,Roboto,sans-serif;font-size:12px;color:var(--muted)}
+.day.today{color:#8a6a1f}
+.job{background:#fff;border:.5px solid var(--rule);border-left:4px solid var(--a);border-radius:12px;padding:12px 14px;margin-bottom:10px}
+.job.b{border-left-color:var(--b)}
+.job .tm{font-size:13px;font-weight:700;color:#8a6a1f;letter-spacing:.3px}
+.job .ti{font-size:17px;font-weight:650;margin:2px 0 4px;overflow-wrap:anywhere}
+.job .loc{display:inline-flex;align-items:center;gap:6px;color:var(--navy);text-decoration:none;font-size:15px;padding:6px 0;overflow-wrap:anywhere}
+.job .loc:before{content:"";width:10px;height:10px;border-radius:50% 50% 50% 0;transform:rotate(-45deg);background:var(--gold);flex:none}
+.job .no{color:#4d4842;font-size:14px;white-space:pre-wrap;overflow-wrap:anywhere;margin-top:6px;padding-top:8px;border-top:.5px solid #eee}
+.job .no a{color:var(--navy)}
+.acts{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
+.acts a{flex:1;min-width:120px;text-align:center;text-decoration:none;background:var(--navy);color:var(--ivory);border-radius:10px;padding:11px 10px;font-size:15px;font-weight:600}
+.acts a.g{background:var(--gold);color:var(--navy)}
+.center{text-align:center;padding:56px 12px;color:var(--muted)}
+.center b{display:block;color:var(--ink);font-size:18px;margin-bottom:6px;font-family:Georgia,serif;font-weight:400}
+.ro{display:inline-block;background:rgba(201,162,75,.18);color:var(--gold);border-radius:20px;padding:1px 8px;font-size:10px;letter-spacing:1px;margin-left:6px;vertical-align:2px}
+</style>
+</head>
+<body>
+<div class="top">
+  <div class="t"><div class="co">AIO Pro — My Jobs</div><div class="sub">Technician schedule <span class="ro">VIEW ONLY</span></div></div>
+  <button id="refresh" type="button" aria-label="Refresh">Refresh</button>
+</div>
+<div class="wrap">
+  <div class="upd" id="upd"></div>
+  <div id="app"><div class="center">Loading your jobs…</div></div>
+</div>
+<script>
+/* Read-only worker page. It never writes anything: the only call is the
+   worker_jobs_list function, which returns the jobs the owner shared. */
+(function () {
+  var URL = 'https://frxjedjcfzybflorlyvp.supabase.co';
+  var KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZyeGplZGpjZnp5YmZsb3JseXZwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODYzMzUzNTAsImV4cCI6MjEwMTkxMTM1MH0.shcVYA8vhN8NzYl4KosH5Qn62r1loxSi3uITxOgjPR0';
+  var app = document.getElementById('app');
+  var upd = document.getElementById('upd');
+  var btn = document.getElementById('refresh');
+  var busy = false, loadedOnce = false;
+
+  /* The worker key comes from the link (?k=...). Remember it so a home-screen
+     shortcut without the key still opens the right schedule. */
+  var params = new URLSearchParams(location.search);
+  var wkey = params.get('k') || '';
+  try {
+    if (wkey) localStorage.setItem('aio-worker-key', wkey);
+    else wkey = localStorage.getItem('aio-worker-key') || '';
+  } catch (e) {}
+
+  function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
+  function pad(n) { return (n < 10 ? '0' : '') + n; }
+  function isoOf(d) { return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate()); }
+  function addDays(iso, n) { var d = new Date(iso + 'T00:00:00'); d.setDate(d.getDate() + n); return isoOf(d); }
+  function fmtTime(t) {
+    if (!t) return '';
+    var p = String(t).split(':'), h = Number(p[0]), m = p[1] || '00';
+    if (isNaN(h)) return t;
+    return ((h % 12) || 12) + ':' + m + (h < 12 ? ' AM' : ' PM');
+  }
+  function dayLabel(iso, today) {
+    var d = new Date(iso + 'T00:00:00');
+    var nice = d.toLocaleDateString(undefined, { weekday: 'long', month: 'short', day: 'numeric' });
+    if (iso === today) return 'Today';
+    if (iso === addDays(today, 1)) return 'Tomorrow';
+    if (iso === addDays(today, -1)) return 'Yesterday';
+    return nice;
+  }
+  /* Make phone numbers in notes tappable (calling is not changing anything). */
+  function linkify(text) {
+    return esc(text).replace(/(\+?1?[\s.\-]?\(?\d{3}\)?[\s.\-]?\d{3}[\s.\-]?\d{4})/g, function (m) {
+      return '<a href="tel:' + m.replace(/[^\d+]/g, '') + '">' + m + '</a>';
+    });
+  }
+  function firstPhone(text) {
+    var m = String(text || '').match(/\+?1?[\s.\-]?\(?\d{3}\)?[\s.\-]?\d{3}[\s.\-]?\d{4}/);
+    return m ? m[0].replace(/[^\d+]/g, '') : '';
+  }
+
+  function show(rows) {
+    var today = isoOf(new Date());
+    if (!rows.length) {
+      app.innerHTML = '<div class="center"><b>No jobs right now</b>When Refael assigns you a job it will show up here.</div>';
+      return;
+    }
+    var html = '', lastDay = '';
+    rows.forEach(function (j) {
+      if (j.day !== lastDay) {
+        var count = rows.filter(function (x) { return x.day === j.day; }).length;
+        var sub = (j.day === today || j.day === addDays(today, 1) || j.day === addDays(today, -1))
+          ? new Date(j.day + 'T00:00:00').toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' }) + ' · '
+          : '';
+        html += '<div class="day' + (j.day === today ? ' today' : '') + '">' + esc(dayLabel(j.day, today)) + '<span class="n">' + esc(sub) + count + ' job' + (count === 1 ? '' : 's') + '</span></div>';
+        lastDay = j.day;
+      }
+      var time = j.start_time ? (fmtTime(j.start_time) + (j.end_time ? ' – ' + fmtTime(j.end_time) : '')) : 'All day';
+      var maps = j.location ? 'https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent(j.location) : '';
+      var phone = firstPhone(j.notes) || firstPhone(j.title);
+      html += '<div class="job' + (j.acct === 'B' ? ' b' : '') + '">' +
+        '<div class="tm">' + esc(time) + '</div>' +
+        '<div class="ti">' + esc(j.title || 'Job') + '</div>' +
+        (j.location ? '<a class="loc" href="' + esc(maps) + '" target="_blank" rel="noopener">' + esc(j.location) + '</a>' : '') +
+        (j.notes ? '<div class="no">' + linkify(j.notes) + '</div>' : '') +
+        ((maps || phone) ? '<div class="acts">' +
+          (maps ? '<a class="g" href="' + esc(maps) + '" target="_blank" rel="noopener">Directions</a>' : '') +
+          (phone ? '<a href="tel:' + esc(phone) + '">Call customer</a>' : '') +
+        '</div>' : '') +
+      '</div>';
+    });
+    app.innerHTML = html;
+  }
+
+  function load() {
+    if (busy) return;
+    if (!wkey) {
+      app.innerHTML = '<div class="center"><b>Link not complete</b>Please open the worker link Refael sent you.</div>';
+      return;
+    }
+    busy = true; btn.textContent = '…';
+    fetch(URL + '/rest/v1/rpc/worker_jobs_list', {
+      method: 'POST',
+      headers: { apikey: KEY, Authorization: 'Bearer ' + KEY, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ p_key: wkey })
+    })
+      .then(function (r) {
+        if (r.ok) return r.json();
+        return r.text().then(function (t) {
+          var err = new Error('HTTP ' + r.status);
+          err.badKey = /bad worker key/i.test(t);
+          throw err;
+        });
+      })
+      .then(function (rows) {
+        rows = Array.isArray(rows) ? rows : [];
+        loadedOnce = true;
+        show(rows);
+        upd.textContent = 'Updated ' + new Date().toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' }) + ' · updates on its own every few minutes';
+      })
+      .catch(function (err) {
+        if (err && err.badKey) {
+          loadedOnce = false;
+          app.innerHTML = '<div class="center"><b>This link is no longer active</b>Ask Refael to send you the new worker link.</div>';
+          upd.textContent = '';
+          return;
+        }
+        if (!loadedOnce) app.innerHTML = '<div class="center"><b>Could not load jobs</b>Check your internet and tap Refresh.</div>';
+        upd.textContent = 'Could not refresh — showing the last list. Check your internet.';
+      })
+      .then(function () { busy = false; btn.textContent = 'Refresh'; });
+  }
+  btn.addEventListener('click', load);
+  document.addEventListener('visibilitychange', function () { if (!document.hidden) load(); });
+  setInterval(function () { if (!document.hidden) load(); }, 5 * 60 * 1000);
+  load();
+})();
+</script>
+</body>
+</html>
