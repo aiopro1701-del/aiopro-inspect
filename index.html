@@ -1347,6 +1347,8 @@ function viewHome() {
       (todays.length ? todays.map(apptCard).join('') : '<div class="empty" style="padding:14px">No jobs today. Tap Schedule to add one.</div>');
     var tomBlk = toms.length ? ('<div class="eyebrow">Tomorrow · ' + esc(fmtDay(tom)) + '</div>' + toms.map(apptCard).join('')) : '';
     var dueBlk = due.length ? ('<div class="eyebrow">Follow-ups due</div>' + due.map(function (c) { return '<button class="card card-tap" style="display:block;width:100%;text-align:left" data-act="client-open" data-arg="' + esc(c.id) + '"><div style="font-weight:650">' + esc(c.name || 'Unnamed') + '</div><div style="color:var(--muted);font-size:13px">next service: ' + esc(c.nextServiceDue) + '</div></button>'; }).join('')) : '';
+    if (crmOn()) dueBlk = '';
+    if (crmOn() && state.crmStats && state.crmStats.due) dueBlk = '<button class="card card-tap" data-act="crm-due" style="display:block;width:100%;text-align:left;border-color:var(--gold)"><div style="font-weight:650">' + state.crmStats.due + ' customer(s) due for service</div><div style="color:var(--muted);font-size:13px">Tap to see who to call this month</div></button>';
     var recentBlk = recent ? ('<div class="eyebrow">Recent inspections</div>' + recent) : '';
     body = hero + todayBlk + tomBlk + dueBlk + recentBlk;
   }
@@ -1595,6 +1597,7 @@ var CHAT_MODES = {
 function chatSystem(mode) {
   var m = CHAT_MODES[mode] || CHAT_MODES.level1;
   var depth = (state.chat && state.chat.depth) || 'full';
+  if (mode === 'estimate') return estChatSystem(depth);
   var who = depth === 'pro' ? 'the owner (an experienced professional)' : 'a technician';
   var lead = depth === 'pro'
     ? 'Keep it efficient — this is an experienced pro. Ask ONLY what you truly need, accept short answers, do not over-explain or hand-hold, and move quickly toward the report. Still make sure the key parts of the system are covered so the report has no holes. '
@@ -1607,6 +1610,21 @@ function chatSystem(mode) {
     + 'Judge conditions using NFPA 211 and the 2021 IRC chapter 10, but never quote section numbers. '
     + 'Red drawing on a photo marks the spots being flagged as problems - address those. '
     + 'Keep each reply to 1-3 short sentences. When you have covered the system and have enough to produce the customer ' + m.out + ', tell them to tap Create report.';
+}
+/* Estimate visits: quick and focused — collect only what the price depends on. */
+function estChatSystem(depth) {
+  var co = state.settings.company || 'AIO Pro Chimney';
+  var services = CATALOG.map(function (c) { return c.name; }).join('; ');
+  return 'You are the estimator for ' + co + ' (Greater St. Louis), helping ' + (depth === 'pro' ? 'the owner, an experienced pro,' : 'a field technician') + ' price a job on site. '
+    + 'GOAL: get just enough to price the job from the owner\'s service list, then stop. This is NOT a full inspection. '
+    + 'Make it easy: ONE short question at a time, 1-2 sentences, plain words. Accept short or voice-typed answers. Never ask for something already said, and never ask for customer name, phone, email or address. '
+    + 'Step 1: ask what the problem is (why the customer called) and for ONE photo of the problem. '
+    + 'Step 2: ask only what changes the price, for example: which appliance and fuel, flue size and type, chimney height or liner length, number of stories and roof access, chimney top size for a cap or chase cover, material (brick, clay, metal), and how bad the damage is. '
+    + (depth === 'pro' ? '' : 'When you ask for a measurement, say exactly how to take it in a few words. ')
+    + 'Ask for at most 2 or 3 more photos, and only ones the price depends on. '
+    + 'If you see a real safety hazard, say it in one sentence. '
+    + 'The owner sells these services (use these names when you talk about the fix): ' + services + '. '
+    + 'As soon as you have enough (usually 4 to 6 exchanges), reply: "Got it — tap Estimate." followed by one line listing what the estimate will include.';
 }
 function chatApiMessages(chat, keepAllImages) {
   var msgs = chat.messages, lastUserIdx = -1;
@@ -2128,7 +2146,7 @@ function viewChatStart() {
   return '<div class="app">' +
     '<div class="topbar"><button class="iconbtn" data-act="home">‹</button><div style="flex:1"><h1>AIO Pro</h1></div><button class="iconbtn" data-act="settings">SET</button></div>' +
     '<div class="screen">' +
-      '<div class="card"><div style="font-size:17px;line-height:1.5">Hi — what are we doing today?</div></div>' +
+      '<div class="card"><div style="font-size:17px;line-height:1.5">' + (state.presetClient ? 'What are we doing for <b>' + esc(state.presetClient.name || 'this customer') + '</b>?' : 'Hi — what are we doing today?') + '</div></div>' +
       opts.map(function (o) { return '<button class="card card-tap" style="display:block;width:100%;text-align:left;font-weight:650;font-size:17px" data-act="chat-mode" data-arg="' + o[0] + '">' + esc(o[1]) + '</button>'; }).join('') +
     '</div></div>';
 }
@@ -2139,7 +2157,8 @@ function viewCustForm() {
   return '<div class="app">' +
     '<div class="topbar"><button class="iconbtn" data-act="ai-start">‹</button><div style="flex:1"><h1>' + esc(modeName) + '</h1><div class="sub">Customer details</div></div></div>' +
     '<div class="screen">' +
-      '<div class="card"><div style="font-size:16px;line-height:1.5">Who is this job for? This saves the customer in your system for follow-ups and prints on the report.</div></div>' +
+      (c.crm ? '<div class="card" style="border-color:var(--ok)"><div style="font-size:14px"><b>' + esc(c.crm.name || 'Existing customer') + '</b> — existing customer. Change anything below if needed.</div></div>'
+             : crmPickerHTML('cust_pick')) +
       '<div class="card">' +
         f('Customer name', 'name') + f('Phone', 'phone', 'tel') + f('Email (report is sent here)', 'email', 'email') + f('Service address', 'address') +
       '</div>' +
@@ -2254,9 +2273,10 @@ function sigClear() {
   if (state.chat) state.chat._sig = false;
 }
 
-/* ══ Clients (local CRM) ═════════════════════════════════════
-   Saved on this device. Customers, notes, next-service-due date;
-   follow-ups that are due surface on the home screen. */
+/* ══ Customers (CRM) ═════════════════════════════════════════
+   Cloud first: when this phone has the owner key, customers live in
+   Supabase (all Billdu customers + new ones), reached only through
+   owner-key RPCs. Without the key it falls back to this phone's list. */
 var CLIENTS_KEY = 'aiopro-clients';
 function loadClients() { try { return JSON.parse(localStorage.getItem(CLIENTS_KEY)) || []; } catch (e) { return []; } }
 function saveClients(list) { try { localStorage.setItem(CLIENTS_KEY, JSON.stringify(list)); } catch (e) {} }
@@ -2264,54 +2284,534 @@ function newClient() { return { id: 'cl-' + Date.now() + '-' + Math.random().toS
 function upsertClient(c) { var list = loadClients(); var i = list.findIndex(function (x) { return x.id === c.id; }); if (i >= 0) list[i] = c; else list.unshift(c); saveClients(list); return c; }
 function removeClient(id) { saveClients(loadClients().filter(function (c) { return c.id !== id; })); }
 function dueSoon(c) { if (!c.nextServiceDue) return false; var d = new Date(c.nextServiceDue); if (isNaN(d.getTime())) return false; return d.getTime() <= Date.now() + 30 * 864e5; }
+
+var REVIEW_LINK = 'https://g.page/r/CcHeVtY7ho03EBM/review';
+var CRM_STATUS = [['lead', 'Lead'], ['estimate', 'Estimate sent'], ['customer', 'Customer']];
+function crmOn() { return !!ownerKey(); }
+function crmIsCloudId(id) { return /^[0-9a-f-]{36}$/i.test(String(id || '')); }
+function crmDigits(s) { return String(s || '').replace(/\D/g, ''); }
+function crmStatusName(s) { for (var i = 0; i < CRM_STATUS.length; i++) if (CRM_STATUS[i][0] === s) return CRM_STATUS[i][1]; return s ? String(s) : 'Customer'; }
+function crmFromRow(r) {
+  return { id: r.id, cloud: true, _first: r.first_name || '', _last: r.last_name || '', name: [r.first_name, r.last_name].filter(Boolean).join(' ').trim(), phone: r.phone || '', email: r.email || '',
+    address: r.address || '', notes: r.notes || '', status: r.status || 'customer', tags: r.tags || '', next: r.next_service || '',
+    history: Array.isArray(r.history) ? r.history : [], localId: r.local_id || '', createdAt: r.created_at, updatedAt: r.updated_at };
+}
+function crmFromLocal(c) {
+  return { id: c.id, cloud: false, name: c.name || '', phone: c.phone || '', email: c.email || '', address: c.address || '', notes: c.notes || '',
+    status: c.status || 'customer', tags: c.tags || '', next: c.nextServiceDue || '', history: c.history || [], localId: c.id, createdAt: c.createdAt };
+}
+function crmToLocal(c) {
+  var base = loadClients().filter(function (x) { return x.id === (c.localId || c.id); })[0] || newClient();
+  return Object.assign(base, { id: c.localId || c.id || base.id, name: c.name, phone: c.phone, email: c.email, address: c.address, notes: c.notes, status: c.status, tags: c.tags, nextServiceDue: c.next, history: base.history || c.history || [] });
+}
+function crmToRow(c) {
+  var parts = String(c.name || '').trim().split(/\s+/);
+  var fn = parts.shift() || '', ln = parts.join(' ');
+  if (c._first != null && [c._first, c._last].filter(Boolean).join(' ').trim() === String(c.name || '').trim()) { fn = c._first || ''; ln = c._last || ''; }
+  var nx = /^\d{4}-\d{2}-\d{2}$/.test(String(c.next || '')) ? c.next : '';
+  var row = { first_name: fn, last_name: ln, phone: c.phone || '', email: c.email || '', address: c.address || '',
+    notes: c.notes || '', status: c.status || '', tags: c.tags || '', next_service: nx, local_id: c.localId || '' };
+  if (c.next && !nx && String(row.notes).indexOf(String(c.next)) < 0) row.notes = (row.notes ? row.notes + '\n' : '') + 'Next service: ' + c.next;
+  if (crmIsCloudId(c.id)) row.id = c.id;
+  if (c.history && !crmIsCloudId(c.id)) row.history = c.history;
+  return row;
+}
+function crmSearch(q, filter, offset) {
+  if (crmOn()) {
+    return cloudRpc('crm_search', { p_owner: ownerKey(), p_q: q || '', p_filter: filter || 'all', p_limit: 50, p_offset: offset || 0 })
+      .then(function (rows) { return (rows || []).map(crmFromRow); });
+  }
+  var ql = String(q || '').toLowerCase(), qd = crmDigits(q);
+  var list = loadClients().map(crmFromLocal).filter(function (c) {
+    var hit = !ql || (c.name + ' ' + c.email + ' ' + c.address + ' ' + c.notes + ' ' + c.tags).toLowerCase().indexOf(ql) >= 0 || (qd.length >= 3 && crmDigits(c.phone).indexOf(qd) >= 0);
+    var f = filter || 'all';
+    var fit = f === 'all' || (f === 'due' ? dueSoon({ nextServiceDue: c.next }) : c.status === f);
+    return hit && fit;
+  });
+  return Promise.resolve(list.slice(offset || 0, (offset || 0) + 50));
+}
+function crmSave(c) {
+  if (crmOn()) return cloudRpc('crm_upsert', { p_owner: ownerKey(), p_row: crmToRow(c) }).then(function (r) { return crmFromRow(r); });
+  var l = crmToLocal(c); upsertClient(l); return Promise.resolve(crmFromLocal(l));
+}
+function crmDelete(c) {
+  if (c.cloud && crmOn()) return cloudRpc('crm_delete', { p_owner: ownerKey(), p_id: c.id });
+  removeClient(c.localId || c.id); return Promise.resolve(true);
+}
+/* Add a timeline entry (and move the status forward). Never blocks the user. */
+function crmLog(c, text, status) {
+  if (!c) return Promise.resolve(null);
+  var entry = { date: isoToday(), title: text };
+  if (c.cloud && crmIsCloudId(c.id) && crmOn()) {
+    return cloudRpc('crm_add_history', { p_owner: ownerKey(), p_id: c.id, p_entry: entry, p_status: status || '' }).then(crmFromRow).catch(function () { return null; });
+  }
+  var l = loadClients().filter(function (x) { return x.id === (c.localId || c.id); })[0];
+  if (l) { l.history = [entry].concat(l.history || []); if (status && !(l.status === 'customer' && status !== 'customer')) l.status = status; upsertClient(l); }
+  return Promise.resolve(null);
+}
+function crmLoadStats() {
+  if (!crmOn()) { state.crmStats = null; return Promise.resolve(null); }
+  return cloudRpc('crm_stats', { p_owner: ownerKey() }).then(function (s) { state.crmStats = s; return s; }).catch(function () { return null; });
+}
+function crmLoad(reset) {
+  var cs = state.crm || (state.crm = { q: '', filter: 'all', list: [], more: false, busy: false, err: null });
+  if (reset) { cs.list = []; cs.more = false; }
+  var seq = cs.seq = (cs.seq || 0) + 1;
+  cs.busy = true; cs.err = null; crmPaint();
+  crmSearch(cs.q, cs.filter, cs.list.length).then(function (rows) {
+    if (seq !== cs.seq) return;
+    cs.list = cs.list.concat(rows); cs.more = rows.length === 50; cs.busy = false; crmPaint();
+  }).catch(function (err) {
+    if (seq !== cs.seq) return;
+    cs.busy = false; cs.err = (err && err.message) || 'Could not load customers.'; crmPaint();
+  });
+  if (reset) crmLoadStats().then(function () { if (state.view === 'clients') crmPaintChips(); });
+}
+function crmInitials(n) { var p = String(n || '?').trim().split(/\s+/); return ((p[0] || '?').charAt(0) + (p.length > 1 ? p[p.length - 1].charAt(0) : '')).toUpperCase(); }
+function crmPill(s) {
+  var col = s === 'lead' ? 'background:#E9EEF6;color:#1d3a66' : s === 'estimate' ? 'background:#FBEFD9;color:#8a5a00' : 'background:#E3F1E8;color:#2b6a45';
+  return '<span class="pill" style="' + col + '">' + esc(crmStatusName(s).toUpperCase()) + '</span>';
+}
+function crmRowHTML(c) {
+  var due = c.next && dueSoon({ nextServiceDue: c.next });
+  return '<button class="card card-tap crm-row" data-id="' + esc(c.id) + '" style="display:flex;width:100%;gap:12px;align-items:center;text-align:left;padding:12px">' +
+    '<span style="flex:none;width:40px;height:40px;border-radius:50%;background:var(--soot);color:var(--ivory);display:grid;place-items:center;font-weight:700;font-size:14px">' + esc(crmInitials(c.name)) + '</span>' +
+    '<span style="flex:1;min-width:0"><span style="display:block;font-weight:650;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + esc(c.name || c.email || c.phone || 'Unnamed') + '</span>' +
+    '<span style="display:block;color:var(--muted);font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + esc([c.phone, c.address || c.email].filter(Boolean).join(' · ') || 'No contact details') + '</span></span>' +
+    '<span style="flex:none;text-align:right">' + crmPill(c.status) + (due ? '<br><span class="pill defect" style="margin-top:4px">DUE</span>' : '') + '</span>' +
+  '</button>';
+}
+function crmChipsHTML() {
+  var st = state.crmStats || {}, f = (state.crm && state.crm.filter) || 'all';
+  var chips = [['all', 'All'], ['lead', 'Leads'], ['estimate', 'Estimate sent'], ['customer', 'Customers'], ['due', 'Follow-up due']];
+  return chips.map(function (c) {
+    var n = st[c[0]];
+    return '<button class="btn ' + (f === c[0] ? 'btn-gold btn-primary' : 'btn-ghost') + ' crm-chip" data-f="' + c[0] + '" style="min-height:34px;padding:4px 10px;font-size:13px;white-space:nowrap">' + c[1] + (n != null ? ' · ' + n : '') + '</button>';
+  }).join('');
+}
+function crmListHTML() {
+  var cs = state.crm || {};
+  var h = (cs.list || []).map(crmRowHTML).join('');
+  if (!h && !cs.busy) h = '<div class="empty">' + (cs.q ? 'No customer matches "' + esc(cs.q) + '".' : 'No customers here yet.') + '</div>';
+  if (cs.err) h += '<div style="color:var(--defect);font-size:13px;padding:6px">' + esc(cs.err) + '</div>';
+  if (cs.busy) h += '<div style="color:var(--muted);font-size:13px;padding:10px;text-align:center">Loading…</div>';
+  else if (cs.more) h += '<button class="btn btn-ghost btn-wide" id="crm_more">Show more</button>';
+  return h;
+}
+function crmPaint() { var el = root.querySelector('#crm_list'); if (el && state.view === 'clients') el.innerHTML = crmListHTML(); }
+function crmPaintChips() { var el = root.querySelector('#crm_chips'); if (el) el.innerHTML = crmChipsHTML(); var t = root.querySelector('#crm_total'); if (t && state.crmStats) t.textContent = state.crmStats.all + ' customers'; }
+function crmLocalToMove() { if (!crmOn()) return 0; var done = {}; try { done = JSON.parse(localStorage.getItem('aio-crm-moved') || '{}'); } catch (e) {} return loadClients().filter(function (c) { return !done[c.id] && (c.name || c.phone || c.email); }).length; }
 function viewClients() {
-  var list = loadClients();
-  var rows = list.length ? list.map(function (c) {
-    var due = dueSoon(c) ? '<span class="pill defect">DUE</span>' : '';
-    return '<div class="card joblist-item">' +
-      '<button class="meta" style="text-align:left" data-act="client-open" data-arg="' + esc(c.id) + '">' +
-      '<div class="name">' + esc(c.name || 'Unnamed') + '</div>' +
-      '<div class="sub">' + esc([c.phone, c.address].filter(Boolean).join(' · ') || 'No contact') + (c.nextServiceDue ? ' · next: ' + esc(c.nextServiceDue) : '') + '</div>' +
-      '</button>' + due +
-      '<button class="iconbtn" style="color:var(--muted)" data-act="client-del" data-arg="' + esc(c.id) + '" aria-label="Delete">DEL</button>' +
-    '</div>';
-  }).join('') : '<div class="empty">No clients yet. Add your first one.</div>';
+  var cs = state.crm || (state.crm = { q: '', filter: 'all', list: [], more: false, busy: false, err: null });
+  var moveN = crmLocalToMove();
+  var banner = crmOn()
+    ? (moveN ? '<div class="card" style="border-color:var(--gold)"><div style="font-size:14px;margin-bottom:8px">' + moveN + ' customer(s) are saved only on this phone.</div><button class="btn btn-gold" id="crm_move" style="width:100%">Move them into your customer list</button></div>' : '')
+    : '<div class="card" style="border-color:var(--gold);font-size:14px">Showing customers saved on this phone only. Open your setup link once on this phone to see all your customers.</div>';
   return '<div class="app">' +
-    '<div class="topbar"><button class="iconbtn" data-act="home">‹</button><div style="flex:1"><h1>Clients</h1></div></div>' +
-    '<div class="screen">' +
-      '<input id="clientSearch" placeholder="Search name, phone, address" style="width:100%;padding:9px 11px;border:0.5px solid var(--rule);border-radius:8px;font-size:15px;margin-bottom:12px">' +
-      rows +
+    '<div class="topbar"><button class="iconbtn" data-act="home">‹</button><div style="flex:1"><h1>Customers</h1><div class="sub" id="crm_total">' + (state.crmStats ? state.crmStats.all + ' customers' : (crmOn() ? 'Your customer list' : 'This phone')) + '</div></div></div>' +
+    '<div class="screen">' + banner + '<div id="crm_import_msg">' + crmImportHTML() + '</div>' +
+      '<input id="clientSearch" type="search" value="' + esc(cs.q) + '" placeholder="Search name, phone, email, address" autocomplete="off" style="width:100%;min-height:46px;padding:10px 12px;border:1px solid var(--rule);border-radius:10px;font-size:16px;margin-bottom:10px">' +
+      '<div id="crm_chips" class="row" style="gap:6px;overflow-x:auto;flex-wrap:nowrap;padding-bottom:6px;margin-bottom:6px">' + crmChipsHTML() + '</div>' +
+      '<div id="crm_list">' + crmListHTML() + '</div>' +
     '</div>' +
-    '<div class="bottombar" style="gap:6px"><button class="btn btn-primary" data-act="client-new">Add client</button><button class="btn btn-ghost" data-act="message-start">Message clients</button></div>' +
+    '<div class="bottombar" style="gap:6px"><button class="btn btn-gold btn-primary" data-act="client-new">+ New customer</button>' + (crmOn() ? '<button class="btn btn-ghost" data-act="crm-import">Import</button>' : '') + '<button class="btn btn-ghost" data-act="message-start">Message</button></div>' +
   '</div>';
+}
+function crmFindCached(id) {
+  var l = (state.crm && state.crm.list) || [];
+  for (var i = 0; i < l.length; i++) if (String(l[i].id) === String(id)) return l[i];
+  return null;
+}
+function crmMatches(c, name, phone, email) {
+  var p1 = crmDigits(c.phone), p2 = crmDigits(phone);
+  if (p1.length >= 7 && p2.length >= 7 && p1.slice(-7) === p2.slice(-7)) return true;
+  if (c.email && email && String(c.email).toLowerCase() === String(email).toLowerCase()) return true;
+  var noContact = !(p1.length >= 7 || c.email) && !(p2.length >= 7 || email);
+  return !!(noContact && c.name && name && String(c.name).trim().toLowerCase() === String(name).trim().toLowerCase());
+}
+function crmEstimatesFor(c) {
+  return loadEstimates().filter(function (e) { return (e.crmId && String(e.crmId) === String(c.id)) || crmMatches(c, e.customer.name, e.customer.phone, e.customer.email); });
+}
+function crmJobsFor(c) { return (state.jobs || []).filter(function (j) { return j.customer && crmMatches(c, j.customer.name, j.customer.phone, j.customer.email); }); }
+function crmFetchEstStatus(ests) {
+  var ids = ests.map(function (e) { return e.shareId; }).filter(Boolean);
+  if (!ids.length) return;
+  var cache = state.estStatus || (state.estStatus = {});
+  ids = ids.filter(function (id) { return !cache[id]; });
+  if (!ids.length) return;
+  ids.forEach(function (id) { cache[id] = { tried: true }; });
+  fetch(CLOUD_URL + '/rest/v1/shared_estimates?select=id,status,viewed_at,signed_at,signer_name&id=in.(' + ids.map(encodeURIComponent).join(',') + ')', { headers: { apikey: CLOUD_KEY, Authorization: 'Bearer ' + CLOUD_KEY } })
+    .then(function (r) { return r.ok ? r.json() : []; })
+    .then(function (rows) { var changed = false; (rows || []).forEach(function (r) { if (r && r.id && r.status) { cache[r.id] = r; changed = true; } }); if (changed && state.view === 'client' && !state.clientEditing) render(); })
+    .catch(function () {});
 }
 function viewClient() {
-  var c = state.editClient || newClient();
-  function f(label, key, mode) { return '<div class="field"><label>' + label + '</label><input data-model="client.' + key + '"' + (mode ? ' inputmode="' + mode + '"' : '') + ' value="' + esc(c[key] || '') + '"></div>'; }
-  var hist = (c.history || []).length ? (c.history || []).map(function (h) { return '<div style="font-size:13px;color:var(--muted);padding:4px 0;border-top:0.5px solid var(--rule)">' + esc(h.date || '') + ' · ' + esc(h.title || h.kind || '') + '</div>'; }).join('') : '<div style="font-size:13px;color:var(--muted)">No visits recorded yet.</div>';
+  var c = state.client;
+  if (!c) { state.view = 'clients'; return viewClients(); }
+  if (state.clientEditing) return viewClientForm(c);
+  var ph = crmDigits(c.phone), first = String(c.name || '').trim().split(/\s+/)[0] || 'there';
+  function act(href, label, ext) { return href ? '<a class="btn btn-ghost" href="' + esc(href) + '"' + (ext ? ' target="_blank" rel="noopener"' : '') + ' style="flex:1;min-width:70px;padding:8px 4px;font-size:13px;text-align:center;text-decoration:none">' + label + '</a>' : ''; }
+  var contact = '<div class="row" style="gap:6px;flex-wrap:wrap">' +
+    act(ph ? 'tel:' + ph : '', 'Call') +
+    act(ph ? 'sms:' + ph : '', 'Text') +
+    act(ph ? 'https://wa.me/' + (ph.length === 10 ? '1' + ph : ph) : '', 'WhatsApp', true) +
+    act(c.email ? 'mailto:' + c.email : '', 'Email') +
+    act(c.address ? 'https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent(c.address) : '', 'Map', true) +
+  '</div>';
+  var reviewText = 'Hi ' + first + ', thank you for choosing ' + (state.settings.company || 'AIO Pro Chimney') + '! If you were happy with our work, a quick Google review would mean a lot to us: ' + REVIEW_LINK + ' — Refael';
+  var doBtns = '<div class="row" style="gap:6px;flex-wrap:wrap;margin-top:8px">' +
+    '<button class="btn btn-gold" data-act="crm-inspect" style="flex:1;min-width:45%">New inspection</button>' +
+    '<button class="btn btn-gold" data-act="crm-estimate" style="flex:1;min-width:45%">New estimate</button>' +
+    '<button class="btn btn-ghost" data-act="crm-schedule" style="flex:1;min-width:45%">Schedule job</button>' +
+    (ph ? '<a class="btn btn-ghost" id="crm_review" href="' + esc('sms:' + ph + '?body=' + encodeURIComponent(reviewText)) + '" style="flex:1;min-width:45%;text-align:center;text-decoration:none">Ask for review</a>' : '') +
+  '</div>';
+  var statusRow = '<div class="row" style="gap:6px;flex-wrap:wrap">' + CRM_STATUS.map(function (s) { return '<button class="btn ' + (c.status === s[0] ? 'btn-gold btn-primary' : 'btn-ghost') + '" data-act="crm-status" data-arg="' + s[0] + '" style="flex:1;min-height:36px;padding:4px 6px;font-size:13px">' + s[1] + '</button>'; }).join('') + '</div>';
+  function info(k, v) { return v ? '<div style="display:flex;gap:10px;padding:6px 0;border-top:0.5px solid var(--rule);font-size:14px"><span style="color:var(--muted);width:92px;flex:none">' + k + '</span><span style="flex:1;overflow-wrap:anywhere;white-space:pre-wrap">' + esc(v) + '</span></div>' : ''; }
+  var due = c.next && dueSoon({ nextServiceDue: c.next });
+  var nextBlk = '<div style="display:flex;gap:10px;align-items:center;padding:6px 0;border-top:0.5px solid var(--rule);font-size:14px"><span style="color:var(--muted);width:92px;flex:none">Next service</span><span style="flex:1;' + (due ? 'color:var(--defect);font-weight:650' : '') + '">' + esc(c.next || 'Not set') + '</span><button class="btn btn-ghost" data-act="crm-next-year" style="min-height:32px;padding:2px 8px;font-size:12px">In 1 year</button></div>';
+  var ests = crmEstimatesFor(c); crmFetchEstStatus(ests);
+  var estRows = ests.map(function (e) {
+    var st = e.shareId && state.estStatus && state.estStatus[e.shareId];
+    var badge = st && st.status ? (st.status === 'signed' ? '<span class="pill done">SIGNED</span>' : st.status === 'viewed' ? '<span class="pill" style="background:#FBEFD9;color:#8a5a00">VIEWED</span>' : '<span class="pill">SENT</span>') : (e.shareId ? '<span class="pill">SENT</span>' : '<span class="pill">DRAFT</span>');
+    return '<button class="card card-tap" data-act="est-open" data-arg="' + esc(e.id) + '" style="display:flex;width:100%;justify-content:space-between;align-items:center;gap:8px;text-align:left;padding:10px;margin-bottom:6px"><span><b>' + esc((e.no ? '#' + e.no + ' ' : '') + (e.title || 'Estimate')) + '</b><br><span style="color:var(--muted);font-size:12px">' + money(estHeadline(e)) + ' · ' + new Date(e.updatedAt || Date.now()).toLocaleDateString() + '</span></span>' + badge + '</button>';
+  }).join('') || '<div style="color:var(--muted);font-size:13px">No estimates on this phone for this customer.</div>';
+  var jobs = crmJobsFor(c);
+  var jobRows = jobs.map(function (j) { return '<button class="card card-tap" data-act="open" data-arg="' + esc(j.id) + '" style="display:block;width:100%;text-align:left;padding:10px;margin-bottom:6px"><b>' + esc(templateById(j.templateId).name) + '</b><br><span style="color:var(--muted);font-size:12px">' + new Date(j.createdAt).toLocaleDateString() + (j.done ? ' · done' : '') + '</span></button>'; }).join('');
+  var hist = (c.history || []).slice(0, 30).map(function (h) { return '<div style="display:flex;gap:10px;font-size:13px;padding:5px 0;border-top:0.5px solid var(--rule)"><span style="color:var(--muted);width:84px;flex:none">' + esc(h.date || '') + '</span><span>' + esc(h.title || h.kind || '') + '</span></div>'; }).join('') || '<div style="color:var(--muted);font-size:13px">Nothing yet — inspections, estimates and reviews show up here.</div>';
   return '<div class="app">' +
-    '<div class="topbar"><button class="iconbtn" data-act="clients">‹</button><div style="flex:1"><h1>' + esc(c.name || 'New client') + '</h1></div></div>' +
+    '<div class="topbar"><button class="iconbtn" data-act="clients">‹</button><div style="flex:1;min-width:0"><h1 style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + esc(c.name || 'Customer') + '</h1><div class="sub">' + esc(crmStatusName(c.status)) + (c.tags ? ' · ' + esc(c.tags) : '') + '</div></div><button class="iconbtn" data-act="crm-edit">EDIT</button></div>' +
     '<div class="screen">' +
-      '<div class="card">' + f('Name', 'name') + f('Phone', 'phone', 'tel') + f('Email', 'email', 'email') + f('Address', 'address') + '</div>' +
-      '<div class="card">' + f('Next service due (YYYY-MM-DD)', 'nextServiceDue') +
-        '<div class="field"><label>Notes</label><textarea data-model="client.notes">' + esc(c.notes || '') + '</textarea></div></div>' +
-      '<div class="card"><div class="eyebrow">History</div>' + hist + '</div>' +
+      (state.crmMsg ? '<div style="color:' + (state.crmMsg.err ? 'var(--defect)' : 'var(--ok)') + ';font-size:13px;margin-bottom:8px">' + esc(state.crmMsg.text) + '</div>' : '') +
+      '<div class="card">' + contact + doBtns + '</div>' +
+      '<div class="card"><div class="eyebrow">Stage</div>' + statusRow + '</div>' +
+      '<div class="card"><div class="eyebrow">Details</div>' + info('Phone', c.phone) + info('Email', c.email) + info('Address', c.address) + nextBlk + info('Notes', c.notes) + '</div>' +
+      '<div class="card"><div class="eyebrow">Estimates</div>' + estRows + '</div>' +
+      (jobRows ? '<div class="card"><div class="eyebrow">Checklist inspections</div>' + jobRows + '</div>' : '') +
+      '<div class="card"><div class="eyebrow">Timeline</div>' + hist + '</div>' +
+    '</div></div>';
+}
+function viewClientForm(c) {
+  var d = state.clientDraft || (state.clientDraft = Object.assign({}, c));
+  function f(label, key, type, im) { return '<div class="field"><label>' + label + '</label><input class="crm-f" data-k="' + key + '" type="' + (type || 'text') + '"' + (im ? ' inputmode="' + im + '"' : '') + ' value="' + esc(d[key] || '') + '"></div>'; }
+  return '<div class="app">' +
+    '<div class="topbar"><button class="iconbtn" data-act="crm-cancel">‹</button><div style="flex:1"><h1>' + (c.id ? 'Edit customer' : 'New customer') + '</h1></div></div>' +
+    '<div class="screen">' +
+      (state.crmMsg && state.crmMsg.err ? '<div style="color:var(--defect);font-size:13px;margin-bottom:8px">' + esc(state.crmMsg.text) + '</div>' : '') +
+      '<div class="card">' + f('Name', 'name') + f('Phone', 'phone', 'tel', 'tel') + f('Email', 'email', 'email', 'email') + f('Address', 'address') + '</div>' +
+      '<div class="card">' + f('Next service due', 'next', 'date') + f('Tags (brand, source — e.g. AIO Pro, Google, referral)', 'tags') +
+        '<div class="field" style="margin-bottom:0"><label>Notes</label><textarea class="crm-f" data-k="notes">' + esc(d.notes || '') + '</textarea></div></div>' +
     '</div>' +
-    '<div class="bottombar" style="gap:6px"><button class="btn btn-primary" data-act="client-save">Save</button>' +
-      (c._existing ? '<button class="btn btn-ghost" data-act="client-del" data-arg="' + esc(c.id) + '">Delete</button>' : '') + '</div>' +
+    '<div class="bottombar" style="gap:6px"><button class="btn btn-gold btn-primary" data-act="crm-save"' + (state.crmSaving ? ' disabled' : '') + '>' + (state.crmSaving ? 'Saving…' : 'Save') + '</button>' +
+      (c.id ? '<button class="btn btn-ghost" data-act="crm-delete">Delete</button>' : '<button class="btn btn-ghost" data-act="crm-cancel">Cancel</button>') + '</div>' +
   '</div>';
 }
+/* Reusable "find an existing customer" box (job start + estimate). */
+function crmPickerHTML(id) {
+  return '<div class="card"><div class="eyebrow">Existing customer?</div><input id="' + id + '_q" type="search" autocomplete="off" placeholder="Type name or phone to find them" style="width:100%;min-height:44px;padding:10px;border:1px solid var(--rule);border-radius:8px;font-size:16px"><div id="' + id + '_res"></div></div>';
+}
+function wireCrmPicker(id, onPick) {
+  var inp = root.querySelector('#' + id + '_q'), res = root.querySelector('#' + id + '_res');
+  if (!inp || !res) return;
+  var timer = null, found = [], seq = 0;
+  inp.addEventListener('input', function () {
+    clearTimeout(timer);
+    var q = inp.value.trim();
+    if (q.length < 2) { res.innerHTML = ''; return; }
+    timer = setTimeout(function () {
+      var my = ++seq;
+      res.innerHTML = '<div style="color:var(--muted);font-size:13px;padding:6px">Searching…</div>';
+      crmSearch(q, 'all', 0).then(function (rows) {
+        if (my !== seq) return;
+        found = rows.slice(0, 6);
+        res.innerHTML = found.map(function (c, i) { return '<button class="crm-pick" data-i="' + i + '" style="display:block;width:100%;text-align:left;padding:10px;border:none;border-bottom:1px solid var(--rule);background:#fff"><b>' + esc(c.name || c.email || 'Unnamed') + '</b><br><span style="color:var(--muted);font-size:12px">' + esc([c.phone, c.address || c.email].filter(Boolean).join(' · ')) + '</span></button>'; }).join('') || '<div style="color:var(--muted);font-size:13px;padding:6px">No match — fill the details below and they are saved as a new customer.</div>';
+      }).catch(function (err) { if (my === seq) res.innerHTML = '<div style="color:var(--defect);font-size:13px;padding:6px">' + esc((err && err.message) || 'Search failed') + '</div>'; });
+    }, 280);
+  });
+  res.addEventListener('click', function (ev) {
+    var b = ev.target.closest('.crm-pick'); if (!b) return;
+    var c = found[Number(b.getAttribute('data-i'))]; if (!c) return;
+    onPick(c);
+  });
+}
 function wireClients() {
-  var search = root.querySelector('#clientSearch');
-  if (search) {
-    search.addEventListener('input', function () {
-      var q = search.value.toLowerCase();
-      root.querySelectorAll('.joblist-item').forEach(function (row) {
-        row.style.display = row.textContent.toLowerCase().indexOf(q) > -1 ? '' : 'none';
-      });
+  if (state.view === 'clients') {
+    var search = root.querySelector('#clientSearch');
+    if (search) {
+      var t = null;
+      search.addEventListener('input', function () { clearTimeout(t); t = setTimeout(function () { state.crm.q = search.value.trim(); crmLoad(true); }, 300); });
+    }
+    var chips = root.querySelector('#crm_chips');
+    if (chips) chips.addEventListener('click', function (ev) { var b = ev.target.closest('.crm-chip'); if (!b) return; state.crm.filter = b.getAttribute('data-f'); crmPaintChips(); crmLoad(true); });
+    var list = root.querySelector('#crm_list');
+    if (list) list.addEventListener('click', function (ev) {
+      if (ev.target.closest('#crm_more')) { crmLoad(false); return; }
+      var r = ev.target.closest('.crm-row'); if (!r) return;
+      var c = crmFindCached(r.getAttribute('data-id')); if (!c) return;
+      state.client = c; state.clientEditing = false; state.clientDraft = null; state.crmMsg = null; state.view = 'client'; render();
+    });
+    var mv = root.querySelector('#crm_move');
+    if (mv) mv.addEventListener('click', function () {
+      mv.disabled = true; mv.textContent = 'Moving…';
+      var done = {}; try { done = JSON.parse(localStorage.getItem('aio-crm-moved') || '{}'); } catch (e) {}
+      var todo = loadClients().filter(function (c) { return !done[c.id] && (c.name || c.phone || c.email); });
+      var chain = Promise.resolve(), ok = 0;
+      todo.forEach(function (lc) { chain = chain.then(function () { var cc = crmFromLocal(lc); cc.status = lc.status || 'customer'; return cloudRpc('crm_upsert', { p_owner: ownerKey(), p_row: crmToRow(cc) }).then(function () { done[lc.id] = 1; ok++; }).catch(function () {}); }); });
+      chain.then(function () { try { localStorage.setItem('aio-crm-moved', JSON.stringify(done)); } catch (e) {} alert(ok + ' of ' + todo.length + ' customer(s) moved.'); render(); crmLoad(true); });
+    });
+    if (!state.crm.list.length && !state.crm.busy && !state.crm.loadedFor) { state.crm.loadedFor = 1; crmLoad(true); }
+  }
+  if (state.view === 'client' && state.clientEditing) {
+    root.querySelectorAll('.crm-f').forEach(function (el) { el.addEventListener('input', function () { state.clientDraft[el.getAttribute('data-k')] = el.value; }); });
+  }
+  if (state.view === 'client' && !state.clientEditing) {
+    var rv = root.querySelector('#crm_review');
+    if (rv) rv.addEventListener('click', function () { crmLog(state.client, 'Review requested', '').then(function (r) { if (r) state.client = r; }); });
+  }
+  if (state.view === 'custform') {
+    wireCrmPicker('cust_pick', function (c) {
+      state.editClient = Object.assign(newClient(), { name: c.name, phone: c.phone, email: c.email, address: c.address, nextServiceDue: c.next, crm: c });
+      if (!c.cloud) state.editClient.id = c.id;
+      render();
+    });
+  }
+  if (state.view === 'estimate' && state.estimate) {
+    wireCrmPicker('est_pick', function (c) {
+      var e = state.estimate;
+      e.customer = { name: c.name, phone: c.phone, email: c.email, addr: c.address };
+      e.crmId = c.id; e.crmCloud = !!c.cloud;
+      render();
     });
   }
 }
+/* Handlers for the CRM screens (called from the main click switch). */
+function crmAction(act, arg) {
+  var c = state.client;
+  switch (act) {
+    case 'clients': state.view = 'clients'; state.client = null; state.clientEditing = false; if (state.crm) { state.crm.loadedFor = 0; state.crm.list = []; state.crm.busy = false; state.crm.seq = (state.crm.seq || 0) + 1; } render(); return true;
+    case 'client-new': state.client = { id: '', cloud: crmOn(), name: '', phone: '', email: '', address: '', notes: '', status: 'lead', tags: '', next: '', history: [] }; state.clientDraft = null; state.clientEditing = true; state.crmMsg = null; state.view = 'client'; render(); return true;
+    case 'client-open': {
+      var lc = loadClients().filter(function (x) { return x.id === arg; })[0];
+      if (lc) { state.client = crmFromLocal(lc); state.clientEditing = false; state.crmMsg = null; state.view = 'client'; render(); }
+      return true;
+    }
+    case 'crm-due': state.crm = { q: '', filter: 'due', list: [], more: false, busy: false, err: null }; state.client = null; state.view = 'clients'; render(); return true;
+    case 'crm-import': crmImportFile(); return true;
+    case 'crm-edit': state.clientDraft = Object.assign({}, c); state.clientEditing = true; state.crmMsg = null; render(); return true;
+    case 'crm-cancel': state.clientDraft = null; state.clientEditing = false; if (!c || !c.id) { state.view = 'clients'; state.client = null; } render(); return true;
+    case 'crm-save': {
+      var d = Object.assign({}, c, state.clientDraft || {});
+      if (!(d.name || d.phone || d.email)) { state.crmMsg = { err: true, text: 'Add at least a name, phone or email.' }; render(); return true; }
+      if (!d.cloud && !d.id) d.localId = newClient().id;
+      state.crmSaving = true; render();
+      crmSave(d).then(function (saved) {
+        state.crmSaving = false; state.client = saved; state.clientDraft = null; state.clientEditing = false; state.crmMsg = { text: 'Saved.' };
+        if (state.crm) { state.crm.list = []; state.crm.loadedFor = 0; }
+        render();
+      }).catch(function (err) { state.crmSaving = false; state.crmMsg = { err: true, text: 'Could not save: ' + ((err && err.message) || err) }; render(); });
+      return true;
+    }
+    case 'crm-delete':
+      if (!c || !confirm('Delete ' + (c.name || 'this customer') + '? This cannot be undone.')) return true;
+      crmDelete(c).then(function () { state.client = null; state.clientEditing = false; state.view = 'clients'; if (state.crm) { state.crm.list = []; state.crm.loadedFor = 0; } render(); })
+        .catch(function (err) { state.crmMsg = { err: true, text: 'Could not delete: ' + ((err && err.message) || err) }; render(); });
+      return true;
+    case 'crm-status': {
+      if (!c || c.status === arg) return true;
+      var prev = c.status; c.status = arg; render();
+      crmSave({ id: c.id, cloud: c.cloud, localId: c.localId, _first: c._first, _last: c._last, name: c.name, phone: c.phone, email: c.email, address: c.address, notes: c.notes, status: arg, tags: c.tags, next: c.next })
+        .then(function (s) { state.client = Object.assign(s, { history: s.history && s.history.length ? s.history : c.history }); render(); })
+        .catch(function (err) { c.status = prev; state.crmMsg = { err: true, text: 'Could not update: ' + ((err && err.message) || err) }; render(); });
+      return true;
+    }
+    case 'crm-next-year': {
+      if (!c) return true;
+      var d1 = new Date(); d1.setFullYear(d1.getFullYear() + 1);
+      var nx = d1.getFullYear() + '-' + String(d1.getMonth() + 1).padStart(2, '0') + '-' + String(d1.getDate()).padStart(2, '0');
+      crmSave(Object.assign({}, c, { next: nx })).then(function (s) { state.client = s; state.crmMsg = { text: 'Next service set to ' + nx + '.' }; render(); })
+        .catch(function (err) { state.crmMsg = { err: true, text: 'Could not update: ' + ((err && err.message) || err) }; render(); });
+      return true;
+    }
+    case 'crm-inspect':
+      state.presetClient = Object.assign(newClient(), { name: c.name, phone: c.phone, email: c.email, address: c.address, nextServiceDue: c.next, crm: c });
+      if (!c.cloud) state.presetClient.id = c.localId || c.id;
+      state.chat = null; state.view = 'chatstart'; render(); return true;
+    case 'crm-estimate': {
+      var e = newEstimate();
+      e.customer = { name: c.name, phone: c.phone, email: c.email, addr: c.address }; e.crmId = c.id; e.crmCloud = !!c.cloud;
+      state.estimate = e; if (!(state.estAi && state.estAi.busy)) state.estAi = null; state.view = 'estimate'; render(); return true;
+    }
+    case 'crm-schedule':
+      state.editEvent = { title: 'Job — ' + (c.name || ''), date: isoToday(), time: '09:00', location: c.address || '', notes: [c.phone, c.email].filter(Boolean).join(' · '), acct: 'A' };
+      state.view = 'calevent'; render(); return true;
+  }
+  return false;
+}
+/* Estimates → customer timeline (once per event). */
+function crmLogEstimate(e, what, status) {
+  if (!e || !e.crmId) return;
+  e.crmLogged = e.crmLogged || {};
+  if (e.crmLogged[what]) return;
+  e.crmLogged[what] = 1; try { if (e.id) upsertEstimate(e); } catch (_) {}
+  var label = 'Estimate ' + (e.no ? '#' + e.no + ' ' : '') + what + (e.title ? ' — ' + e.title : '') + ' (' + money(estHeadline(e)) + ')';
+  crmLog({ id: e.crmId, cloud: !!e.crmCloud, localId: e.crmCloud ? '' : e.crmId }, label, status);
+}
+
+/* Find an existing customer by phone / email (name only when neither has contact details). */
+function crmFindMatch(name, phone, email) {
+  var pd = crmDigits(phone);
+  var q = pd.length >= 7 ? pd.slice(-7) : (email || name);
+  if (!q) return Promise.resolve(null);
+  return crmSearch(q, 'all', 0).then(function (rows) { return rows.filter(function (c) { return crmMatches(c, name, phone, email); })[0] || null; });
+}
+var crmEnsurePending = typeof WeakMap !== 'undefined' ? new WeakMap() : null;
+function crmEnsureForEstimate(e) {
+  if (!e || e.crmId) return Promise.resolve(e);
+  var cu = e.customer || {};
+  if (!(cu.name || cu.phone || cu.email)) return Promise.resolve(e);
+  if (crmEnsurePending && crmEnsurePending.has(e)) return crmEnsurePending.get(e);
+  var pr = crmFindMatch(cu.name, cu.phone, cu.email).then(function (m) {
+    if (m) return m;
+    return crmSave({ id: '', cloud: crmOn(), localId: newClient().id, name: cu.name, phone: cu.phone, email: cu.email, address: cu.addr, notes: '', status: 'estimate', tags: '', next: '', history: [] });
+  }).then(function (c) { e.crmId = c.id; e.crmCloud = !!c.cloud; try { if (e.id) upsertEstimate(e); } catch (_) {} return e; })
+    .catch(function () { return e; })
+    .then(function (r) { if (crmEnsurePending) crmEnsurePending.delete(e); return r; });
+  if (crmEnsurePending) crmEnsurePending.set(e, pr);
+  return pr;
+}
+/* A job was started from the customer form: save / update the customer and log it. */
+function crmTouchFromJob(cc, label) {
+  var found = cc.crm ? Promise.resolve(cc.crm) : crmFindMatch(cc.name, cc.phone, cc.email).catch(function () { return null; });
+  return found.then(function (existing) {
+    var base = existing ? Object.assign({}, existing) : { id: crmOn() ? '' : cc.id, cloud: crmOn(), localId: cc.id, status: 'lead', tags: '', notes: '', history: [] };
+    base.name = cc.name || base.name || ''; base.phone = cc.phone || base.phone || ''; base.email = cc.email || base.email || '';
+    base.address = cc.address || base.address || ''; base.next = base.next || cc.nextServiceDue || '';
+    return crmSave(base).then(function (saved) {
+      cc.crmId = saved.id; cc.crmCloud = !!saved.cloud;
+      /* Keep a copy on this phone for the Messages screen, marked as already in the cloud list. */
+      if (saved.cloud) {
+        var mv = {}; try { mv = JSON.parse(localStorage.getItem('aio-crm-moved') || '{}'); } catch (e) {}
+        mv[cc.id] = 1; try { localStorage.setItem('aio-crm-moved', JSON.stringify(mv)); } catch (e) {}
+        upsertClient(Object.assign({}, cc, { crm: undefined }));
+      }
+      return crmLog(saved, label, existing ? '' : 'lead');
+    });
+  }).catch(function () { return null; });
+}
+
+/* ── Import Refael's consolidated customer database (Excel) into the cloud list ── */
+var XLSX_URL = 'https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js';
+function crmLoadXlsx() {
+  if (window.XLSX) return Promise.resolve(window.XLSX);
+  return new Promise(function (res, rej) {
+    var s = document.createElement('script'); s.src = XLSX_URL; s.async = true;
+    s.onload = function () { window.XLSX ? res(window.XLSX) : rej(new Error('Excel reader did not load.')); };
+    s.onerror = function () { rej(new Error('Could not load the Excel reader — check the internet.')); };
+    document.head.appendChild(s);
+  });
+}
+function crmImportRows(XLSX, wb) {
+  function sheetRows(name) {
+    var ws = wb.Sheets[name]; if (!ws) return [];
+    return XLSX.utils.sheet_to_json(ws, { defval: '', raw: true });
+  }
+  function s(v) { return v == null ? '' : String(v).trim(); }
+  function dig(v) { return s(v).replace(/\D/g, ''); }
+  function dstr(v) {
+    if (typeof v === 'number' && v > 20000 && v < 80000) return XLSX.SSF.format('yyyy-mm-dd', v);
+    if (v instanceof Date) return v.getFullYear() + '-' + String(v.getMonth() + 1).padStart(2, '0') + '-' + String(v.getDate()).padStart(2, '0');
+    var m = /^(\d{4}-\d{2}-\d{2})/.exec(s(v)); return m ? m[1] : s(v);
+  }
+  function usd(v) { var n = parseFloat(v); return isFinite(n) && s(v) !== '' ? '$' + Math.round(n).toLocaleString('en-US') : s(v); }
+  var cust = sheetRows('Customers').filter(function (r) { return Object.keys(r).some(function (k) { return s(r[k]) !== ''; }); });
+  if (!cust.length || !('Name' in cust[0]) || !('Stage' in cust[0])) throw new Error('This file has no "Customers" sheet in the expected format.');
+  var act = sheetRows('All activity');
+  var idxP = {}, idxE = {}, idxN = {};
+  cust.forEach(function (c, i) {
+    (s(c['All phones']) || s(c.Phone)).split(/[;,/]/).forEach(function (p) { var d = dig(p).slice(-10); if (d.length >= 7 && !(d in idxP)) idxP[d] = i; });
+    (s(c['All emails']) || s(c.Email)).toLowerCase().split(/[;, ]+/).forEach(function (e) { if (e.indexOf('@') >= 0 && !(e in idxE)) idxE[e] = i; });
+    var nm = s(c.Name).toLowerCase(); if (nm && !(nm in idxN)) idxN[nm] = i;
+  });
+  var hist = {};
+  act.forEach(function (a) {
+    var i = null, d = dig(a.Phone).slice(-10);
+    if (d.length >= 7 && d in idxP) i = idxP[d];
+    if (i === null) s(a.Email).toLowerCase().split(/[;, ]+/).some(function (e) { if (e in idxE) { i = idxE[e]; return true; } return false; });
+    if (i === null && s(a.Name).toLowerCase() in idxN) i = idxN[s(a.Name).toLowerCase()];
+    if (i === null) return;
+    var doc = s(a['Doc / Job #']);
+    var parts = [s(a.Type) + (doc && doc.indexOf('http') !== 0 ? ' #' + doc : '')];
+    if (s(a.Service)) parts.push(s(a.Service).slice(0, 80));
+    if (s(a.Amount)) parts.push(usd(a.Amount));
+    if (s(a.Status)) parts.push(s(a.Status).slice(0, 30));
+    (hist[i] = hist[i] || []).push({ date: dstr(a.Date), title: parts.join(' — ') });
+  });
+  var STAGE = { 'Paying customer': 'customer', 'Job booked': 'customer', 'Quoted - not closed': 'estimate', 'Lead only': 'lead' };
+  return cust.map(function (c, i) {
+    var name = s(c.Name), parts = name ? name.split(/\s+/) : [];
+    var notes = [];
+    if (s(c.Services)) notes.push('Services: ' + s(c.Services).slice(0, 300));
+    var mb = [];
+    if (s(c.Jobs) !== '' && s(c.Jobs) !== '0') mb.push('Jobs ' + s(c.Jobs));
+    if (s(c.Estimates) !== '' && s(c.Estimates) !== '0') mb.push('Estimates ' + s(c.Estimates) + (s(c['Estimated $']) ? ' (' + usd(c['Estimated $']) + ')' : ''));
+    if (s(c.Invoices) !== '' && s(c.Invoices) !== '0') mb.push('Invoices ' + s(c.Invoices) + (s(c['Invoiced $']) ? ' (' + usd(c['Invoiced $']) + ')' : ''));
+    if (s(c['WA job $'])) mb.push('WhatsApp jobs ' + usd(c['WA job $']));
+    if (mb.length) notes.push(mb.join(' · '));
+    notes.push('First seen ' + dstr(c['First seen']) + ' · Last seen ' + dstr(c['Last seen']) + ' · From: ' + s(c.Sources));
+    if (s(c['All phones']).indexOf(';') >= 0) notes.push('Other phones: ' + s(c['All phones']));
+    if (s(c['All emails']).indexOf(';') >= 0) notes.push('Other emails: ' + s(c['All emails']));
+    if (s(c['All addresses']).indexOf(';') >= 0) notes.push('Other addresses: ' + s(c['All addresses']).slice(0, 200));
+    if (s(c['Bad emails'])) notes.push('Bad email: ' + s(c['Bad emails']));
+    if (s(c.Notes)) notes.push(s(c.Notes).slice(0, 600));
+    var stage = STAGE[s(c.Stage)] || 'lead';
+    var last = dstr(c['Last seen']), next = '';
+    if (stage === 'customer' && /^\d{4}-\d{2}-\d{2}$/.test(last)) {
+      var y = +last.slice(0, 4) + 1, mo = last.slice(5, 7), dd = last.slice(8, 10);
+      if (mo === '02' && dd === '29') dd = '28';
+      next = y + '-' + mo + '-' + dd;
+    }
+    var h = (hist[i] || []).slice().sort(function (a, b) { return a.date < b.date ? 1 : a.date > b.date ? -1 : 0; }).slice(0, 40);
+    var key = dig(c.Phone).slice(-10) || s(c.Email).toLowerCase() || name.toLowerCase() || String(i);
+    return { first_name: parts[0] || '', last_name: parts.slice(1).join(' '), phone: s(c.Phone), email: s(c.Email).toLowerCase(), address: s(c.Address),
+      status: stage, tags: s(c['All brands']) || s(c.Brand), next_service: next, notes: notes.join('\n'), history: h, src_key: 'db:' + key };
+  });
+}
+function crmImportFile() {
+  if (!crmOn()) { alert('Open your setup link on this device first.'); return; }
+  var inp = document.createElement('input');
+  inp.type = 'file'; inp.accept = '.xlsx,.xls,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
+  inp.onchange = function () {
+    var f = inp.files && inp.files[0]; if (!f) return;
+    state.crmImport = { busy: true, text: 'Reading ' + f.name + '…' }; crmPaintImport();
+    Promise.all([crmLoadXlsx(), f.arrayBuffer()]).then(function (r) {
+      var XLSX = r[0], wb = XLSX.read(r[1], { type: 'array' });
+      var rows = crmImportRows(XLSX, wb);
+      if (!confirm('Import ' + rows.length + ' customers from ' + f.name + '? Existing customers are matched by phone or email and updated — nobody is deleted.')) { state.crmImport = null; crmPaintImport(); return; }
+      var ins = 0, upd = 0, i = 0, size = 150;
+      function next() {
+        if (i >= rows.length) return Promise.resolve();
+        var batch = rows.slice(i, i + size);
+        state.crmImport = { busy: true, text: 'Importing ' + Math.min(i + size, rows.length) + ' of ' + rows.length + '…' }; crmPaintImport();
+        return cloudRpc('crm_import', { p_owner: ownerKey(), p_rows: batch }).then(function (res) {
+          ins += (res && res.inserted) || 0; upd += (res && res.updated) || 0; i += size; return next();
+        });
+      }
+      return next().then(function () {
+        state.crmImport = { busy: false, text: 'Done: ' + ins + ' new, ' + upd + ' updated.' };
+        if (state.crm) { state.crm.list = []; state.crm.loadedFor = 0; }
+        if (state.view === 'clients') { render(); }
+      });
+    }).catch(function (err) {
+      state.crmImport = { busy: false, err: true, text: 'Import stopped: ' + ((err && err.message) || err) + '. Nothing is lost — tap Import again to continue.' };
+      crmPaintImport();
+    });
+  };
+  inp.click();
+}
+function crmImportHTML() {
+  var st = state.crmImport;
+  return st ? '<div style="font-size:13px;margin:4px 0 10px;color:' + (st.err ? 'var(--defect)' : st.busy ? 'var(--muted)' : 'var(--ok)') + '">' + esc(st.text) + '</div>' : '';
+}
+function crmPaintImport() { var el = root.querySelector('#crm_import_msg'); if (el && state.view === 'clients') el.innerHTML = crmImportHTML(); }
 
 /* ══ Client messaging / campaigns (no backend yet) ═══════════
    Draft a message (AI or typed), pick a channel, and fire it to each
@@ -2821,8 +3321,8 @@ function viewEstimate() {
     '<div id="est_pkgs" class="row" style="gap:6px;flex-wrap:wrap">' + EST_PACKAGES.map(function (p) { return '<button class="btn btn-ghost est-pkg" data-pkg="' + p.id + '" style="padding:6px 10px;font-size:13px;min-height:36px">' + esc(p.name) + '</button>'; }).join('') + '</div></div>';
   return '<div class="app">' +
     '<div class="topbar"><button class="iconbtn" data-act="est-back">‹</button><div style="flex:1"><h1>Estimate' + (e.no ? ' #' + e.no : '') + '</h1><div class="sub">' + esc(e.title || 'Your catalog · your prices') + '</div></div></div>' +
-    '<div class="screen">' + quick +
-      '<div class="card"><div class="eyebrow">Customer & job</div>' + cf('Name', 'name') + cf('Phone', 'phone', 'tel') + cf('Email', 'email', 'email') + cf('Property address', 'addr') +
+    '<div class="screen">' + quick + (e.crmId ? '' : crmPickerHTML('est_pick')) +
+      '<div class="card"><div class="eyebrow">Customer & job' + (e.crmId ? ' · linked ✓' : '') + '</div>' + cf('Name', 'name') + cf('Phone', 'phone', 'tel') + cf('Email', 'email', 'email') + cf('Property address', 'addr') +
         '<div class="field"><label>Job title (e.g. Furnace vent, Chimney liner)</label><input id="est_title" value="' + esc(e.title) + '"></div>' +
         '<div class="row" style="gap:8px"><div class="field" style="flex:1;margin-bottom:0"><label>Date of visit</label><input id="est_vdate" value="' + esc(e.visitDate) + '"></div><div class="field" style="flex:1;margin-bottom:0"><label>Prepared by</label><input id="est_prep" value="' + esc(e.preparedBy) + '"></div></div></div>' +
       '<div class="card"><div class="eyebrow">Add from your catalog</div><input id="est_search" placeholder="Search: liner, sweep, damper, flashing…" style="width:100%;min-height:46px;padding:11px;border:1px solid var(--rule);border-radius:8px"><div id="est_cat" style="max-height:220px;overflow:auto;border:1px solid var(--rule);border-radius:8px;margin-top:8px">' + renderEstCatHTML('') + '</div></div>' +
@@ -3175,6 +3675,7 @@ function buildEstimatePdf() {
   var fn = company.replace(/[^\w]+/g, '-') + '-Estimate-' + first + '-' + e.no + '.pdf';
   try { upsertEstimate(e); } catch (_) {}
   savePdf(fn, doc.output('blob'));
+  crmEnsureForEstimate(e).then(function () { crmLogEstimate(e, 'created', 'estimate'); });
 }
 var CLOUD_URL = 'https://frxjedjcfzybflorlyvp.supabase.co';
 var CLOUD_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZyeGplZGpjZnp5YmZsb3JseXZwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODYzMzUzNTAsImV4cCI6MjEwMTkxMTM1MH0.shcVYA8vhN8NzYl4KosH5Qn62r1loxSi3uITxOgjPR0';
@@ -3196,6 +3697,7 @@ function shareEstimate() {
   }).then(function (res) {
     if (res.error) throw res.error;
     e.shareId = id; e.shareLink = link; try { upsertEstimate(e); } catch (_) {}
+    crmEnsureForEstimate(e).then(function () { crmLogEstimate(e, 'sent', 'estimate'); });
     if (btn) { btn.textContent = 'Shared ✓ — copy link'; btn.disabled = false; }
     window.prompt('Send this link to your customer. They can view all 3 options and sign — and you\'ll see when they open and sign it:', link);
   }).catch(function (err) {
@@ -3213,6 +3715,7 @@ function checkEstimateStatus() {
     if (btn) { btn.textContent = 'Check status'; btn.disabled = false; }
     var d = res.data;
     if (!d) { alert('Not found.'); return; }
+    if (d.status === 'signed') crmEnsureForEstimate(e).then(function () { crmLogEstimate(e, 'signed by ' + (d.signer_name || 'customer'), 'customer'); });
     var msg = d.status === 'signed' ? ('Signed by ' + (d.signer_name || 'customer') + ' on ' + new Date(d.signed_at).toLocaleString())
       : d.status === 'viewed' ? ('Customer opened it on ' + new Date(d.viewed_at).toLocaleString() + ' — not signed yet.')
       : 'Sent — customer has not opened it yet.';
@@ -3337,6 +3840,7 @@ root.addEventListener('click', function (e) {
   if (!t) return;
   var act = t.getAttribute('data-act');
   var arg = t.getAttribute('data-arg');
+  if (crmAction(act, arg)) return;
 
   switch (act) {
     case 'settings': state.view = 'settings'; render(); break;
@@ -3474,12 +3978,13 @@ root.addEventListener('click', function (e) {
     case 'ai-write': aiWrite(); break;
     case 'ai-step': aiStep(); break;
     case 'ai-apply': aiApply(); break;
-    case 'ai-start': state.chat = null; state.view = 'chatstart'; render(); break;
+    case 'ai-start': state.chat = null; state.presetClient = null; state.view = 'chatstart'; render(); break;
     case 'estimates': state.view = 'estimates'; render(); break;
     case 'estimate-new': state.estimate = newEstimate(); if (!(state.estAi && state.estAi.busy)) state.estAi = null; state.view = 'estimate'; render(); break;
     case 'chat-estimate': {
       var ee = (state.chat && state.chat.estimate) || newEstimate();
       if (ee.id) { var fresh = loadEstimates().filter(function (x) { return x.id === ee.id; })[0]; if (fresh) ee = fresh; }
+      if (state.chat && state.chat.customer && state.chat.customer.crmId && !ee.crmId) { ee.crmId = state.chat.customer.crmId; ee.crmCloud = !!state.chat.customer.crmCloud; }
       if (state.chat && state.chat.customer) { var c2 = state.chat.customer; ee.customer = { name: c2.name || ee.customer.name || '', phone: c2.phone || ee.customer.phone || '', email: c2.email || ee.customer.email || '', addr: c2.address || ee.customer.addr || '' }; }
       if (state.chat) state.chat.estimate = ee;
       state.estimate = estNorm(ee); if (!(state.estAi && state.estAi.busy)) state.estAi = null; state.view = 'estimate'; render();
@@ -3490,12 +3995,14 @@ root.addEventListener('click', function (e) {
     case 'est-open': { var eo = loadEstimates().filter(function (x) { return x.id === arg; })[0]; if (eo) { state.estimate = estNorm(eo); if (!(state.estAi && state.estAi.busy)) state.estAi = null; state.view = 'estimate'; render(); } break; }
     case 'est-del': removeEstimate(arg); render(); break;
     case 'est-back': { var eb = state.estimate; if (eb && eb.options.some(function (o) { return o.items.length; })) upsertEstimate(eb); state.view = 'estimates'; render(); break; }
-    case 'chat-mode': state.editClient = newClient(); state.pendingMode = arg; state.pendingDepth = 'full'; state.view = 'custform'; render(); break;
+    case 'chat-mode': state.editClient = state.presetClient || newClient(); state.presetClient = null; state.pendingMode = arg; state.pendingDepth = 'full'; state.view = 'custform'; render(); break;
     case 'cust-depth': state.pendingDepth = arg; render(); break;
     case 'cust-start': {
       var cc = state.editClient || newClient();
-      if ((cc.name || cc.phone || cc.email || cc.address)) { if (!cc.nextServiceDue) { var d1 = new Date(); d1.setFullYear(d1.getFullYear() + 1); cc.nextServiceDue = d1.toISOString().slice(0, 10); } upsertClient(cc); }
+      var hasInfo = !!(cc.name || cc.phone || cc.email || cc.address);
+      if (hasInfo && !cc.nextServiceDue) { var d1 = new Date(); d1.setFullYear(d1.getFullYear() + 1); cc.nextServiceDue = d1.toISOString().slice(0, 10); }
       chatStartMode(state.pendingMode || 'level1', cc, state.pendingDepth);
+      if (hasInfo) crmTouchFromJob(cc, (CHAT_MODES[state.pendingMode] || CHAT_MODES.level1).name + ' visit started');
       break;
     }
     case 'cust-skip': chatStartMode(state.pendingMode || 'level1', null, state.pendingDepth); break;
@@ -3524,7 +4031,6 @@ root.addEventListener('click', function (e) {
     case 'sig-clear': sigClear(); break;
     case 'sig-cancel': if (state.chat) { state.chat.signing = false; render(); } break;
     case 'sig-done': sigDone(); break;
-    case 'clients': state.view = 'clients'; render(); break;
     case 'message-start': state.msg = { channel: 'whatsapp', text: '', off: {}, busy: false, err: null }; state.view = 'message'; render(); break;
     case 'schedule': state.view = 'schedule'; render(); if (gcalConnectedSlots().length) gcalFetch(); break;
     case 'gcal-connect': gcalConnect(arg || 'A'); break;
@@ -3565,20 +4071,6 @@ root.addEventListener('click', function (e) {
     case 'msg-channel': if (state.msg) { state.msg.channel = arg; render(); } break;
     case 'msg-toggle': if (state.msg) { state.msg.off[arg] = !state.msg.off[arg]; render(); } break;
     case 'msg-draft': msgDraft(arg); break;
-    case 'client-new': state.editClient = newClient(); state.view = 'client'; render(); break;
-    case 'client-open':
-      var foundc = loadClients().find(function (c) { return c.id === arg; });
-      state.editClient = Object.assign({ _existing: true }, foundc || newClient());
-      state.view = 'client'; render();
-      break;
-    case 'client-save':
-      var toSave = Object.assign({}, state.editClient || newClient()); delete toSave._existing;
-      upsertClient(toSave);
-      state.editClient = null; state.view = 'clients'; render();
-      break;
-    case 'client-del':
-      if (confirm('Delete this client?')) { removeClient(arg); state.editClient = null; state.view = 'clients'; render(); }
-      break;
   }
 });
 
@@ -3843,7 +4335,7 @@ function importData() {
     }
   } catch (e) {}
 })();
-refresh();
+refresh().then(function () { return crmLoadStats(); }).then(function () { if (state.view === 'home') render(); }).catch(function () {});
 
 /* Register the service worker so the app keeps working offline once
    installed. Only over http(s); on a file:// page it is skipped. */
