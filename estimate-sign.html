@@ -5,24 +5,31 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Your Estimate — AIO Pro Chimney</title>
 <style>
-:root{--bg:#0F1D30;--card:#16202E;--ink:#F1EAD9;--muted:#9AA7B4;--gold:#C9A24B;--line:#2A3A4A;--paper:#F3EEE4;--dark:#1a1614}
+:root{--rust:#B3541E;--sand:#F2EFEA;--cream:#F9F5F1;--rule:#E0DACF;--paper:#FFFFFF;--dark:#1a1614;--muted:#7a746e}
 *{box-sizing:border-box}
 body{margin:0;background:var(--paper);color:var(--dark);font-family:-apple-system,Segoe UI,Roboto,sans-serif;font-size:16px;line-height:1.5}
 .wrap{max-width:720px;margin:0 auto;padding:0 0 40px}
-.top{background:var(--bg);color:var(--ink);padding:20px 18px;border-bottom:2px solid var(--gold)}
-.top .co{font-family:Georgia,serif;font-size:20px}
-.top .sub{color:var(--gold);font-size:12px;letter-spacing:1px;margin-top:2px}
+.top{background:#fff;color:var(--dark);padding:22px 18px 14px;border-bottom:2px solid var(--rust);text-align:center}
+.top .co{color:var(--rust);font-weight:800;font-size:22px;letter-spacing:.28em}
+.top .sub{color:var(--muted);font-size:12px;font-style:italic;margin-top:2px}
+.top .cr{color:var(--rust);font-size:11px;font-weight:700;margin-top:4px}
+.sec{font-weight:800;letter-spacing:.08em;font-size:14px;margin:22px 0 10px;padding-bottom:6px;border-bottom:1.5px solid var(--rust);text-transform:uppercase}
+.grid{display:grid;grid-template-columns:auto 1fr;border:1px solid var(--rule);border-radius:10px;overflow:hidden;margin-bottom:6px}
+.grid div{padding:8px 10px;border-bottom:1px solid var(--rule);font-size:14px}
+.grid .k{background:var(--sand);color:var(--muted);font-size:11px;font-weight:700;letter-spacing:.05em}
+.bul{margin:4px 0 0;padding-left:16px;color:#6b655e;font-size:13px}
+.bul li{margin:2px 0}
 .pad{padding:18px}
-h1{font-family:Georgia,serif;font-size:24px;margin:10px 0 2px}
+h1{font-size:21px;letter-spacing:.1em;text-transform:uppercase;text-align:center;margin:14px 0 12px}
 .meta{color:#6b6b6b;font-size:14px;margin-bottom:14px}
 .forwho{background:#fff;border:0.5px solid #e0dacf;border-radius:12px;padding:14px;margin-bottom:16px}
 .forwho .lbl{color:#8a8a8a;font-size:12px;letter-spacing:1px}
 .opt{background:#fff;border:0.5px solid #e0dacf;border-radius:12px;overflow:hidden;margin-bottom:14px}
-.opt.rec{border:2px solid var(--gold)}
-.opt .hd{background:var(--bg);color:#fff;padding:12px 14px;display:flex;justify-content:space-between;align-items:center}
+.opt.rec{border:2px solid var(--rust)}
+.opt .hd{background:var(--rust);color:#fff;padding:12px 14px;display:flex;justify-content:space-between;align-items:center}
 .opt .hd .nm{font-weight:600;font-size:16px}
-.opt .hd .tot{font-family:Georgia,serif;font-size:18px;color:var(--gold)}
-.badge{display:inline-block;background:var(--gold);color:#0F1D30;font-size:11px;font-weight:700;padding:2px 8px;border-radius:20px;margin-left:8px;vertical-align:middle}
+.opt .hd .tot{font-size:18px;font-weight:800;color:#fff}
+.badge{display:inline-block;background:#fff;color:var(--rust);font-size:11px;font-weight:700;padding:2px 8px;border-radius:20px;margin-left:8px;vertical-align:middle}
 .li{padding:10px 14px;border-top:0.5px solid #eee}
 .li .r{display:flex;justify-content:space-between;gap:10px}
 .li .nm{font-weight:600}
@@ -34,7 +41,7 @@ h1{font-family:Georgia,serif;font-size:24px;margin:10px 0 2px}
 .signbox h2{font-size:17px;margin:0 0 10px}
 input{width:100%;padding:11px;border:1px solid #d8d2c7;border-radius:8px;font-size:15px;margin-bottom:10px}
 canvas{width:100%;height:180px;background:#faf8f3;border:1px dashed #c9c2b5;border-radius:8px;touch-action:none;display:block}
-button{width:100%;padding:14px;border:none;border-radius:10px;background:var(--gold);color:#0F1D30;font-size:16px;font-weight:700;cursor:pointer;margin-top:12px}
+button{width:100%;padding:14px;border:none;border-radius:10px;background:var(--rust);color:#fff;font-size:16px;font-weight:700;cursor:pointer;margin-top:12px}
 button.ghost{background:transparent;color:#555;border:1px solid #d8d2c7;font-weight:500;margin-top:8px}
 .done{background:#eaf3ee;border:1px solid #b9dcc7;color:#2b6a45;border-radius:12px;padding:16px;text-align:center;font-size:16px}
 .msg{color:#b03d27;font-size:14px;margin-top:8px}
@@ -43,7 +50,7 @@ button.ghost{background:transparent;color:#555;border:1px solid #d8d2c7;font-wei
 </head>
 <body>
 <div class="wrap">
-  <div class="top"><div class="co" id="co">AIO Pro Chimney</div><div class="sub" id="cosub">CHIMNEY · ROOFING</div></div>
+  <div class="top"><div class="co" id="co">AIO PRO CHIMNEY</div><div class="sub" id="cosub">AIOPRO LLC</div><div class="cr" id="cocr">Licensed General Contractor · Insured · CSIA Member · NCSG Member · BBB Accredited</div></div>
   <div id="app" class="pad"><div class="center">Loading your estimate…</div></div>
 </div>
 <script type="module">
@@ -54,41 +61,63 @@ var sb=createClient(URL,KEY);
 var app=document.getElementById('app');
 function esc(s){return String(s==null?'':s).replace(/[&<>"]/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];});}
 function money(n){n=Number(n)||0;return '$'+n.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g,',');}
-function line(it){return (Number(it.qty)||0)*(Number(it.price)||0);}
-function totals(o,tax){var sub=(o.items||[]).reduce(function(a,it){return a+line(it);},0);var disc=Number(o.disc)||0;var taxed=Math.max(0,sub-disc);var t=taxed*(Number(tax)||0)/100;return {sub:sub,disc:disc,tax:t,total:taxed+t};}
+function num(v){var n=parseFloat(String(v==null?'':v).replace(/[^0-9.\-]/g,''));return isFinite(n)?n:0;}
+function line(it){return num(it.qty)*num(it.price);}
+function totals(o,tax){var sub=(o.items||[]).reduce(function(a,it){return a+line(it);},0);var disc=num(o.disc);var taxed=Math.max(0,sub-disc);var t=taxed*num(tax)/100;return {sub:sub,disc:disc,tax:t,total:taxed+t};}
 var params=new URLSearchParams(location.search);
 var id=params.get('id');
 
+function bullets(t){t=String(t||'').trim();if(!t)return[];var parts=t.indexOf('\n')>=0?t.split(/\n+/):t.split(/;\s+|\.\s+(?=[A-Z0-9])/);return parts.map(function(p){return p.replace(/^[\s·•\-–]+/,'').trim();}).filter(Boolean);}
+function fmtDate(v){v=String(v||'');var d=new Date(/^\d{4}-\d{2}-\d{2}$/.test(v)?v+'T00:00:00':v);return isNaN(d.getTime())?String(v||''):d.toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'});}
 function render(row){
   var e=row.payload||{}; var c=e.company||{}; var cu=e.customer||{};
-  if(c.name) document.getElementById('co').textContent=c.name;
+  if(c.name) document.getElementById('co').textContent=String(c.name).toUpperCase();
+  if(c.legal) document.getElementById('cosub').textContent=c.legal;
+  if(c.creds) document.getElementById('cocr').textContent=c.creds;
   var opts=(e.options||[]).filter(function(o){return (o.items||[]).some(function(it){return it.name||it.price;});});
-  var body='<h1>Your Estimate</h1><div class="meta">'+esc(c.name||'AIO Pro Chimney')+(c.phone?(' · '+esc(c.phone)):'')+' · '+new Date(row.created_at||Date.now()).toLocaleDateString()+'</div>';
-  body+='<div class="forwho"><div class="lbl">PREPARED FOR</div><div style="font-size:17px;font-weight:600;margin-top:3px">'+esc(cu.name||'')+'</div><div style="color:#666;font-size:14px">'+esc(cu.addr||'')+'</div><div style="color:#666;font-size:14px">'+esc([cu.phone,cu.email].filter(Boolean).join(' · '))+'</div></div>';
-  body+='<div class="meta">Choose the option that fits you best:</div>';
+  var multi=opts.length>1;
+  var title=e.title?(/estimate/i.test(e.title)?e.title:e.title+' estimate'):'Your estimate';
+  var body='<h1>'+esc(title)+'</h1>';
+  body+='<div class="grid">'
+    +'<div class="k">CLIENT</div><div>'+esc(cu.name||'')+'</div>'
+    +(e.no?'<div class="k">ESTIMATE NO.</div><div>'+esc(e.no)+'</div>':'')
+    +'<div class="k">PROPERTY</div><div>'+esc(cu.addr||'')+'</div>'
+    +'<div class="k">DATE OF VISIT</div><div>'+esc(fmtDate(e.visitDate||row.created_at))+'</div>'
+    +'<div class="k">PREPARED BY</div><div>'+esc(e.preparedBy||'')+'</div>'
+    +'<div class="k">PRICES VALID</div><div>30 days from this date</div></div>';
+  if(e.found) body+='<div class="sec">What we found</div><div style="font-size:15px">'+esc(e.found)+'</div>';
+  body+='<div class="sec">'+(multi?'Your options':'Scope and pricing')+'</div>';
+  if(multi) body+='<div class="meta">Choose the option that fits you best:</div>';
   opts.forEach(function(o,i){
-    var t=totals(o,e.tax);
-    body+='<div class="opt'+(i===1?' rec':'')+'"><div class="hd"><div class="nm">Option '+(i+1)+': '+esc(o.name||'')+(i===1?'<span class="badge">RECOMMENDED</span>':'')+'</div><div class="tot">'+money(t.total)+'</div></div>';
+    var t=totals(o,e.tax); var rec=multi&&i===1&&opts.length===3;
+    body+='<div class="opt'+(rec?' rec':'')+'"><div class="hd"><div class="nm">'+(multi?('Option '+(i+1)+': '):'')+esc(o.name||'')+(rec?'<span class="badge">RECOMMENDED</span>':'')+'</div><div class="tot">'+money(t.total)+'</div></div>';
+    if(o.summary) body+='<div class="li" style="background:var(--cream);color:#555;font-size:14px">'+esc(o.summary)+'</div>';
     (o.items||[]).forEach(function(it){
-      body+='<div class="li"><div class="r"><div class="nm">'+esc(it.name||'Item')+'</div><div class="amt">'+money(line(it))+'</div></div>'+(it.desc?('<div class="d">'+esc(it.desc)+'</div>'):'')+'<div class="qp">'+(Number(it.qty)||1)+' × '+money(it.price)+'</div></div>';
+      var bl=bullets(it.desc);
+      body+='<div class="li"><div class="r"><div class="nm">'+esc(it.name||'Item')+'</div><div class="amt">'+(num(it.price)>0?money(line(it)):'Included')+'</div></div>'+(bl.length?('<ul class="bul">'+bl.map(function(b){return '<li>'+esc(b)+'</li>';}).join('')+'</ul>'):'')+((num(it.qty)||1)!==1?'<div class="qp">'+(num(it.qty)||1)+' × '+money(num(it.price))+'</div>':'')+'</div>';
     });
     if(t.disc||t.tax){body+='<div class="li"><div class="r"><div style="color:#777">'+(t.disc?('Discount -'+money(t.disc)):'')+(t.tax?('  Tax '+money(t.tax)):'')+'</div><div></div></div></div>';}
     body+='</div>';
   });
+  var notes=String(e.notes||'').split(/\n+/).map(function(l){return l.replace(/^[\s·•\-–]+/,'').trim();}).filter(Boolean);
+  if(notes.length) body+='<div class="sec">Scope notes</div><ul class="bul" style="font-size:14px;color:#333">'+notes.map(function(n){return '<li>'+esc(n)+'</li>';}).join('')+'</ul>';
   var terms=(c.terms&&c.terms.trim())?c.terms:'This estimate is valid for 30 days. A deposit may be required to schedule work, with the balance due on completion unless otherwise agreed. All work is performed to NFPA 211 and local codes. Workmanship warranted for one year unless stated otherwise.';
-  body+='<div class="terms"><b>Terms &amp; conditions:</b><br>'+esc(terms)+'</div>';
+  body+='<div class="sec">Terms &amp; conditions</div><div class="terms">'+esc(terms)+'</div>';
 
   if(row.status==='signed'){
     body+='<div class="done">✓ Accepted and signed'+(row.signer_name?(' by '+esc(row.signer_name)):'')+'<br><span style="font-size:14px;color:#4a7658">'+new Date(row.signed_at).toLocaleString()+'</span></div>';
-    if(row.signature) body+='<div style="text-align:center;margin-top:10px"><img src="'+row.signature+'" style="max-width:240px;border:1px solid #e0dacf;border-radius:8px;background:#fff"></div>';
+    if(/^data:image\/png;base64,[A-Za-z0-9+\/=]+$/.test(String(row.signature||''))) body+='<div style="text-align:center;margin-top:10px"><img src="'+row.signature+'" style="max-width:240px;border:1px solid #e0dacf;border-radius:8px;background:#fff"></div>';
   } else {
-    body+='<div class="signbox"><h2>Accept &amp; sign</h2><input id="signer" placeholder="Your full name"><div style="color:#888;font-size:13px;margin:2px 0 6px">Sign below with your finger or mouse:</div><canvas id="pad"></canvas><button class="ghost" id="clear">Clear signature</button><button id="accept">Accept &amp; sign this estimate</button><div class="msg" id="err"></div></div>';
+    body+='<div class="sec">To go ahead</div><div class="signbox"><div style="color:#555;font-size:14px;margin-bottom:10px">Sign below'+(c.phone?(', or call or text '+esc(c.phone)+' and we will book it in'):'')+'.</div>'
+      +(multi?'<div style="font-size:13px;color:#888;margin-bottom:4px">Your choice</div><select id="choice" style="width:100%;padding:11px;border:1px solid #d8d2c7;border-radius:8px;font-size:15px;margin-bottom:10px"><option value="">Choose your option…</option>'+opts.map(function(o,i){return '<option value="'+i+'">Option '+(i+1)+': '+esc(o.name||'')+' — '+money(totals(o,e.tax).total)+'</option>';}).join('')+'</select>':'')
+      +'<input id="signer" placeholder="Your full name"><div style="color:#888;font-size:13px;margin:2px 0 6px">Sign below with your finger or mouse:</div><canvas id="pad"></canvas><button class="ghost" id="clear">Clear signature</button><button id="accept">Accept &amp; sign this estimate</button><div class="msg" id="err"></div></div>';
   }
+  if(c.owner) body+='<div style="margin-top:22px;border-top:1.5px solid var(--rust);padding-top:12px;font-size:14px">Respectfully submitted,<div style="font-weight:800;font-size:16px;margin-top:2px">'+esc(c.owner)+'</div><div style="color:#888;font-size:12px">Owner · '+esc(c.legal||'')+' ('+esc(c.name||'')+')<br>'+esc([c.phone,c.email,c.web].filter(Boolean).join(' · '))+'</div></div>';
   app.innerHTML=body;
-  if(row.status!=='signed') setupSign(row);
+  if(row.status!=='signed') setupSign(row, opts);
 }
 
-function setupSign(row){
+function setupSign(row, opts){
   var canvas=document.getElementById('pad');
   var rect=canvas.getBoundingClientRect();
   canvas.width=Math.round(rect.width); canvas.height=180;
@@ -102,10 +131,14 @@ function setupSign(row){
   document.getElementById('accept').onclick=async function(){
     var name=document.getElementById('signer').value.trim();
     var err=document.getElementById('err');
+    var chEl=document.getElementById('choice');
+    if(chEl&&chEl.value===''){err.textContent='Please choose an option first.';return;}
     if(!name){err.textContent='Please enter your name.';return;}
     if(!has){err.textContent='Please sign in the box.';return;}
     err.textContent='Saving…';
     var sig=canvas.toDataURL('image/png');
+    var ch=document.getElementById('choice');
+    if(ch&&ch.value!==''&&opts&&opts[Number(ch.value)]){var oc=opts[Number(ch.value)];name=name+' — chose Option '+(Number(ch.value)+1)+': '+(oc.name||'');}
     var res=await sb.from('shared_estimates').update({status:'signed',signed_at:new Date().toISOString(),signer_name:name,signature:sig}).eq('id',row.id);
     if(res.error){err.textContent='Error: '+res.error.message;return;}
     row.status='signed';row.signed_at=new Date().toISOString();row.signer_name=name;row.signature=sig;
