@@ -1356,10 +1356,13 @@ function viewHome() {
       estimate: '<rect x="5" y="3" width="14" height="18" rx="2"/><path d="M9 8h6M9 12h6M9 16h3"/><circle cx="16.5" cy="16.5" r="0"/>',
       settings: '<circle cx="12" cy="12" r="3"/><path d="M12 3.5v2.5M12 18v2.5M4.4 7.5l2.2 1.3M17.4 15.2l2.2 1.3M19.6 7.5l-2.2 1.3M6.6 15.2l-2.2 1.3"/>'
     };
+    function bigTile(kind, label, path) { return '<button class="tile" data-act="fj-new" data-arg="' + kind + '"><span class="ico">' + tico(path) + '</span><span class="lbl2">' + label + '</span></button>'; }
     var tiles = '<div class="tiles">' +
-      tile('ai-start', 'New job', ICO.inspect) +
+      bigTile('inspection', 'Inspection', ICO.inspect) +
+      bigTile('estimate', 'Estimate', ICO.estimate) +
+      bigTile('invoice', 'Invoice', ICO.checklist) +
       tile('coach-start', 'Ask Refael', ICO.ask) +
-      tile('estimates', 'Estimates', ICO.estimate) +
+      tile('estimates', 'Saved estimates', ICO.estimate) +
       tile('clients', 'Customers', ICO.clients) +
       tile('schedule', 'Schedule', ICO.schedule) +
       tile('message-start', 'Messages', ICO.message) +
@@ -1391,7 +1394,7 @@ function viewHome() {
         '<div style="flex:1"><h1 style="font-family:var(--serif);letter-spacing:1px">A.I.O PRO</h1><div class="sub" style="color:var(--gold);letter-spacing:0.18em;font-size:9px">CHIMNEY · ROOFING</div></div>' +
         '<button class="iconbtn" data-act="settings" aria-label="Settings">SET</button></div>') +
     '<div class="screen">' + body + '</div>' +
-    (state.picking ? '' : '<div class="bottombar" style="gap:8px"><button class="btn btn-gold btn-primary" data-act="ai-start">New job</button></div>') +
+    (state.picking ? '' : '<div class="bottombar" style="gap:6px"><button class="btn btn-gold btn-primary" data-act="fj-new" data-arg="inspection" style="flex:1">Inspection</button><button class="btn btn-ghost" data-act="fj-new" data-arg="estimate" style="flex:1">Estimate</button><button class="btn btn-ghost" data-act="fj-new" data-arg="invoice" style="flex:0.8">Invoice</button></div>') +
     '</div>';
 }
 
@@ -1906,7 +1909,7 @@ function viewRepEdit() {
         '<div id="rep_totals">' + repTotalsHTML(d) + '</div></div>' +
       '<div class="card">' + ta('Limitations (what could not be checked)', 'limitations', d.limitations, 60) + '</div>' +
     '</div>' +
-    '<div class="bottombar" style="gap:6px"><button class="btn btn-gold btn-primary" data-act="rep-save" style="flex:1.5">Save &amp; update PDF</button><button class="btn btn-ghost" data-act="rep-pdf" style="flex:0.8">Open PDF</button><button class="btn btn-ghost" data-act="rep-mail" style="flex:0.8">Email</button></div>' +
+    '<div class="bottombar" style="gap:6px"><button class="btn btn-gold btn-primary" data-act="rep-save" style="flex:1.1">Save</button><button class="btn btn-ghost" data-act="rep-preview" style="flex:1">Preview</button><button class="btn btn-ghost" data-act="rep-pdf" style="flex:0.7">PDF</button><button class="btn btn-ghost" data-act="rep-mail" style="flex:0.7">Email</button></div>' +
   '</div>';
 }
 function repSetPath(obj, path, val) {
@@ -2374,23 +2377,24 @@ function viewChatStart() {
 }
 function viewCustForm() {
   var c = state.editClient || newClient();
-  var modeName = CHAT_MODES[state.pendingMode] ? CHAT_MODES[state.pendingMode].name : 'Inspection';
+  var fjKind = /^fj-/.test(state.pendingMode || '') ? String(state.pendingMode).slice(3) : '';
+  var modeName = fjKind ? FJ_KINDS[fjKind].name : (CHAT_MODES[state.pendingMode] ? CHAT_MODES[state.pendingMode].name : 'Inspection');
   function f(label, key, im) { return '<div class="field"><label>' + label + '</label><input data-model="client.' + key + '"' + (im ? ' inputmode="' + im + '"' : '') + ' value="' + esc(c[key] || '') + '"></div>'; }
   return '<div class="app">' +
-    '<div class="topbar"><button class="iconbtn" data-act="ai-start">‹</button><div style="flex:1"><h1>' + esc(modeName) + '</h1><div class="sub">Customer details</div></div></div>' +
+    '<div class="topbar"><button class="iconbtn" data-act="home">‹</button><div style="flex:1"><h1>' + esc(modeName) + '</h1><div class="sub">Customer details</div></div></div>' +
     '<div class="screen">' +
       (c.crm ? '<div class="card" style="border-color:var(--ok)"><div style="font-size:14px"><b>' + esc(c.crm.name || 'Existing customer') + '</b> — existing customer. Change anything below if needed.</div></div>'
              : crmPickerHTML('cust_pick')) +
       '<div class="card">' +
         f('Customer name', 'name') + f('Phone', 'phone', 'tel') + f('Email (report is sent here)', 'email', 'email') + addrHTML('Service address', c.address, 'data-model="client.address"') +
       '</div>' +
-      '<div class="card"><div class="eyebrow">Who is doing this inspection?</div>' +
+      (fjKind ? '' : '<div class="card"><div class="eyebrow">Who is doing this inspection?</div>' +
         '<div class="row" style="gap:8px">' +
           '<button class="btn ' + (state.pendingDepth === 'pro' ? 'btn-gold btn-primary' : 'btn-ghost') + '" data-act="cust-depth" data-arg="pro" style="flex:1">I\'m the pro — keep it short</button>' +
           '<button class="btn ' + (state.pendingDepth !== 'pro' ? 'btn-gold btn-primary' : 'btn-ghost') + '" data-act="cust-depth" data-arg="full" style="flex:1">Guide the technician fully</button>' +
         '</div>' +
         '<div style="color:var(--muted);font-size:13px;margin-top:8px">' + (state.pendingDepth === 'pro' ? 'Fewer questions — the app trusts you and moves fast to the report.' : 'The app leads step by step so a newer tech never misses anything.') + '</div>' +
-      '</div>' +
+      '</div>') +
     '</div>' +
     '<div class="bottombar" style="gap:8px"><button class="btn btn-gold btn-primary" data-act="cust-start">Start</button><button class="btn btn-ghost" data-act="cust-skip">Skip for now</button></div>' +
   '</div>';
@@ -2520,7 +2524,7 @@ function addrSplit(a) {
 function addrJoin(p) {
   var street = String(p.street || '').trim(), city = String(p.city || '').trim(), st = String(p.state || '').trim().toUpperCase(), zip = String(p.zip || '').trim();
   if (!street && !city && !zip) return '';
-  var tail = [st, zip].filter(Boolean).join(' ');
+  var tail = [(city || zip) ? st : '', zip].filter(Boolean).join(' ');
   return [street, city, tail].filter(Boolean).join(', ');
 }
 function addrCityLine(a) { var p = addrSplit(a); return addrJoin({ city: p.city, state: p.city || p.zip ? p.state : '', zip: p.zip }); }
@@ -2922,11 +2926,11 @@ function crmAction(act, arg) {
     case 'crm-inspect':
       state.presetClient = Object.assign(newClient(), { name: c.name, phone: c.phone, email: c.email, address: c.address, nextServiceDue: c.next, crm: c });
       if (!c.cloud) state.presetClient.id = c.localId || c.id;
-      state.chat = null; state.view = 'chatstart'; render(); return true;
+      state.chat = null; state.editClient = state.presetClient; state.presetClient = null; state.pendingMode = 'fj-inspection'; state.pendingDepth = 'full'; state.view = 'custform'; render(); return true;
     case 'crm-estimate': {
       var pc = Object.assign(newClient(), { name: c.name, phone: c.phone, email: c.email, address: c.address, nextServiceDue: c.next, crm: c });
       if (!c.cloud) pc.id = c.localId || c.id;
-      state.chat = null; state.editClient = pc; state.presetClient = null; state.pendingMode = 'estimate'; state.pendingDepth = 'full'; state.view = 'custform'; render(); return true;
+      state.chat = null; state.editClient = pc; state.presetClient = null; state.pendingMode = 'fj-estimate'; state.pendingDepth = 'full'; state.view = 'custform'; render(); return true;
     }
     case 'crm-schedule':
       state.editEvent = { title: 'Job — ' + (c.name || ''), date: isoToday(), time: '09:00', location: c.address || '', notes: [c.phone, c.email].filter(Boolean).join(' · '), acct: 'A' };
@@ -3666,7 +3670,7 @@ function viewEstimatesList() {
     var sub = [e.no ? ('#' + e.no) : '', e.title, money(estHeadline(e)), nItems + ' items', new Date(e.updatedAt || Date.now()).toLocaleDateString()].filter(Boolean).join(' · ');
     return '<div class="card joblist-item"><button class="meta" style="text-align:left" data-act="est-open" data-arg="' + esc(e.id) + '"><div class="name">' + esc(head) + '</div><div class="sub">' + esc(sub) + '</div></button><button class="iconbtn" style="color:var(--muted)" data-act="est-del" data-arg="' + esc(e.id) + '" aria-label="Delete">DEL</button></div>';
   }).join('') : '<div class="empty">No estimates yet. Tap New estimate to build one.</div>';
-  return '<div class="app"><div class="topbar"><button class="iconbtn" data-act="home">‹</button><div style="flex:1"><h1>Estimates</h1></div></div><div class="screen">' + rows + '</div><div class="bottombar"><button class="btn btn-gold btn-primary" data-act="ai-start">New job</button></div></div>';
+  return '<div class="app"><div class="topbar"><button class="iconbtn" data-act="home">‹</button><div style="flex:1"><h1>Estimates</h1></div></div><div class="screen">' + rows + '</div><div class="bottombar"><button class="btn btn-gold btn-primary" data-act="fj-new" data-arg="estimate">New estimate</button></div></div>';
 }
 function estNum(v) { var n = parseFloat(String(v == null ? '' : v).replace(/[^0-9.\-]/g, '')); return isFinite(n) ? n : 0; }
 function estLine(it) { return estNum(it.qty) * estNum(it.price); }
@@ -3766,7 +3770,7 @@ function viewEstimate() {
         '<div class="field"><label>What we found — 2–3 plain sentences</label><textarea id="est_found" style="min-height:70px">' + esc(e.found) + '</textarea></div>' +
         '<div class="field" style="margin-bottom:0"><label>Scope notes — one per line (what is not included, measurements, what the customer prepares)</label><textarea id="est_notes" style="min-height:80px">' + esc(e.notes) + '</textarea></div></div>' +
     '</div>' +
-    '<div class="bottombar" style="gap:6px"><button class="btn btn-gold btn-primary" data-act="estmail-open" style="flex:1.4">' + (e.emailedAt ? 'Emailed ✓' : 'Email to customer') + '</button><button class="btn btn-ghost" id="est_pdf" style="flex:0.8">PDF</button><button class="btn btn-ghost" id="est_share" style="flex:0.8">' + (e.shareId ? 'Link ✓' : 'Link') + '</button></div>' +
+    '<div class="bottombar" style="gap:6px"><button class="btn btn-gold btn-primary" data-act="pv-open" data-arg="estimate" style="flex:1.2">Preview &amp; send</button><button class="btn btn-ghost" data-act="estmail-open" style="flex:0.9">' + (e.emailedAt ? 'Emailed ✓' : 'Email') + '</button><button class="btn btn-ghost" id="est_pdf" style="flex:0.6">PDF</button><button class="btn btn-ghost" id="est_share" style="flex:0.6">' + (e.shareId ? 'Link ✓' : 'Link') + '</button></div>' +
   '</div>';
 }
 function wireEstimate() {
@@ -3849,7 +3853,7 @@ function estTranscript(chat) {
   }).join('\n');
   return out.length > 14000 ? out.slice(out.length - 14000) : out;
 }
-function estAiPrompt(chat) {
+function estAiPrompt(chat, transcript) {
   var cat = CATALOG.map(function (c, i) { return i + ' | ' + c.name + ' | ' + (c.price ? '$' + c.price : 'no set price') + ' | ' + c.description; }).join('\n');
   return 'You are the estimator for ' + (state.settings.company || 'AIO Pro Chimney') + ' (Greater St. Louis). Build a repair estimate from this field visit, using ONLY the owner\'s price catalog.\n'
     + 'RULES:\n'
@@ -3867,7 +3871,8 @@ function estAiPrompt(chat) {
     + 'Return ONLY JSON, no markdown:\n'
     + '{"title":"","found":"","options":[{"name":"","summary":"","items":[{"n":0,"qty":1,"lines":["",""]},{"custom":"","qty":1,"lines":[""]}]}],"notes":[""]}\n\n'
     + 'CATALOG (n | name | owner price | standard scope):\n' + cat + '\n\n'
-    + 'FIELD VISIT (technician and inspector chat):\n' + estTranscript(chat);
+    + (transcript ? 'The measurements below are ours: use them to size the work, but never put a raw measurement or an internal note in the customer text on its own line. A size belongs in a scope line only where it helps the customer picture the work.\n\nFIELD VISIT (what the technician filled in on site):\n' + transcript
+                    : 'FIELD VISIT (technician and inspector chat):\n' + estTranscript(chat));
 }
 function estApplyAi(e, data) {
   var opts = (data && Array.isArray(data.options)) ? data.options.slice(0, 3) : [];
@@ -4572,6 +4577,9 @@ function render() {
   else if (state.view === 'settings') html = viewSettings();
   else if (state.view === 'pair') html = viewPair();
   else if (state.view === 'repedit') html = viewRepEdit();
+  else if (state.view === 'fjsetup') html = viewFjSetup();
+  else if (state.view === 'fjform') html = viewFjForm();
+  else if (state.view === 'preview') html = viewPreview();
   else html = viewHome();
   root.innerHTML = html;
   wireInputs();
@@ -4583,6 +4591,7 @@ function render() {
   wireMsg();
   wirePair();
   wireRepEdit();
+  wireFj();
   wireAddr();
   var af = root.querySelector('[autofocus]');
   if (af) { try { af.focus(); } catch (e) {} }
@@ -4837,11 +4846,19 @@ root.addEventListener('click', function (e) {
       var cc = state.editClient || newClient();
       var hasInfo = !!(cc.name || cc.phone || cc.email || cc.address);
       if (hasInfo && !cc.nextServiceDue) { var d1 = new Date(); d1.setFullYear(d1.getFullYear() + 1); cc.nextServiceDue = d1.toISOString().slice(0, 10); }
+      if (/^fj-/.test(state.pendingMode || '')) {
+        var fk = String(state.pendingMode).slice(3);
+        fjStart(fk, cc);
+        if (hasInfo) crmTouchFromJob(cc, FJ_KINDS[fk].name + ' visit started');
+        break;
+      }
       chatStartMode(state.pendingMode || 'level1', cc, state.pendingDepth);
       if (hasInfo) crmTouchFromJob(cc, (CHAT_MODES[state.pendingMode] || CHAT_MODES.level1).name + ' visit started');
       break;
     }
-    case 'cust-skip': chatStartMode(state.pendingMode || 'level1', null, state.pendingDepth); break;
+    case 'cust-skip':
+      if (/^fj-/.test(state.pendingMode || '')) { fjStart(String(state.pendingMode).slice(3), null); break; }
+      chatStartMode(state.pendingMode || 'level1', null, state.pendingDepth); break;
     case 'chat-cam':
     case 'chat-gal':
       (function () {
@@ -4883,15 +4900,35 @@ root.addEventListener('click', function (e) {
     case 'est-schedule': estSchedule(); break;
     case 'estmail-back':
       if (state.estMail && state.estMail.back === 'repedit-reopen' && state.chat && state.chat.lastReport) { repEditOpen(false); break; }
-      state.view = (state.estMail && state.estMail.kind === 'report') ? 'chat' : 'estimate'; render(); break;
+      if (state.estMail && state.estMail.kind === 'report') { state.view = state.repEdit ? 'repedit' : (state.chat && !state.chat.fromForm ? 'chat' : 'home'); render(); break; }
+      state.view = 'estimate'; render(); break;
     case 'tech-link': techLink(false); break;
     case 'pair-open': pairOpen(arg || state.view); break;
     case 'pair-send': pairSend(); break;
     case 'pair-ok': { var pc = root.querySelector('#pair_code'); if (pc && state.pair) state.pair.code = pc.value; pairOk(); break; }
     case 'pair-back': pairBack(); break;
+    case 'fj-new': state.chat = null; state.editClient = state.presetClient || newClient(); state.presetClient = null; state.pendingMode = 'fj-' + (arg || 'inspection'); state.pendingDepth = 'full'; state.view = 'custform'; render(); break;
+    case 'fj-level': if (state.fj) { state.fj.level = arg; render(); } break;
+    case 'fj-sys': if (state.fj) { state.fj.system = arg; render(); } break;
+    case 'fj-area': if (state.fj) { var ai2 = state.fj.areas.indexOf(arg); if (ai2 >= 0) state.fj.areas.splice(ai2, 1); else state.fj.areas.push(arg); render(); } break;
+    case 'fj-go': if (state.fj) { state.view = 'fjform'; render(); try { window.scrollTo(0, 0); } catch (_) {} } break;
+    case 'fj-back': if (state.view === 'fjform') { state.view = 'fjsetup'; render(); } else { state.view = 'home'; render(); } break;
+    case 'fj-v': { var vp = String(arg).split('|'), fr = state.fj && fjRow(state.fj, vp[0]); if (fr) { fr.v = fr.v === vp[1] ? '' : vp[1]; render(); } break; }
+    case 'fj-cam': fjAddPhoto(arg, true); break;
+    case 'fj-gal': fjAddPhoto(arg, false); break;
+    case 'fj-photo-del': { var pp = String(arg).split('|'), f2 = state.fj; if (f2) { if (pp[0] === '_extra') f2.extraPhotos.splice(Number(pp[1]), 1); else fjRow(f2, pp[0]).photos.splice(Number(pp[1]), 1); render(); } break; }
+    case 'fj-review': fjReview(); break;
+    case 'fj-build': fjBuildEstimate(); break;
+    case 'fj-report': fjBuildReport(); break;
+    case 'pv-open': previewOpen(arg || 'estimate'); break;
+    case 'pv-back':
+    case 'pv-edit': { var wasRep = state.preview && state.preview.kind === 'report'; state.preview = null; state.view = wasRep ? (state.repEdit ? 'repedit' : 'chat') : (state.estimate ? 'estimate' : 'home'); render(); break; }
+    case 'pv-pdf': if (state.preview && state.preview.kind === 'report') { var rp = state.chat && state.chat.lastReport; if (rp) savePdf(rp.fn, rp.blob); } else buildEstimatePdf(); break;
+    case 'pv-mail': estMailOpen(state.preview && state.preview.kind === 'report' ? 'report' : 'estimate'); break;
     case 'rep-edit': repEditOpen(false); break;
     case 'rep-back': repBack(); break;
     case 'rep-save': repSave(); try { window.scrollTo(0, 0); } catch (_) {} break;
+    case 'rep-preview': { var rv = state.repEdit; if (rv && rv.dirty) repSave(function () { previewOpen('report'); }); else previewOpen('report'); break; }
     case 'rep-pdf': { var rs = state.repEdit; if (!rs) break; if (rs.dirty) { if (repSave(function () { render(); savePdf(rs.rep.fn, rs.rep.blob); })) {} } else savePdf(rs.rep.fn, rs.rep.blob); break; }
     case 'rep-mail': { var rm = state.repEdit; if (!rm) break; var go = function () { state.repEdit = null; estMailOpen('report'); state.estMail.back = 'repedit-reopen'; }; if (rm.dirty) repSave(go); else go(); break; }
     case 'rep-status': { var sp = String(arg).split('|'), ce2 = state.repEdit && state.repEdit.d.components[Number(sp[0])]; if (ce2) { ce2.status = sp[1]; state.repEdit.dirty = true; render(); } break; }
@@ -5181,6 +5218,463 @@ function importData() {
   };
   input.click();
 }
+
+/* ══ Form jobs: Inspection / Estimate / Invoice ═══════════════
+   The technician fills boxes, not a chat. The AI only comes in at
+   the end: it checks the work and writes the customer document. */
+var FJ_KINDS = {
+  inspection: { name: 'Inspection', out: 'inspection report' },
+  estimate:   { name: 'Estimate',   out: 'estimate' },
+  invoice:    { name: 'Invoice',    out: 'invoice' }
+};
+var FJ_SYS = [
+  { id: 'wood',     name: 'Wood fireplace',            sub: 'Masonry, open fireplace' },
+  { id: 'factory',  name: 'Factory-built fireplace',   sub: 'Metal firebox, prefab' },
+  { id: 'insert',   name: 'Wood stove or insert',      sub: 'Stove, insert, pellet' },
+  { id: 'gaslog',   name: 'Gas logs in a fireplace',   sub: 'Vented, chimney above' },
+  { id: 'dv',       name: 'Direct-vent gas',           sub: 'Sealed glass, pipe outside' },
+  { id: 'ventfree', name: 'Vent-free gas',             sub: 'No flue, vents into the room' },
+  { id: 'flue',     name: 'Furnace / water heater flue', sub: 'B-vent or masonry flue' }
+];
+var FJ_SECS = [
+  ['out', 'Outside'], ['appl', 'The appliance'], ['fb', 'Firebox'], ['gas', 'Gas side'],
+  ['dmp', 'Damper & throat'], ['sc', 'Smoke chamber'], ['flue', 'Flue & liner'], ['vent', 'Venting'],
+  ['room', 'Room & safety'], ['att', 'Attic & basement'], ['roof', 'Roof & top']
+];
+/* sys: '*' = every system. lvl 2 = only on a Level 2 inspection. */
+var FJ_CHECKS = [
+  { id: 'front', sec: 'out', label: 'Front of the house', help: 'One photo — it goes on the front of the report.', sys: '*', lvl: 1 },
+  { id: 'ext', sec: 'out', label: 'Chimney from the ground', help: 'Brick, mortar, lean, staining, what you can see of the top.', sys: ['wood', 'factory', 'insert', 'gaslog', 'flue'], lvl: 1 },
+
+  { id: 'appl', sec: 'appl', label: 'The appliance', help: 'One photo facing it. Note make and model if there is a label.', sys: '*', lvl: 1 },
+  { id: 'appl-run', sec: 'appl', label: 'Does it run?', help: 'If it is safe, run it: flame, blower, shut-off.', sys: ['gaslog', 'dv', 'ventfree', 'flue'], lvl: 1 },
+
+  { id: 'fb-walls', sec: 'fb', label: 'Firebox walls and floor', help: 'Cracks, open joints, crumbling mortar, missing brick.', sys: ['wood', 'gaslog', 'ventfree'], lvl: 1 },
+  { id: 'fb-panels', sec: 'fb', label: 'Refractory panels', help: 'Cracks you can fit a coin in, gaps at the seams, missing pieces.', sys: ['factory', 'insert', 'dv'], lvl: 1 },
+  { id: 'fb-doors', sec: 'fb', label: 'Doors, screen and glass', help: 'Cracked glass, broken latch, missing gasket.', sys: ['wood', 'factory', 'insert', 'gaslog', 'dv', 'ventfree'], lvl: 1 },
+
+  { id: 'gas-burner', sec: 'gas', label: 'Burner, logs and media', help: 'Logs set the way the maker shows; rocks or embers not over the ports.', sys: ['gaslog', 'dv', 'ventfree'], lvl: 1 },
+  { id: 'gas-pilot', sec: 'gas', label: 'Pilot / oxygen sensor', help: 'Lights and stays lit; pilot area clean.', sys: ['gaslog', 'dv', 'ventfree'], lvl: 1 },
+  { id: 'gas-valve', sec: 'gas', label: 'Gas shut-off valve', help: 'Can you reach it and turn it? Photo of where it is.', sys: ['gaslog', 'dv', 'ventfree'], lvl: 1 },
+  { id: 'gas-leak', sec: 'gas', label: 'Leak test at the fittings', help: 'Bubble test every connection you can reach. Any leak = stop and call Refael.', sys: ['gaslog', 'dv', 'ventfree'], lvl: 1 },
+
+  { id: 'dmp-move', sec: 'dmp', label: 'Damper opens, closes and seals', help: 'Move it by hand: free, closes flat, handle works.', sys: ['wood', 'gaslog', 'factory'], lvl: 1 },
+  { id: 'dmp-type', sec: 'dmp', label: 'Damper against the flue', help: 'A square plate cannot seal a round liner — note the shapes.', sys: ['wood', 'gaslog'], lvl: 1 },
+  { id: 'dmp-clamp', sec: 'dmp', label: 'Damper fixed open for gas', help: 'Vented gas logs need the damper blocked open. Is it?', sys: ['gaslog'], lvl: 1 },
+
+  { id: 'sc-cond', sec: 'sc', label: 'Smoke chamber', help: 'Look up with a light: voids, rough brick, missing mortar, buildup.', sys: ['wood', 'gaslog'], lvl: 1 },
+
+  { id: 'flue-type', sec: 'flue', label: 'Liner type and size', help: 'Clay tile, stainless, or none. Inside size if you can measure it.', sys: ['wood', 'factory', 'insert', 'gaslog', 'flue'], lvl: 1 },
+  { id: 'flue-view', sec: 'flue', label: 'Flue from below', help: 'Flashlight up: cracks, offsets, daylight, debris, blockage.', sys: ['wood', 'factory', 'insert', 'gaslog', 'flue'], lvl: 1 },
+  { id: 'flue-build', sec: 'flue', label: 'Creosote or buildup', help: 'How thick, and is it flaky, tarry or glazed?', sys: ['wood', 'insert'], lvl: 1 },
+  { id: 'flue-cam', sec: 'flue', label: 'Camera scan of the flue', help: 'Run the camera. Photo the worst spot you find.', sys: ['wood', 'factory', 'insert', 'gaslog', 'flue'], lvl: 2 },
+
+  { id: 'vent-conn', sec: 'vent', label: 'Vent connector', help: 'Rust, holes, sags; rises toward the chimney; joints screwed; supported.', sys: ['flue'], lvl: 1 },
+  { id: 'vent-clear', sec: 'vent', label: 'Connector clearance to wood', help: 'Single-wall 6 in, B-vent 1 in, unless the label says otherwise.', sys: ['flue'], lvl: 1 },
+  { id: 'vent-draft', sec: 'vent', label: 'Draft test', help: 'Appliance running: does the draft hood pull the smoke in?', sys: ['flue'], lvl: 1 },
+  { id: 'dv-term', sec: 'vent', label: 'Vent termination outside', help: 'Photo it: clear of decks, windows and snow line; cap intact.', sys: ['dv'], lvl: 1 },
+  { id: 'dv-seal', sec: 'vent', label: 'Glass gasket and seals', help: 'Sealed unit: gasket all round, glass clamped, no soot leak.', sys: ['dv'], lvl: 1 },
+
+  { id: 'room-clear', sec: 'room', label: 'Mantel, trim and clearances', help: 'Measure from the opening; compare with the label on the unit.', sys: ['wood', 'factory', 'insert', 'gaslog', 'dv', 'ventfree'], lvl: 1 },
+  { id: 'room-hearth', sec: 'room', label: 'Hearth extension', help: 'How far it runs in front and to the sides; carpet or wood at the edge.', sys: ['wood', 'factory', 'insert', 'gaslog'], lvl: 1 },
+  { id: 'room-co', sec: 'room', label: 'CO and smoke alarms', help: 'In the room and on each floor; check the date on them.', sys: '*', lvl: 1 },
+  { id: 'room-air', sec: 'room', label: 'Combustion air / tight room', help: 'Closed room, big exhaust fan or new windows can starve it.', sys: ['ventfree', 'flue', 'gaslog'], lvl: 1 },
+
+  { id: 'att-chase', sec: 'att', label: 'Chimney in the attic', help: 'Gaps, water stains, framing touching the chimney.', sys: ['wood', 'factory', 'insert', 'gaslog', 'flue'], lvl: 2 },
+  { id: 'att-base', sec: 'att', label: 'Chimney base and cleanout', help: 'Cleanout door, debris, water, cracks in the base.', sys: ['wood', 'gaslog', 'flue'], lvl: 2 },
+
+  { id: 'roof-crown', sec: 'roof', label: 'Crown or chase cover', help: 'Cracks, rust, standing water, the seal at the tiles.', sys: ['wood', 'factory', 'insert', 'gaslog', 'flue'], lvl: 2 },
+  { id: 'roof-cap', sec: 'roof', label: 'Cap and spark arrestor', help: 'There, fastened, screen clear.', sys: ['wood', 'factory', 'insert', 'gaslog', 'flue'], lvl: 2 },
+  { id: 'roof-flash', sec: 'roof', label: 'Flashing and cricket', help: 'Sealed, no rust. Cricket if the chimney is wider than 30 in.', sys: ['wood', 'factory', 'insert', 'gaslog', 'flue'], lvl: 2 },
+  { id: 'roof-brick', sec: 'roof', label: 'Brick and mortar at the top', help: 'Spalling, missing mortar, lean.', sys: ['wood', 'gaslog', 'flue'], lvl: 2 },
+  { id: 'roof-height', sec: 'roof', label: 'Height above the roof', help: '3 ft above where it comes through, 2 ft above anything within 10 ft.', sys: ['wood', 'factory', 'insert', 'gaslog', 'flue'], lvl: 2 }
+];
+/* What the estimate visit came for. m = measurements the price depends on (internal only). */
+var FJ_AREAS = [
+  { id: 'liner', name: 'Liner / flue', help: 'New liner, relining, broken clay tile.', m: ['Liner length (ft)', 'Flue size inside (in)', 'Stories', 'Roof pitch / access'] },
+  { id: 'cap', name: 'Cap / chase cover', help: 'Cap, chase cover, animal screen.', m: ['Top size L x W (in)', 'Tile height above the crown (in)', 'Number of flues'] },
+  { id: 'crown', name: 'Crown / top of the chimney', help: 'Crown cracked, top tiles, rebuild from the roofline.', m: ['Crown size (in)', 'Courses to rebuild'] },
+  { id: 'damper', name: 'Damper', help: 'Damper stuck, missing, does not seal, damper cap.', m: ['Flue shape and size (in)', 'Damper type'] },
+  { id: 'smokechamber', name: 'Smoke chamber', help: 'Parging, voids, rebuild.', m: ['Chamber height (in)'] },
+  { id: 'firebox', name: 'Firebox', help: 'Mortar repair, panels, brick cleaning.', m: ['Panel sizes (in)', 'How many panels'] },
+  { id: 'masonry', name: 'Brick / tuckpointing', help: 'Tuckpointing, spalled brick, waterproofing.', m: ['Area (sq ft)', 'Stories', 'Lift or scaffold?'] },
+  { id: 'flashing', name: 'Flashing / leak', help: 'Water coming in, flashing, cricket.', m: ['Roof type', 'Cricket needed?'] },
+  { id: 'gas', name: 'Gas fireplace / logs', help: 'Logs, valve, burner service, conversion.', m: ['Make and model', 'Gas line present?', 'Opening size (in)'] },
+  { id: 'stove', name: 'Stove / insert', help: 'New insert or stove, install with liner.', m: ['Opening W x H x D (in)', 'Liner length (ft)'] },
+  { id: 'sweep', name: 'Sweep / cleaning', help: 'Sweep, deep clean, dryer vent, air ducts.', m: [] },
+  { id: 'animal', name: 'Animal / blockage', help: 'Nest, animal, debris, smell.', m: [] },
+  { id: 'vent', name: 'Furnace / water heater vent', help: 'Connector, B-vent, power vent conversion.', m: ['Appliance type', 'Connector size (in)', 'Run length (ft)'] },
+  { id: 'other', name: 'Something else', help: 'Anything not on this list.', m: [] }
+];
+function fjArea(id) { for (var i = 0; i < FJ_AREAS.length; i++) if (FJ_AREAS[i].id === id) return FJ_AREAS[i]; return null; }
+function fjSysName(id) { for (var i = 0; i < FJ_SYS.length; i++) if (FJ_SYS[i].id === id) return FJ_SYS[i].name; return ''; }
+function fjSecName(id) { for (var i = 0; i < FJ_SECS.length; i++) if (FJ_SECS[i][0] === id) return FJ_SECS[i][1]; return id; }
+function fjChecks(f) {
+  return FJ_CHECKS.filter(function (c) {
+    if (c.lvl > Number(f.level || 1)) return false;
+    return c.sys === '*' || c.sys.indexOf(f.system) >= 0;
+  });
+}
+function fjRow(f, id) { return (f.data[id] = f.data[id] || { v: '', note: '', photos: [], m: {} }); }
+function fjDone(f) {
+  if (f.kind === 'inspection') {
+    var list = fjChecks(f), n = 0;
+    list.forEach(function (c) { var r = f.data[c.id]; if (r && (r.v || (r.photos || []).length || String(r.note || '').trim())) n++; });
+    return { n: n, all: list.length };
+  }
+  var n2 = 0;
+  (f.areas || []).forEach(function (id) { var r = f.data[id]; if (r && ((r.photos || []).length || String(r.note || '').trim())) n2++; });
+  return { n: n2, all: (f.areas || []).length };
+}
+function fjPhotos(f) {
+  var out = [];
+  if (f.kind === 'inspection') fjChecks(f).forEach(function (c) { (fjRow(f, c.id).photos || []).forEach(function (p) { out.push(p); }); });
+  else (f.areas || []).forEach(function (id) { (fjRow(f, id).photos || []).forEach(function (p) { out.push(p); }); });
+  (f.extraPhotos || []).forEach(function (p) { out.push(p); });
+  return out;
+}
+function fjStart(kind, customer) {
+  state.fj = { kind: kind, level: '1', system: '', areas: [], data: {}, extraPhotos: [], extraNote: '', customer: customer || null, review: null, busy: false, err: '' };
+  state.view = 'fjsetup'; render(); try { window.scrollTo(0, 0); } catch (_) {}
+}
+var FJ_V = [['good', 'Good', 'var(--ok)'], ['monitor', 'Monitor', 'var(--monitor)'], ['bad', 'Needs attention', 'var(--defect)'], ['na', 'N/A', 'var(--muted)']];
+function viewFjSetup() {
+  var f = state.fj; if (!f) { state.view = 'home'; return viewHome(); }
+  var K = FJ_KINDS[f.kind];
+  var body;
+  if (f.kind === 'inspection') {
+    body = '<div class="card"><div class="eyebrow">Which inspection?</div><div class="row" style="gap:8px">' +
+        ['1', '2'].map(function (l) { return '<button class="btn ' + (f.level === l ? 'btn-gold btn-primary' : 'btn-ghost') + '" data-act="fj-level" data-arg="' + l + '" style="flex:1">Level ' + l + '</button>'; }).join('') +
+      '</div><div style="color:var(--muted);font-size:13px;margin-top:8px">' +
+        (f.level === '2' ? 'Level 2 adds the attic and basement, the roof and top, and a camera scan.' : 'Level 1 is what you can see inside the home and from the ground — no roof, no attic.') + '</div></div>' +
+      '<div class="eyebrow" style="margin:4px 2px 8px">What are we inspecting?</div>' +
+      FJ_SYS.map(function (s) {
+        return '<button class="card card-tap" style="display:block;width:100%;text-align:left;' + (f.system === s.id ? 'border-color:var(--gold);border-width:2px' : '') + '" data-act="fj-sys" data-arg="' + s.id + '">' +
+          '<div style="font-weight:700;font-size:17px">' + esc(s.name) + '</div>' + (s.sub ? '<div style="color:var(--muted);font-size:13px">' + esc(s.sub) + '</div>' : '') + '</button>';
+      }).join('');
+  } else {
+    body = '<div class="card"><div style="font-size:16px;line-height:1.5">' + (f.kind === 'invoice' ? 'What work did we do? Tap everything that applies.' : 'What did we come for? Tap everything that applies.') + '</div></div>' +
+      '<div class="row" style="flex-wrap:wrap;gap:8px;margin-bottom:8px">' +
+      FJ_AREAS.map(function (a) {
+        var on = (f.areas || []).indexOf(a.id) >= 0;
+        return '<button class="btn ' + (on ? 'btn-gold btn-primary' : 'btn-ghost') + '" data-act="fj-area" data-arg="' + a.id + '" style="flex:1 1 46%;min-height:56px;padding:6px 10px;font-size:14px;text-align:center">' + esc(a.name) + '</button>';
+      }).join('') + '</div>';
+  }
+  var ready = f.kind === 'inspection' ? !!f.system : (f.areas || []).length > 0;
+  return '<div class="app">' +
+    '<div class="topbar"><button class="iconbtn" data-act="home">‹</button><div style="flex:1"><h1>' + esc(K.name) + '</h1>' + (f.customer && f.customer.name ? '<div class="sub">' + esc(f.customer.name) + '</div>' : '') + '</div></div>' +
+    '<div class="screen">' + body + '</div>' +
+    '<div class="bottombar"><button class="btn ' + (ready ? 'btn-gold btn-primary' : 'btn-ghost') + '" data-act="fj-go"' + (ready ? '' : ' disabled') + '>' + (ready ? 'Start' : (f.kind === 'inspection' ? 'Pick the system' : 'Pick at least one')) + '</button></div>' +
+  '</div>';
+}
+function fjPhotoStrip(id, photos) {
+  return '<div style="margin:2px 0 8px">' +
+    (photos || []).map(function (src, i) {
+      return '<span style="display:inline-block;position:relative;margin:0 8px 8px 0">' +
+        '<img src="' + src + '" style="display:block;height:74px;border-radius:8px;border:0.5px solid var(--rule)">' +
+        '<button class="btn btn-ghost" data-act="fj-photo-del" data-arg="' + esc(id + '|' + i) + '" aria-label="Remove photo" style="position:absolute;top:-6px;right:-6px;min-height:26px;height:26px;width:26px;padding:0;border-radius:13px;background:#fff;font-size:13px">✕</button></span>';
+    }).join('') +
+    '<button class="btn btn-ghost" data-act="fj-cam" data-arg="' + esc(id) + '" style="min-height:44px;padding:0 14px;font-size:14px">📷 Photo</button>' +
+    '<button class="btn btn-ghost" data-act="fj-gal" data-arg="' + esc(id) + '" style="min-height:44px;padding:0 14px;margin-left:6px;font-size:14px">Gallery</button>' +
+  '</div>';
+}
+function viewFjForm() {
+  var f = state.fj; if (!f) { state.view = 'home'; return viewHome(); }
+  var K = FJ_KINDS[f.kind], p = fjDone(f), body = '';
+  if (f.kind === 'inspection') {
+    var list = fjChecks(f), lastSec = '';
+    list.forEach(function (c) {
+      var r = fjRow(f, c.id);
+      if (c.sec !== lastSec) { lastSec = c.sec; body += '<div class="eyebrow" style="margin:14px 2px 8px">' + esc(fjSecName(c.sec)) + '</div>'; }
+      body += '<div class="card" style="' + (r.v ? 'border-left:4px solid ' + (r.v === 'bad' ? 'var(--defect)' : r.v === 'monitor' ? 'var(--monitor)' : r.v === 'na' ? 'var(--rule)' : 'var(--ok)') : '') + '">' +
+        '<div style="font-weight:700;font-size:16px">' + esc(c.label) + '</div>' +
+        '<div style="color:var(--muted);font-size:13px;margin:3px 0 9px">' + esc(c.help) + '</div>' +
+        '<div class="row" style="gap:6px;margin-bottom:9px">' + FJ_V.map(function (v) {
+          var on = r.v === v[0];
+          return '<button class="btn ' + (on ? '' : 'btn-ghost') + '" data-act="fj-v" data-arg="' + esc(c.id + '|' + v[0]) + '" style="flex:1;min-height:42px;padding:0 4px;font-size:13px;' + (on ? 'background:' + v[2] + ';color:#fff;border-color:' + v[2] : '') + '">' + v[1] + '</button>';
+        }).join('') + '</div>' +
+        fjPhotoStrip(c.id, r.photos) +
+        '<input class="fj-note" data-fj="' + esc(c.id) + '" placeholder="A few words for the report…" value="' + esc(r.note || '') + '" style="width:100%;padding:10px 11px;border:1px solid var(--rule);border-radius:8px;font-size:15px">' +
+      '</div>';
+    });
+  } else {
+    (f.areas || []).forEach(function (id) {
+      var a = fjArea(id); if (!a) return;
+      var r = fjRow(f, id);
+      body += '<div class="card">' +
+        '<div style="font-weight:700;font-size:16px">' + esc(a.name) + '</div>' +
+        '<div style="color:var(--muted);font-size:13px;margin:3px 0 9px">' + esc(a.help) + '</div>' +
+        fjPhotoStrip(id, r.photos) +
+        '<input class="fj-note" data-fj="' + esc(id) + '" placeholder="' + (f.kind === 'invoice' ? 'What you did, in a few words…' : 'What you found and what it needs…') + '" value="' + esc(r.note || '') + '" style="width:100%;padding:10px 11px;border:1px solid var(--rule);border-radius:8px;font-size:15px">' +
+        (a.m.length ? '<div style="margin-top:10px"><div class="eyebrow" style="margin-bottom:6px">Measurements (for us, not for the customer)</div>' +
+          '<div class="row" style="flex-wrap:wrap;gap:8px">' + a.m.map(function (label, i) {
+            return '<div class="field" style="flex:1 1 46%;margin-bottom:0"><label>' + esc(label) + '</label><input class="fj-m" data-fj="' + esc(id) + '" data-mi="' + i + '" value="' + esc((r.m && r.m[label]) || '') + '"></div>';
+          }).join('') + '</div></div>' : '') +
+      '</div>';
+    });
+  }
+  body += '<div class="eyebrow" style="margin:14px 2px 8px">Anything else</div>' +
+    '<div class="card">' + fjPhotoStrip('_extra', f.extraPhotos) +
+      '<textarea class="fj-note" data-fj="_extra" placeholder="Anything else worth writing down…" style="width:100%;min-height:70px;padding:10px 11px;border:1px solid var(--rule);border-radius:8px;font-size:15px">' + esc(f.extraNote || '') + '</textarea></div>';
+  var rev = f.review;
+  var revBox = rev ? '<div class="card" style="border-color:' + (rev.ready ? 'var(--ok)' : 'var(--gold)') + '">' +
+      '<div class="eyebrow">Before you price it</div>' +
+      (rev.ready ? '<div style="color:var(--ok);font-weight:650;margin-bottom:6px">Looks complete — you can build it.</div>' : '') +
+      ['photos', 'measure', 'checks'].map(function (k) {
+        var arr = rev[k] || []; if (!arr.length) return '';
+        return '<div style="margin-bottom:8px"><div style="font-weight:650;font-size:14px">' + (k === 'photos' ? 'Take these photos' : k === 'measure' ? 'Measure this' : 'Check this') + '</div><ul style="margin:4px 0 0 18px;padding:0;font-size:14px;color:var(--ink)">' + arr.map(function (x) { return '<li style="margin:3px 0">' + esc(x) + '</li>'; }).join('') + '</ul></div>';
+      }).join('') +
+      (rev.refael ? '<div style="color:var(--defect);font-weight:650;font-size:14px;margin-top:6px">Call Refael: ' + esc(rev.refael) + '</div>' : '') +
+      (rev.installer && rev.installer.length ? '<div style="margin-top:8px"><div style="font-weight:650;font-size:14px">For the installer</div><ul style="margin:4px 0 0 18px;padding:0;font-size:14px">' + rev.installer.map(function (x) { return '<li style="margin:3px 0">' + esc(x) + '</li>'; }).join('') + '</ul></div>' : '') +
+    '</div>' : '';
+  var isInsp = f.kind === 'inspection';
+  return '<div class="app">' +
+    '<div class="topbar"><button class="iconbtn" data-act="fj-back">‹</button><div style="flex:1;min-width:0"><h1 style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + esc(K.name) + (isInsp ? ' — Level ' + esc(f.level) : '') + '</h1><div class="sub">' + (isInsp ? esc(fjSysName(f.system)) + ' · ' : '') + p.n + ' of ' + p.all + ' done</div></div></div>' +
+    '<div class="screen">' +
+      (f.err ? '<div class="card" style="border-color:var(--defect);color:var(--defect);font-size:14px">' + esc(f.err) + '</div>' : '') +
+      revBox + body +
+    '</div>' +
+    '<div class="bottombar" style="gap:6px">' +
+      (isInsp
+        ? '<button class="btn btn-gold btn-primary" data-act="fj-report"' + (f.busy ? ' disabled' : '') + '>' + (f.busy ? 'Writing the report…' : 'Create report') + '</button>'
+        : '<button class="btn btn-ghost" data-act="fj-review" style="flex:1"' + (f.busy ? ' disabled' : '') + '>' + (f.busy === 'review' ? 'Checking…' : 'Check my work') + '</button>' +
+          '<button class="btn btn-gold btn-primary" data-act="' + (f.kind === 'invoice' ? 'fj-report' : 'fj-build') + '" style="flex:1.3"' + (f.busy ? ' disabled' : '') + '>' + (f.busy ? 'Building…' : f.kind === 'invoice' ? 'Create invoice' : 'Create estimate') + '</button>') +
+    '</div>' +
+  '</div>';
+}
+function wireFj() {
+  if ((state.view !== 'fjform' && state.view !== 'fjsetup') || !state.fj) return;
+  var f = state.fj;
+  root.querySelectorAll('.fj-note').forEach(function (el) {
+    el.addEventListener('input', function () {
+      var id = el.getAttribute('data-fj');
+      if (id === '_extra') f.extraNote = el.value; else fjRow(f, id).note = el.value;
+    });
+  });
+  root.querySelectorAll('.fj-m').forEach(function (el) {
+    el.addEventListener('input', function () {
+      var id = el.getAttribute('data-fj'), a = fjArea(id); if (!a) return;
+      var label = a.m[Number(el.getAttribute('data-mi'))];
+      var r = fjRow(f, id); r.m = r.m || {}; r.m[label] = el.value;
+    });
+  });
+}
+function fjAddPhoto(id, cam) {
+  var f = state.fj; if (!f) return;
+  (cam ? takePhoto() : pickImage()).then(function (src) {
+    if (!src) return;
+    if (id === '_extra') (f.extraPhotos = f.extraPhotos || []).push(src);
+    else fjRow(f, id).photos.push(src);
+    render();
+  }).catch(function () {});
+}
+/* What the technician filled in, as plain text for the AI. */
+function fjTranscript(f) {
+  var L = [];
+  if (f.kind === 'inspection') {
+    L.push('INSPECTION: Level ' + f.level + ' on a ' + fjSysName(f.system) + '.');
+    var n = 0;
+    fjChecks(f).forEach(function (c) {
+      var r = f.data[c.id]; if (!r || (!r.v && !String(r.note || '').trim() && !(r.photos || []).length)) return;
+      var ph = (r.photos || []).length;
+      var vv = r.v === 'good' ? 'GOOD' : r.v === 'monitor' ? 'MONITOR' : r.v === 'bad' ? 'NEEDS ATTENTION' : r.v === 'na' ? 'NOT PRESENT / NOT CHECKED' : 'no mark';
+      L.push('- [' + fjSecName(c.sec) + '] ' + c.label + ': ' + vv + (String(r.note || '').trim() ? ' — tech wrote: "' + String(r.note).trim() + '"' : '') + (ph ? ' (' + ph + ' photo' + (ph > 1 ? 's' : '') + ')' : ''));
+      n++;
+    });
+    if (!n) L.push('- (nothing marked yet)');
+    var skipped = fjChecks(f).filter(function (c) { var r = f.data[c.id]; return !r || (!r.v && !String(r.note || '').trim() && !(r.photos || []).length); });
+    if (skipped.length) L.push('NOT CHECKED: ' + skipped.map(function (c) { return c.label; }).join(', ') + '.');
+  } else {
+    L.push((f.kind === 'invoice' ? 'WORK DONE' : 'ESTIMATE VISIT') + ':');
+    (f.areas || []).forEach(function (id) {
+      var a = fjArea(id), r = f.data[id] || {};
+      if (!a) return;
+      var ms = Object.keys(r.m || {}).filter(function (k) { return String(r.m[k] || '').trim(); }).map(function (k) { return k + ': ' + r.m[k]; });
+      L.push('- ' + a.name + (String(r.note || '').trim() ? ' — tech wrote: "' + String(r.note).trim() + '"' : ' — (no note)') + ((r.photos || []).length ? ' (' + r.photos.length + ' photo' + (r.photos.length > 1 ? 's' : '') + ')' : ' (no photo)') + (ms.length ? ' | measurements: ' + ms.join('; ') : ' | no measurements taken'));
+    });
+  }
+  if (String(f.extraNote || '').trim()) L.push('ALSO: ' + String(f.extraNote).trim());
+  var cu = f.customer || {};
+  if (cu.name || cu.address) L.push('CUSTOMER: ' + [cu.name, cu.address].filter(Boolean).join(', ') + '.');
+  return L.join('\n');
+}
+function fjAiCall(userText, maxTokens, withPhotos) {
+  var s = state.settings, f = state.fj;
+  if (!s.aiKey) return Promise.reject(new Error('Add your Anthropic API key in Settings first.'));
+  var photos = withPhotos ? fjPhotos(f).slice(0, 20) : [];
+  return aiCopies(photos).then(function (small) {
+    var content = [{ type: 'text', text: userText }];
+    small.forEach(function (src) {
+      var mm = /^data:(image\/[\w.+-]+);base64,(.*)$/.exec(src);
+      if (mm) content.push({ type: 'image', source: { type: 'base64', media_type: mm[1], data: mm[2] } });
+    });
+    return fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json', 'x-api-key': s.aiKey, 'anthropic-version': '2023-06-01', 'anthropic-dangerous-direct-browser-access': 'true' },
+      body: JSON.stringify({ model: EST_AI_MODEL, max_tokens: maxTokens, system: [{ type: 'text', text: chatKnowledge(), cache_control: { type: 'ephemeral' } }], messages: [{ role: 'user', content: content }] })
+    });
+  }).then(function (r) { return r.json(); }).then(function (d) {
+    if (d.error) throw new Error((d.error && d.error.message) || 'AI request failed.');
+    var t = ''; (d.content || []).forEach(function (b) { if (b && b.type === 'text') t += b.text; });
+    var parsed = parseAiJson(t);
+    if (!parsed) throw new Error(d.stop_reason === 'max_tokens' ? 'The answer was cut off — tap again.' : 'Could not read the AI answer — tap again.');
+    return parsed;
+  });
+}
+/* Estimate / invoice: the AI checks the visit before anything is priced. */
+function fjReview() {
+  var f = state.fj; if (!f || f.busy) return;
+  f.busy = 'review'; f.err = ''; render();
+  var prompt = 'You are Refael, checking a technician\'s field visit BEFORE the estimate is written. '
+    + 'Look at the photos and what he wrote. Say what is still missing so the job can be priced and then installed correctly: photos that are missing, measurements that were not taken, things to check on site, and whether he should call Refael before quoting. '
+    + 'Also list the photos the INSTALLER will need to do the job without guessing. '
+    + 'Be short and practical, at most 4 items per list, plain words, no jargon. Do not repeat what he already has. If nothing is missing, return empty lists and ready true.\n'
+    + 'Return ONLY JSON: {"ready":true,"photos":[""],"measure":[""],"checks":[""],"installer":[""],"refael":""}\n\n'
+    + fjTranscript(f);
+  fjAiCall(prompt, 900, true).then(function (d) {
+    f.busy = false;
+    f.review = { ready: d.ready === true, photos: d.photos || [], measure: d.measure || [], checks: d.checks || [], installer: d.installer || [], refael: String(d.refael || '').trim() };
+    if (state.view === 'fjform') { render(); try { window.scrollTo(0, 0); } catch (_) {} }
+  }).catch(function (err) { f.busy = false; f.err = (err && err.message) || 'AI error'; if (state.view === 'fjform') render(); });
+}
+/* Estimate: build the priced document from the form. */
+function fjBuildEstimate() {
+  var f = state.fj; if (!f || f.busy) return;
+  if (!fjDone(f).n) { f.err = 'Fill in at least one of the jobs above first.'; render(); return; }
+  f.busy = 'build'; f.err = ''; render();
+  var prompt = estAiPrompt(null, fjTranscript(f));
+  fjAiCall(prompt, 4096, true).then(function (d) {
+    var e = newEstimate();
+    e.customer = { name: (f.customer && f.customer.name) || '', phone: (f.customer && f.customer.phone) || '', email: (f.customer && f.customer.email) || '', addr: (f.customer && f.customer.address) || '' };
+    if (f.customer && f.customer.crmId) { e.crmId = f.customer.crmId; e.crmCloud = !!f.customer.crmCloud; }
+    var unpriced = estApplyAi(e, d);
+    e.fjPhotos = fjPhotos(f);
+    estEnsureNo(e);
+    try { upsertEstimate(e); } catch (_) {}
+    state.estimate = e; state.estAi = { forId: e, done: 'Built from your visit. Check the prices and the scope lines' + (unpriced ? ' — ' + unpriced + ' item(s) need a price (red).' : '.') };
+    f.busy = false; state.fjLast = f;
+    state.view = 'estimate'; render(); try { window.scrollTo(0, 0); } catch (_) {}
+  }).catch(function (err) { f.busy = false; f.err = (err && err.message) || 'AI error'; if (state.view === 'fjform') render(); });
+}
+/* Inspection / invoice: build the customer document from the form. */
+function fjBuildReport() {
+  var f = state.fj; if (!f || f.busy) return;
+  if (!fjDone(f).n) { f.err = 'Mark at least one box first.'; render(); return; }
+  f.busy = 'report'; f.err = ''; render();
+  var isInv = f.kind === 'invoice';
+  var prompt = 'You are writing the customer-facing ' + (isInv ? 'invoice' : 'inspection report') + ' for ' + (state.settings.company || 'AIO Pro Chimney') + ' from what the technician filled in on site. '
+    + 'RULES: use ONLY what the technician marked, wrote or photographed. Never invent a finding, a measurement or a cause. '
+    + 'A box marked GOOD is "ok", MONITOR is "monitor", NEEDS ATTENTION is "defect". Anything not checked or not present goes in "limitations" — not in the components. '
+    + 'Plain homeowner language, warm and confident, no code section numbers, no jargon.\n'
+    + 'Return ONLY JSON, no markdown:\n'
+    + '{"title":"","customer":{"name":"","address":"","cityStateZip":"","phone":"","email":"","preparedBy":""},'
+    + '"property":{"stories":"","roof":"","systemLocation":"","roomLocation":""},'
+    + '"appliance":{"type":"","fuel":"","makeModel":"","facingMaterial":"","openingSize":"","flueCollar":""},'
+    + '"levelOfInspection":"one plain sentence about what was covered",'
+    + '"summary":"2-4 plain sentences: overall condition and whether it is safe to use",'
+    + '"components":[{"name":"","status":"ok|monitor|defect","condition":"what was found, in plain words","recommended":"","photos":[]}],'
+    + '"conclusion":"one clear verdict",'
+    + (isInv ? '"lineItems":[{"description":"","qty":1,"unitPrice":0,"amount":0}],"subtotal":0,"tax":0,"total":0,"deposit":0,' : '"lineItems":[],')
+    + '"limitations":"what was not accessible or not checked"}\n'
+    + (isInv ? 'Price ONLY from the owner\'s catalog, with the catalog name as the description and the catalog price as unitPrice. CATALOG: ' + CATALOG.filter(function (c) { return c.price > 0; }).map(function (c) { return c.name + ' | ' + c.price; }).join('; ') + '.\n' : '')
+    + 'In each component\'s "photos" array put the numbers of the photos that show it. Photos are numbered from 1 in the order they appear in the list below; photo 1 is the front of the house.\n\n'
+    + fjTranscript(f);
+  fjAiCall(prompt, 3000, true).then(function (d) {
+    var cu = f.customer || {};
+    var ap = cu.address ? addrSplit(cu.address) : null;
+    d.customer = Object.assign({}, d.customer || {}, {
+      name: cu.name || (d.customer && d.customer.name) || '',
+      address: ap ? ap.street : ((d.customer && d.customer.address) || ''),
+      cityStateZip: ap ? addrCityLine(cu.address) : ((d.customer && d.customer.cityStateZip) || ''),
+      phone: cu.phone || (d.customer && d.customer.phone) || '',
+      email: cu.email || (d.customer && d.customer.email) || ''
+    });
+    var imgs = fjPhotos(f);
+    var modeName = isInv ? 'Invoice' : 'Inspection — Level ' + f.level;
+    var blob = buildChatReport(d, imgs, state.settings, modeName);
+    var who = String(d.customer.name || 'Customer').trim().split(/\s+/)[0].replace(/[^\w-]+/g, '') || 'Customer';
+    var fn = 'AIO-Pro-Chimney-' + (isInv ? 'Invoice-' : 'Inspection-') + who + '-' + isoToday() + '.pdf';
+    state.chat = { mode: isInv ? 'invoice' : (f.level === '2' ? 'level2' : 'level1'), customer: cu, depth: 'full', messages: [], pending: { photos: [] }, fromForm: true };
+    state.chat.lastReport = { data: d, imgs: imgs, blob: blob, fn: fn, mode: state.chat.mode, modeName: modeName, shareId: '', at: Date.now() };
+    f.busy = false; state.fjLast = f;
+    repEditOpen(true);
+  }).catch(function (err) { f.busy = false; f.err = (err && err.message) || 'AI error'; if (state.view === 'fjform') render(); });
+}
+
+/* ── Preview: what the customer will get, before it is sent ── */
+function fjMoney(n) { return money(n).replace(/\.00$/, ''); }
+function previewEstimateHTML(e) {
+  var used = estUsed(e), multi = used.length > 1;
+  var addOns = [];
+  used.forEach(function (o) { o.items.forEach(function (it) { if (it.opt && estReal(it) && !addOns.some(function (x) { return x.name === it.name; })) addOns.push(it); }); });
+  return '<div class="card"><div class="eyebrow">Estimate #' + esc(e.no || '') + '</div>' +
+      '<div style="font-family:var(--serif);font-size:22px;margin-bottom:4px">' + esc(e.title || 'Chimney work') + '</div>' +
+      '<div style="color:var(--muted);font-size:14px">' + esc(e.customer.name || '') + (e.customer.addr ? ' · ' + esc(e.customer.addr) : '') + '</div></div>' +
+    (String(e.found || '').trim() ? '<div class="card"><div class="eyebrow">What we found</div><div style="font-size:15px;line-height:1.55">' + esc(e.found) + '</div></div>' : '') +
+    used.map(function (o, i) {
+      var t = estTotals(o, e.tax);
+      return '<div class="card">' +
+        '<div class="row" style="align-items:baseline"><div style="flex:1;font-weight:700;font-size:17px">' + (multi ? 'Option ' + estLetter(i) + (estOptName(o) ? ' — ' + esc(estOptName(o)) : '') : 'The work') + '</div>' +
+          '<div style="font-weight:700;font-size:18px;color:var(--ember)">' + esc(fjMoney(t.total)) + '</div></div>' +
+        (o.summary ? '<div style="color:var(--muted);font-size:14px;margin:4px 0 8px">' + esc(o.summary) + '</div>' : '') +
+        o.items.filter(function (it) { return estReal(it) && !it.opt; }).map(function (it) {
+          return '<div style="border-top:1px solid var(--rule);padding:8px 0">' +
+            '<div class="row"><div style="flex:1;font-weight:650;font-size:15px">' + esc(it.name || 'Service') + '</div><div style="font-size:15px">' + (estNum(it.price) > 0 ? esc(fjMoney(estLine(it))) : 'Included') + '</div></div>' +
+            (estBulletsFrom(it.desc).length ? '<ul style="margin:5px 0 0 18px;padding:0;color:var(--muted);font-size:13.5px">' + estBulletsFrom(it.desc).map(function (b) { return '<li style="margin:2px 0">' + esc(b) + '</li>'; }).join('') + '</ul>' : '') +
+          '</div>';
+        }).join('') +
+      '</div>';
+    }).join('') +
+    (addOns.length ? '<div class="card"><div class="eyebrow">Optional add-ons (not in the total)</div>' + addOns.map(function (it) {
+        return '<div class="row" style="border-top:1px solid var(--rule);padding:8px 0"><div style="flex:1;font-size:15px">' + esc(it.name) + '</div><div>' + (estNum(it.price) > 0 ? esc(fjMoney(estLine(it))) : '') + '</div></div>';
+      }).join('') + '</div>' : '') +
+    (String(e.notes || '').trim() ? '<div class="card"><div class="eyebrow">Good to know</div><ul style="margin:0 0 0 18px;padding:0;font-size:14px">' + String(e.notes).split(/\n+/).filter(Boolean).map(function (n) { return '<li style="margin:3px 0">' + esc(n.replace(/^[\s·•-]+/, '')) + '</li>'; }).join('') + '</ul></div>' : '');
+}
+function previewReportHTML(rep) {
+  var d = rep.data || {}, comps = Array.isArray(d.components) ? d.components : [];
+  var pill = { defect: ['NEEDS ATTENTION', 'var(--defect)'], monitor: ['MONITOR', 'var(--monitor)'], ok: ['GOOD', 'var(--ok)'] };
+  return '<div class="card"><div class="eyebrow">' + esc(rep.modeName || 'Report') + '</div>' +
+      '<div style="font-family:var(--serif);font-size:22px;margin-bottom:4px">' + esc(d.title || 'Chimney Inspection Report') + '</div>' +
+      '<div style="color:var(--muted);font-size:14px">' + esc((d.customer || {}).name || '') + ((d.customer || {}).address ? ' · ' + esc(d.customer.address) : '') + '</div></div>' +
+    (d.summary ? '<div class="card"><div class="eyebrow">Overall</div><div style="font-size:15px;line-height:1.55">' + esc(d.summary) + '</div></div>' : '') +
+    comps.map(function (c) {
+      var p = pill[c.status] || pill.ok;
+      return '<div class="card" style="border-left:4px solid ' + p[1] + '">' +
+        '<div class="row" style="align-items:baseline"><div style="flex:1;font-weight:700;font-size:16px">' + esc(c.name || '') + '</div>' +
+        '<div style="font-size:11px;font-weight:700;color:#fff;background:' + p[1] + ';border-radius:10px;padding:2px 8px">' + p[0] + '</div></div>' +
+        (c.condition ? '<div style="font-size:14.5px;margin-top:5px">' + esc(c.condition) + '</div>' : '') +
+        (c.recommended ? '<div style="font-size:14px;margin-top:5px;color:var(--defect)">Recommended: ' + esc(c.recommended) + '</div>' : '') +
+      '</div>';
+    }).join('') +
+    ((d.lineItems || []).length ? '<div class="card"><div class="eyebrow">Prices</div>' + d.lineItems.map(function (it) {
+        return '<div class="row" style="border-top:1px solid var(--rule);padding:7px 0"><div style="flex:1;font-size:15px">' + esc(it.description || '') + (Number(it.qty) > 1 ? ' ×' + Number(it.qty) : '') + '</div><div>' + esc(fjMoney(Number(it.amount || 0))) + '</div></div>';
+      }).join('') + '<div class="row" style="border-top:2px solid var(--rule);padding:8px 0;font-weight:700"><div style="flex:1">Total</div><div>' + esc(fjMoney(Number(d.total || 0))) + '</div></div></div>' : '') +
+    (d.conclusion ? '<div class="card"><div class="eyebrow">Conclusion</div><div style="font-size:15px;line-height:1.55">' + esc(d.conclusion) + '</div></div>' : '') +
+    (d.limitations ? '<div class="card"><div class="eyebrow">Limitations</div><div style="font-size:13.5px;color:var(--muted)">' + esc(d.limitations) + '</div></div>' : '');
+}
+function viewPreview() {
+  var pv = state.preview;
+  if (!pv) { state.view = 'home'; return viewHome(); }
+  var isRep = pv.kind === 'report';
+  var rep = state.chat && state.chat.lastReport, e = state.estimate;
+  if (isRep && !rep) { state.view = 'home'; return viewHome(); }
+  if (!isRep && !e) { state.view = 'home'; return viewHome(); }
+  var photos = isRep ? (rep.imgs || []) : (e.fjPhotos || estPhotos(e) || []);
+  return '<div class="app">' +
+    '<div class="topbar"><button class="iconbtn" data-act="pv-back">‹</button><div style="flex:1"><h1>Preview</h1><div class="sub">What the customer sees</div></div></div>' +
+    '<div class="screen">' +
+      '<div class="card" style="border-color:var(--gold);font-size:14px">Read it through. Tap <b>Edit</b> to change any word or price, then send it.</div>' +
+      (isRep ? previewReportHTML(rep) : previewEstimateHTML(e)) +
+      (photos.length ? '<div class="card"><div class="eyebrow">Photos (' + photos.length + ')</div><div>' + photos.slice(0, 12).map(function (src) { return '<img src="' + src + '" style="height:74px;border-radius:8px;margin:0 8px 8px 0;border:0.5px solid var(--rule)">'; }).join('') + '</div></div>' : '') +
+    '</div>' +
+    '<div class="bottombar" style="gap:6px">' +
+      '<button class="btn btn-ghost" data-act="pv-edit" style="flex:0.8">Edit</button>' +
+      '<button class="btn btn-ghost" data-act="pv-pdf" style="flex:0.7">PDF</button>' +
+      '<button class="btn btn-gold btn-primary" data-act="pv-mail" style="flex:1.3">Email it</button>' +
+    '</div>' +
+  '</div>';
+}
+function previewOpen(kind) { state.preview = { kind: kind }; state.view = 'preview'; render(); try { window.scrollTo(0, 0); } catch (_) {} }
 
 /* ── Boot ──────────────────────────────────────────────────── */
 /* One-time setup link: ...?ownerkey=XXXX stores the worker-sharing owner key on this phone. */
