@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex,nofollow">
+<title>Your Document — AIO Pro Chimney</title>
+<style>
+:root{--rust:#B3541E;--rust-d:#8f4217;--sand:#F2EFEA;--cream:#F9F5F1;--rule:#E0DACF;--paper:#FFFFFF;--dark:#1a1614;--muted:#7a746e;--ok:#2b6a45;--bad:#b03d27;--warn:#8a5a00}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:#f6f3ee;color:var(--dark);font-family:-apple-system,Segoe UI,Roboto,sans-serif;font-size:16px;line-height:1.5;-webkit-text-size-adjust:100%}
+.wrap{max-width:720px;margin:0 auto;background:var(--paper);min-height:100vh;padding-bottom:96px}
+.top{background:#fff;padding:22px 16px 14px;border-bottom:2px solid var(--rust);text-align:center}
+.top .co{color:var(--rust);font-weight:800;font-size:21px;letter-spacing:.26em}
+.top .sub{color:var(--muted);font-size:12px;font-style:italic;margin-top:2px}
+.top .cr{color:var(--rust);font-size:10.5px;font-weight:700;margin-top:4px}
+.pad{padding:16px}
+h1{font-size:20px;letter-spacing:.08em;text-transform:uppercase;text-align:center;margin:12px 0 12px}
+.sec{font-weight:800;letter-spacing:.08em;font-size:13.5px;margin:24px 0 10px;padding-bottom:6px;border-bottom:1.5px solid var(--rust);text-transform:uppercase}
+.grid{display:grid;grid-template-columns:auto 1fr;border:1px solid var(--rule);border-radius:10px;overflow:hidden}
+.grid div{padding:8px 10px;border-bottom:1px solid var(--rule);font-size:14px;overflow-wrap:anywhere}
+.grid .k{background:var(--sand);color:var(--muted);font-size:11px;font-weight:700;letter-spacing:.05em}
+.bul{margin:4px 0 0;padding-left:18px;color:#5f5953;font-size:13.5px}
+.bul li{margin:2px 0}
+.lead{font-size:15.5px}
+.opt{border:1px solid var(--rule);border-radius:12px;overflow:hidden;margin-bottom:14px}
+.opt .hd{background:var(--rust);color:#fff;padding:12px 14px;display:flex;justify-content:space-between;align-items:center;gap:10px}
+.opt .hd .nm{font-weight:650;font-size:16px}
+.opt .hd .tot{font-size:18px;font-weight:800;white-space:nowrap}
+.opt .sm{background:var(--cream);color:#555;font-size:14px;padding:9px 14px}
+.li{padding:10px 14px;border-top:1px solid #eee}
+.li .r{display:flex;justify-content:space-between;gap:10px}
+.li .nm{font-weight:600}
+.li .amt{white-space:nowrap;font-weight:600}
+.li .qp{color:#999;font-size:12px}
+.li.add{background:#fbf8f2}
+.tag{display:inline-block;font-size:10.5px;font-weight:700;letter-spacing:.06em;color:var(--rust);border:1px solid var(--rust);border-radius:20px;padding:0 7px;margin-right:6px;vertical-align:1px}
+.comp{border:1px solid var(--rule);border-radius:12px;padding:12px 14px;margin-bottom:10px}
+.comp .nm{font-weight:700;display:flex;justify-content:space-between;gap:8px;align-items:center}
+.pill{font-size:11px;font-weight:700;letter-spacing:.05em;border-radius:20px;padding:2px 9px;white-space:nowrap}
+.pill.defect{background:#fbe6e1;color:var(--bad)}.pill.monitor{background:#fbefd9;color:var(--warn)}.pill.ok{background:#e3f1e8;color:var(--ok)}
+.comp .c{font-size:14.5px;margin-top:4px}.comp .rec{font-size:14px;color:#555;margin-top:4px}
+.photos{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:8px}
+.photos img{width:100%;height:140px;object-fit:cover;border-radius:8px;border:1px solid var(--rule);cursor:zoom-in;background:var(--sand)}
+.lb{position:fixed;inset:0;background:rgba(0,0,0,.92);display:flex;align-items:center;justify-content:center;z-index:50;padding:12px}
+.lb img{max-width:100%;max-height:100%;object-fit:contain}
+.terms{color:#555;font-size:13px}
+.notes{margin:0;padding-left:18px;font-size:14.5px}
+.bar{position:fixed;left:0;right:0;bottom:0;z-index:20;background:rgba(255,255,255,.97);border-top:1px solid var(--rule);padding:10px 16px calc(10px + env(safe-area-inset-bottom,0px))}
+.bar .in{max-width:688px;margin:0 auto;display:flex;gap:10px;align-items:center}
+.bar .t{flex:1;font-size:13px;color:var(--muted);line-height:1.3}
+.btn{display:inline-block;border:none;border-radius:10px;background:var(--rust);color:#fff;font-size:16px;font-weight:700;padding:13px 20px;cursor:pointer;text-align:center;min-height:48px}
+.btn:disabled{opacity:.45}
+.btn.ghost{background:#fff;color:var(--dark);border:1px solid #d8d2c7;font-weight:600}
+.btn.wide{width:100%}
+/* guided signing */
+.sign{border:2px solid var(--rust);border-radius:14px;padding:16px;margin-top:10px;scroll-margin-top:12px}
+.steps{display:flex;gap:6px;margin:0 0 14px}
+.steps span{flex:1;height:5px;border-radius:3px;background:var(--rule)}
+.steps span.on{background:var(--rust)}
+.q{font-size:18px;font-weight:700;margin:0 0 4px}
+.h{color:var(--muted);font-size:14px;margin:0 0 12px}
+.choice{display:block;width:100%;text-align:left;border:1.5px solid var(--rule);border-radius:12px;padding:12px 14px;margin-bottom:10px;background:#fff;cursor:pointer;font:inherit;color:inherit}
+.choice.on{border-color:var(--rust);background:#fdf5ef;box-shadow:0 0 0 2px rgba(179,84,30,.15)}
+.choice .a{display:flex;justify-content:space-between;gap:10px;font-weight:700}
+.choice .b{color:#666;font-size:13.5px;margin-top:2px}
+.check{display:flex;gap:12px;align-items:flex-start;border:1px solid var(--rule);border-radius:10px;padding:11px 12px;margin-bottom:8px;cursor:pointer}
+.check input{width:22px;height:22px;margin:1px 0 0;flex:none;accent-color:var(--rust)}
+.inp{width:100%;padding:13px;border:1.5px solid #d8d2c7;border-radius:10px;font-size:17px;font-family:inherit}
+.inp:focus{outline:none;border-color:var(--rust)}
+canvas{width:100%;height:200px;background:#fbfaf7;border:1.5px dashed #c9c2b5;border-radius:10px;touch-action:none;display:block}
+.nav{display:flex;gap:10px;margin-top:16px}
+.nav .btn{flex:1}
+.err{color:var(--bad);font-size:14px;margin-top:10px;min-height:1px}
+.review{background:var(--cream);border-radius:10px;padding:12px;font-size:14.5px}
+.review div{margin:3px 0}
+.review img{max-width:220px;border:1px solid var(--rule);border-radius:8px;background:#fff;margin-top:6px}
+.done{background:#eaf3ee;border:1px solid #b9dcc7;color:var(--ok);border-radius:12px;padding:16px;text-align:center;font-size:16px}
+.done img{max-width:240px;border:1px solid #cfe3d7;border-radius:8px;background:#fff;margin-top:10px}
+.center{text-align:center;padding:60px 20px;color:#777}
+.sig{margin-top:26px;border-top:1.5px solid var(--rust);padding-top:12px;font-size:14px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="top"><div class="co" id="co">AIO PRO CHIMNEY</div><div class="sub" id="cosub">AIOPRO LLC</div><div class="cr" id="cocr">Licensed General Contractor · Insured · CSIA Member · NCSG Member · BBB Accredited</div></div>
+  <div id="app" class="pad"><div class="center">Loading…</div></div>
+</div>
+<div class="bar" id="bar" hidden><div class="in"><div class="t" id="barText"></div><button class="btn" id="barBtn" type="button">Sign</button></div></div>
+<script>
+(function () {
+  var URL = 'https://frxjedjcfzybflorlyvp.supabase.co';
+  var KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZyeGplZGpjZnp5YmZsb3JseXZwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODYzMzUzNTAsImV4cCI6MjEwMTkxMTM1MH0.shcVYA8vhN8NzYl4KosH5Qn62r1loxSi3uITxOgjPR0';
+  var MAILER_URL = 'https://script.google.com/macros/s/AKfycbwRYDiA9ImnwXmsWpFSf8CXZAJHGkGAsOFCiOhPtQg-plxSTcYqv5h6dSfzjO-9YzOF/exec';
+  var app = document.getElementById('app'), bar = document.getElementById('bar'), barText = document.getElementById('barText'), barBtn = document.getElementById('barBtn');
+  var params = new URLSearchParams(location.search);
+  var id = params.get('id') || '';
+  var wantSign = params.get('step') === 'sign';
+
+  function rpc(fn, args) {
+    return fetch(URL + '/rest/v1/rpc/' + fn, { method: 'POST', headers: { apikey: KEY, Authorization: 'Bearer ' + KEY, 'Content-Type': 'application/json' }, body: JSON.stringify(args) })
+      .then(function (r) { return r.text().then(function (t) { var d = null; try { d = t ? JSON.parse(t) : null; } catch (e) { d = t; } if (!r.ok) throw new Error((d && d.message) || ('HTTP ' + r.status)); return d; }); });
+  }
+  function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
+  function num(v) { var n = parseFloat(String(v == null ? '' : v).replace(/[^0-9.\-]/g, '')); return isFinite(n) ? n : 0; }
+  function money(n) { n = Number(n) || 0; return '$' + n.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ','); }
+  function line(it) { return num(it.qty) * num(it.price); }
+  function real(it) { return !!(it && (it.name || it.desc || num(it.price))); }
+  function totals(o, tax) { var sub = (o.items || []).reduce(function (a, it) { return a + (it.opt ? 0 : line(it)); }, 0); var disc = num(o.disc); var taxed = Math.max(0, sub - disc); var t = taxed * num(tax) / 100; return { sub: sub, disc: disc, tax: t, total: taxed + t }; }
+  function bullets(t) { t = String(t || '').trim(); if (!t) return []; var parts = t.indexOf('\n') >= 0 ? t.split(/\n+/) : t.split(/;\s+|\.\s+(?=[A-Z0-9])/); return parts.map(function (p) { return p.replace(/^[\s·•\-–]+/, '').trim(); }).filter(Boolean); }
+  function fmtDate(v) { v = String(v || ''); var d = new Date(/^\d{4}-\d{2}-\d{2}$/.test(v) ? v + 'T00:00:00' : v); return isNaN(d.getTime()) ? v : d.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }); }
+  function letter(i) { return String.fromCharCode(65 + i); }
+  function oname(o) { var n = String((o && o.name) || '').trim(); return /^(good|better|best|option\s*\w?\d*)$/i.test(n) ? '' : n; }
+  function olabel(o, i) { var n = oname(o); return 'Option ' + letter(i) + (n ? ': ' + n : ''); }
+  function ikey(it) { return [String(it.name || '').trim(), String(it.desc || '').trim(), num(it.qty), num(it.price), it.opt ? 1 : 0].join(''); }
+  function splitFromA(a, o) {
+    var base = ((a && a.items) || []).filter(function (it) { return real(it) && !it.opt; }), mine = ((o && o.items) || []).filter(real);
+    if (!base.length || mine.length <= base.length || num(a.disc)) return null;
+    var used = mine.map(function () { return false; });
+    var ok = base.every(function (b) { var k = ikey(b); for (var j = 0; j < mine.length; j++) { if (!used[j] && ikey(mine[j]) === k) { used[j] = true; return true; } } return false; });
+    return ok ? { base: base, rest: mine.filter(function (it, j) { return !used[j]; }) } : null;
+  }
+  function todayTyped() { var d = new Date(); return String(d.getMonth() + 1).padStart(2, '0') + '/' + String(d.getDate()).padStart(2, '0') + '/' + d.getFullYear(); }
+
+  var doc = null, pay = {}, opts = [], photos = [], S = null;
+
+  function optionHTML(o, i, multi) {
+    var t = totals(o, pay.tax), h = '<div class="opt"><div class="hd"><div class="nm">' + esc(multi ? olabel(o, i) : (oname(o) || 'The work')) + '</div><div class="tot">' + money(t.total) + '</div></div>';
+    if (o.summary) h += '<div class="sm">' + esc(o.summary) + '</div>';
+    var sp = i > 0 ? splitFromA(opts[0], o) : null, adds = [];
+    if (sp) h += '<div class="li"><div class="r"><div class="nm">Everything in Option A</div><div class="amt">' + money(sp.base.reduce(function (a, it) { return a + line(it); }, 0)) + '</div></div><ul class="bul">' + sp.base.map(function (it) { return '<li>' + esc(it.name || 'Item') + '</li>'; }).join('') + '</ul></div>';
+    (sp ? sp.rest : (o.items || [])).filter(real).forEach(function (it) {
+      if (it.opt) { adds.push(it); return; }
+      var bl = bullets(it.desc), q = num(it.qty) || 1;
+      h += '<div class="li"><div class="r"><div class="nm">' + esc(it.name || 'Item') + '</div><div class="amt">' + (num(it.price) > 0 ? money(line(it)) : 'Included') + '</div></div>' + (bl.length ? '<ul class="bul">' + bl.map(function (b) { return '<li>' + esc(b) + '</li>'; }).join('') + '</ul>' : '') + (q !== 1 ? '<div class="qp">' + q + ' × ' + money(num(it.price)) + '</div>' : '') + '</div>';
+    });
+    if (t.disc || t.tax) h += '<div class="li"><div class="r"><div style="color:#777">' + (t.disc ? 'Discount −' + money(t.disc) + ' ' : '') + (t.tax ? 'Tax ' + money(t.tax) : '') + '</div><div></div></div></div>';
+    adds.forEach(function (it) {
+      var bl = bullets(it.desc);
+      h += '<div class="li add"><div class="r"><div class="nm"><span class="tag">OPTIONAL</span>' + esc(it.name || 'Add-on') + '</div><div class="amt">' + (num(it.price) > 0 ? '+ ' + money(line(it)) : '') + '</div></div>' + (bl.length ? '<ul class="bul">' + bl.map(function (b) { return '<li>' + esc(b) + '</li>'; }).join('') + '</ul>' : '') + '<div class="qp">Not in the total — you can add it when you sign.</div></div>';
+    });
+    return h + '</div>';
+  }
+  function reportHTML() {
+    var h = '';
+    if (pay.levelOfInspection) h += '<div class="sec">Level of inspection</div><div>' + esc(pay.levelOfInspection) + '</div>';
+    if (pay.summary) h += '<div class="sec">In short</div><div class="lead">' + esc(pay.summary) + '</div>';
+    var comps = Array.isArray(pay.components) ? pay.components : [];
+    if (comps.length) {
+      h += '<div class="sec">What we found</div>';
+      var order = { defect: 0, monitor: 1, ok: 2 };
+      comps.slice().sort(function (a, b) { return (order[a.status] == null ? 3 : order[a.status]) - (order[b.status] == null ? 3 : order[b.status]); }).forEach(function (c) {
+        var st = c.status === 'defect' ? 'defect' : c.status === 'monitor' ? 'monitor' : c.status === 'ok' ? 'ok' : '';
+        var lbl = st === 'defect' ? 'NEEDS ATTENTION' : st === 'monitor' ? 'MONITOR' : st === 'ok' ? 'GOOD' : '';
+        h += '<div class="comp"><div class="nm"><span>' + esc(c.name || 'Item') + '</span>' + (lbl ? '<span class="pill ' + st + '">' + lbl + '</span>' : '') + '</div>' +
+          (c.condition ? '<div class="c">' + esc(c.condition) + '</div>' : '') + (c.recommended ? '<div class="rec"><b>Recommended:</b> ' + esc(c.recommended) + '</div>' : '') + '</div>';
+      });
+    }
+    if (pay.conclusion) h += '<div class="sec">Conclusion</div><div class="lead">' + esc(pay.conclusion) + '</div>';
+    if (pay.limitations) h += '<div class="sec">Limitations</div><div class="terms">' + esc(pay.limitations) + '</div>';
+    return h;
+  }
+  function render() {
+    var c = pay.company || {}, cu = pay.customer || {};
+    var isRep = doc.kind === 'report', multi = opts.length > 1;
+    if (c.name) document.getElementById('co').textContent = String(c.name).toUpperCase();
+    if (c.legal) document.getElementById('cosub').textContent = c.legal;
+    if (c.creds) document.getElementById('cocr').textContent = c.creds;
+    document.title = (isRep ? 'Your Inspection Report' : 'Your Estimate') + ' — ' + (c.name || 'AIO Pro Chimney');
+    var title = isRep ? (pay.title || 'Chimney Inspection Report') : (pay.title ? (/estimate/i.test(pay.title) ? pay.title : pay.title + ' estimate') : 'Your estimate');
+    var h = '<h1>' + esc(title) + '</h1>';
+    h += '<div class="grid"><div class="k">CLIENT</div><div>' + esc(cu.name || '') + '</div>' +
+      (pay.no ? '<div class="k">ESTIMATE NO.</div><div>' + esc(pay.no) + '</div>' : '') +
+      (isRep && pay.modeName ? '<div class="k">INSPECTION</div><div>' + esc(pay.modeName) + '</div>' : '') +
+      '<div class="k">PROPERTY</div><div>' + esc(cu.addr || '') + '</div>' +
+      '<div class="k">DATE</div><div>' + esc(fmtDate(pay.visitDate || pay.date || doc.created_at)) + '</div>' +
+      '<div class="k">PREPARED BY</div><div>' + esc(pay.preparedBy || '') + '</div>' +
+      (isRep ? '' : '<div class="k">PRICES VALID</div><div>30 days from this date</div>') + '</div>';
+    if (isRep) h += reportHTML();
+    else {
+      if (pay.found) h += '<div class="sec">What we found</div><div class="lead">' + esc(pay.found) + '</div>';
+      h += '<div class="sec">' + (multi ? 'Your options' : 'Scope and pricing') + '</div>';
+      if (multi) h += '<p style="margin:0 0 12px;color:#555">' + (opts.length === 2 ? 'Two ways to do the work. Choose one — you do not need both.' : 'Three ways to do the work. Choose one — you only need one.') + '</p>';
+      opts.forEach(function (o, i) { h += optionHTML(o, i, multi); });
+      var notes = String(pay.notes || '').split(/\n+/).map(function (l) { return l.replace(/^[\s·•\-–]+/, '').trim(); }).filter(Boolean);
+      if (notes.length) h += '<div class="sec">Scope notes</div><ul class="notes">' + notes.map(function (n) { return '<li>' + esc(n) + '</li>'; }).join('') + '</ul>';
+    }
+    if (doc.photo_count) h += '<div class="sec">Photographs</div><div class="photos" id="photos">' + (photos.length ? photos.map(function (p, i) { return '<img src="' + p + '" alt="Photo ' + (i + 1) + '" data-i="' + i + '">'; }).join('') : '<div style="color:#999;font-size:14px">Loading photos…</div>') + '</div>';
+    if (!isRep) {
+      var terms = (c.terms && String(c.terms).trim()) ? c.terms : 'A deposit may be required to schedule work, with the balance due on completion unless otherwise agreed. All work is performed to NFPA 211 and local codes. Workmanship warranted for one year unless stated otherwise. Prices reflect the conditions visible at the visit; if concealed damage is found once work begins, we stop and agree any change with you before continuing.';
+      h += '<div class="sec">Terms &amp; conditions</div><div class="terms">' + esc(terms) + '</div>';
+    }
+    h += '<div class="sec" id="signsec">' + (isRep ? 'Confirm you received it' : 'To go ahead') + '</div>';
+    h += doc.status === 'signed' ? doneHTML() : '<div id="signwrap">' + (S && S.open ? '' : '<p style="margin:0 0 10px;color:#555">' + (isRep ? 'Tap below to sign that you received this report.' : 'Tap below to accept' + (multi ? ' — you choose your option first' : '') + '. It takes about a minute.') + (c.phone ? ' Or call or text ' + esc(c.phone) + '.' : '') + '</p><button class="btn wide" type="button" id="startSign">' + (isRep ? 'Sign the report' : 'Sign the estimate') + '</button>') + '</div>';
+    if (c.owner) h += '<div class="sig">Respectfully submitted,<div style="font-weight:800;font-size:16px;margin-top:2px">' + esc(c.owner) + '</div><div style="color:#888;font-size:12px">Owner · ' + esc(c.legal || '') + ' (' + esc(c.name || '') + ')<br>' + esc([c.phone, c.email, c.web].filter(Boolean).join(' · ')) + '</div></div>';
+    app.innerHTML = h;
+    var ph = document.getElementById('photos');
+    if (ph) ph.addEventListener('click', function (ev) { var im = ev.target.closest('img'); if (!im) return; var lb = document.createElement('div'); lb.className = 'lb'; lb.innerHTML = '<img src="' + im.src + '" alt="">'; lb.addEventListener('click', function () { lb.remove(); }); document.body.appendChild(lb); });
+    var st = document.getElementById('startSign'); if (st) st.addEventListener('click', function () { openSign(true); });
+    if (S && S.open) drawSign();
+    updateBar();
+  }
+  function doneHTML() {
+    var sig = /^data:image\/png;base64,[A-Za-z0-9+\/=]+$/.test(String(doc.signature || '')) ? '<br><img src="' + doc.signature + '" alt="Signature">' : '';
+    return '<div class="done">✓ Signed' + (doc.signer_name ? ' by ' + esc(doc.signer_name) : '') + (doc.sign_date ? '<br><span style="font-size:14px">Dated ' + esc(doc.sign_date) + '</span>' : '') + sig +
+      '<div style="font-size:14px;color:#3d6b52;margin-top:8px">' + (doc.kind === 'report' ? 'Thank you — we have your confirmation.' : 'Thank you! We will call you to schedule the work.') + '</div></div>';
+  }
+  function updateBar() {
+    if (!doc || doc.status === 'signed' || (S && S.open)) { bar.hidden = true; return; }
+    bar.hidden = false;
+    barText.textContent = doc.kind === 'report' ? 'Please confirm you received this report.' : (opts.length > 1 ? 'Ready? Pick your option and sign.' : 'Ready to go ahead?');
+    barBtn.textContent = 'Sign';
+  }
+  barBtn.addEventListener('click', function () { openSign(true); });
+
+  /* ── Guided signing: option → add-ons → name → signature → date → review ── */
+  function steps() {
+    var list = [];
+    if (doc.kind !== 'report' && opts.length > 1) list.push('choice');
+    if (doc.kind !== 'report' && addOnsFor().length) list.push('addons');
+    list.push('name', 'draw', 'date', 'review');
+    return list;
+  }
+  function addOnsFor() {
+    var o = opts[S && S.choice != null ? S.choice : 0] || opts[0];
+    return o ? (o.items || []).filter(function (it) { return it.opt && String(it.name || '').trim(); }) : [];
+  }
+  function openSign(scroll) {
+    if (!S) S = { open: true, i: 0, choice: opts.length > 1 ? null : 0, extras: [], name: '', date: todayTyped(), sig: '', err: '' };
+    S.open = true; render();
+    if (scroll) { var el = document.getElementById('signsec'); if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' }); }
+  }
+  function drawSign() {
+    var wrap = document.getElementById('signwrap'); if (!wrap) return;
+    var list = steps(); if (S.i >= list.length) S.i = list.length - 1;
+    var step = list[S.i], h = '<div class="sign" id="signbox"><div class="steps">' + list.map(function (x, k) { return '<span class="' + (k <= S.i ? 'on' : '') + '"></span>'; }).join('') + '</div>';
+    if (step === 'choice') {
+      h += '<p class="q">Which option do you choose?</p><p class="h">Tap one.</p>' + opts.map(function (o, i) { return '<button type="button" class="choice' + (S.choice === i ? ' on' : '') + '" data-c="' + i + '"><div class="a"><span>' + esc(olabel(o, i)) + '</span><span>' + money(totals(o, pay.tax).total) + '</span></div>' + (o.summary ? '<div class="b">' + esc(o.summary) + '</div>' : '') + '</button>'; }).join('');
+    } else if (step === 'addons') {
+      h += '<p class="q">Any add-ons?</p><p class="h">Optional — tick anything you would like added. You can skip this.</p>' + addOnsFor().map(function (it) { var on = S.extras.indexOf(it.name) >= 0; return '<label class="check"><input type="checkbox" data-x="' + esc(it.name) + '"' + (on ? ' checked' : '') + '><span><b>' + esc(it.name) + '</b>' + (num(it.price) > 0 ? ' — + ' + money(line(it)) : '') + '</span></label>'; }).join('');
+    } else if (step === 'name') {
+      h += '<p class="q">Your full name</p><p class="h">As it should appear on the ' + (doc.kind === 'report' ? 'report' : 'agreement') + '.</p><input class="inp" id="sName" autocomplete="name" value="' + esc(S.name) + '" placeholder="First and last name">';
+    } else if (step === 'draw') {
+      h += '<p class="q">Sign with your finger</p><p class="h">Draw your signature in the box.</p><canvas id="pad"></canvas><div style="text-align:right;margin-top:6px"><button type="button" class="btn ghost" id="clearPad" style="min-height:38px;padding:6px 14px;font-size:14px">Clear</button></div>';
+    } else if (step === 'date') {
+      h += '<p class="q">Today\'s date</p><p class="h">Type the date (we filled in today — change it if needed).</p><input class="inp" id="sDate" inputmode="numeric" value="' + esc(S.date) + '" placeholder="MM/DD/YYYY">';
+    } else {
+      var o = opts[S.choice != null ? S.choice : 0];
+      var addSum = o ? addOnsFor().filter(function (it) { return S.extras.indexOf(it.name) >= 0; }).reduce(function (a, it) { return a + line(it); }, 0) : 0;
+      h += '<p class="q">Check and confirm</p><div class="review">' +
+        (doc.kind !== 'report' && opts.length > 1 ? '<div><b>Option:</b> ' + esc(olabel(o, S.choice)) + ' — ' + money(totals(o, pay.tax).total) + '</div>' : '') +
+        (S.extras.length ? '<div><b>Add-ons:</b> ' + esc(S.extras.join(', ')) + (addSum ? ' — + ' + money(addSum) : '') + '</div>' : '') +
+        (doc.kind !== 'report' && o ? '<div><b>Total' + (addSum ? ' with add-ons' : '') + ':</b> ' + money(totals(o, pay.tax).total + addSum) + (addSum && num(pay.tax) ? ' + tax' : '') + '</div>' : '') +
+        '<div><b>Name:</b> ' + esc(S.name) + '</div><div><b>Date:</b> ' + esc(S.date) + '</div>' +
+        (S.sig ? '<img src="' + S.sig + '" alt="Your signature">' : '') + '</div>' +
+        '<p class="h" style="margin-top:10px">' + (doc.kind === 'report' ? 'By signing you confirm you received this inspection report.' : 'By signing you accept this estimate and its terms, and authorize ' + esc((pay.company && pay.company.name) || 'AIO Pro Chimney') + ' to schedule the work.') + '</p>';
+    }
+    h += '<div class="err" id="sErr">' + esc(S.err || '') + '</div>';
+    h += '<div class="nav">' + (S.i > 0 ? '<button type="button" class="btn ghost" id="sBack">Back</button>' : '<button type="button" class="btn ghost" id="sClose">Not now</button>') +
+      '<button type="button" class="btn" id="sNext"' + (S.busy ? ' disabled' : '') + '>' + (step === 'review' ? (S.busy ? 'Saving…' : 'Accept & sign') : (step === 'addons' ? 'Continue' : 'Next')) + '</button></div></div>';
+    wrap.innerHTML = h;
+    var box = document.getElementById('signbox');
+    box.addEventListener('click', function (ev) {
+      var c = ev.target.closest('.choice'); if (c) { S.choice = Number(c.getAttribute('data-c')); S.extras = []; S.err = ''; S.i++; drawSign(); return; }
+    });
+    box.addEventListener('change', function (ev) {
+      var x = ev.target.getAttribute && ev.target.getAttribute('data-x'); if (x == null) return;
+      var k = S.extras.indexOf(x); if (ev.target.checked && k < 0) S.extras.push(x); if (!ev.target.checked && k >= 0) S.extras.splice(k, 1);
+    });
+    var nm = document.getElementById('sName'); if (nm) { nm.addEventListener('input', function () { S.name = nm.value; }); setTimeout(function () { try { nm.focus(); } catch (e) {} }, 50); }
+    var dt = document.getElementById('sDate'); if (dt) dt.addEventListener('input', function () { S.date = dt.value; });
+    if (step === 'draw') setupPad();
+    var bk = document.getElementById('sBack'); if (bk) bk.addEventListener('click', function () { S.err = ''; S.i--; drawSign(); });
+    var cl = document.getElementById('sClose'); if (cl) cl.addEventListener('click', function () { S.open = false; render(); });
+    document.getElementById('sNext').addEventListener('click', next);
+  }
+  function next() {
+    var step = steps()[S.i];
+    S.err = '';
+    if (step === 'choice' && S.choice == null) S.err = 'Please tap the option you choose.';
+    if (step === 'name' && S.name.trim().length < 2) S.err = 'Please type your full name.';
+    if (step === 'draw' && !S.sig) S.err = 'Please draw your signature in the box.';
+    if (step === 'date' && !/\d/.test(S.date) || step === 'date' && S.date.trim().length < 6) S.err = 'Please type the date, for example ' + todayTyped() + '.';
+    if (S.err) { drawSign(); return; }
+    if (step === 'review') { submit(); return; }
+    S.i++; drawSign();
+    var sb = document.getElementById('signbox'); if (sb && sb.getBoundingClientRect().top < 0) sb.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+  function setupPad() {
+    var canvas = document.getElementById('pad');
+    var ratio = Math.max(1, window.devicePixelRatio || 1), rect = canvas.getBoundingClientRect();
+    canvas.width = Math.round(rect.width * ratio); canvas.height = Math.round(200 * ratio);
+    var ctx = canvas.getContext('2d'); ctx.scale(ratio, ratio); ctx.lineWidth = 2.6; ctx.lineCap = 'round'; ctx.lineJoin = 'round'; ctx.strokeStyle = '#14110f';
+    var drawing = false, drew = false;
+    if (S.sig) { var im = new Image(); im.onload = function () { ctx.drawImage(im, 0, 0, rect.width, 200); }; im.src = S.sig; }
+    function pos(e) { var r = canvas.getBoundingClientRect(); return { x: e.clientX - r.left, y: e.clientY - r.top }; }
+    canvas.addEventListener('pointerdown', function (e) { e.preventDefault(); drawing = true; if (S.err) { S.err = ''; var er = document.getElementById('sErr'); if (er) er.textContent = ''; } try { canvas.setPointerCapture(e.pointerId); } catch (x) {} var p = pos(e); ctx.beginPath(); ctx.moveTo(p.x, p.y); ctx.lineTo(p.x + 0.1, p.y + 0.1); ctx.stroke(); drew = true; });
+    canvas.addEventListener('pointermove', function (e) { if (!drawing) return; e.preventDefault(); var p = pos(e); ctx.lineTo(p.x, p.y); ctx.stroke(); drew = true; });
+    function end() { if (!drawing) return; drawing = false; if (drew) S.sig = exportSig(canvas); }
+    canvas.addEventListener('pointerup', end); canvas.addEventListener('pointercancel', end); canvas.addEventListener('pointerleave', end);
+    document.getElementById('clearPad').addEventListener('click', function () { ctx.clearRect(0, 0, canvas.width, canvas.height); S.sig = ''; drew = false; });
+  }
+  /* Signature as a small PNG (white background) so it stays light. */
+  function exportSig(canvas) {
+    var w = 600, h = Math.round(600 * canvas.height / canvas.width) || 200;
+    var c = document.createElement('canvas'); c.width = w; c.height = h;
+    var x = c.getContext('2d'); x.fillStyle = '#fff'; x.fillRect(0, 0, w, h); x.drawImage(canvas, 0, 0, w, h);
+    return c.toDataURL('image/png');
+  }
+  function submit() {
+    S.busy = true; drawSign();
+    var isRep = doc.kind === 'report';
+    rpc('share_public_sign', { p_id: doc.id, p_name: S.name.trim(), p_choice: isRep || opts.length < 2 ? null : S.choice, p_extras: isRep ? [] : S.extras, p_date: S.date.trim(), p_sig: S.sig })
+      .then(function (res) {
+        doc.status = 'signed'; doc.signer_name = (res && res.signer_name) || S.name; doc.sign_date = S.date.trim(); doc.signature = S.sig;
+        try { fetch(MAILER_URL, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ action: 'signed', id: doc.id }), keepalive: true }).catch(function () {}); } catch (e) {}
+        S = null; render();
+        var el = document.getElementById('signsec'); if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      })
+      .catch(function (err) {
+        S.busy = false;
+        var m = (err && err.message) || '';
+        if (/already signed/i.test(m)) { load(); return; }
+        S.err = /choose an option/i.test(m) ? 'Please go back and choose your option.' : 'Could not save — please check your internet and tap again. (' + m + ')';
+        drawSign();
+      });
+  }
+  function load() {
+    if (!/^[a-z0-9]{6,40}$/.test(id)) { app.innerHTML = '<div class="center">This link is not complete. Please use the link from your email.</div>'; return; }
+    rpc('share_public_get', { p_id: id }).then(function (d) {
+      if (!d) { app.innerHTML = '<div class="center">Sorry, we couldn\'t find this document. Please check the link or call us.</div>'; return; }
+      doc = d; pay = d.payload || {};
+      opts = (pay.options || []).filter(function (o) { return (o.items || []).some(real); });
+      render();
+      if (wantSign && doc.status !== 'signed') { wantSign = false; setTimeout(function () { openSign(true); }, 150); }
+      if (d.photo_count && !photos.length) rpc('share_public_photos', { p_id: id }).then(function (list) {
+        photos = Array.isArray(list) ? list.filter(function (p) { return /^data:image\/jpeg;base64,[A-Za-z0-9+\/=]+$/.test(p); }) : [];
+        var ph = document.getElementById('photos');
+        if (ph) ph.innerHTML = photos.map(function (p, i) { return '<img src="' + p + '" alt="Photo ' + (i + 1) + '" data-i="' + i + '">'; }).join('') || '<div style="color:#999;font-size:14px">No photos.</div>';
+      }).catch(function () {});
+    }).catch(function () { app.innerHTML = '<div class="center">Could not load — please check your internet and refresh.</div>'; });
+  }
+  load();
+})();
+</script>
+</body>
+</html>

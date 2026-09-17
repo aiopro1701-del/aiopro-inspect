@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex,nofollow">
+<meta name="theme-color" content="#0F1D30">
+<meta name="mobile-web-app-capable" content="yes">
+<title>AIO Pro — Installer</title>
+<link rel="icon" href="../icons/icon.svg">
+<style>
+:root{--navy:#0F1D30;--gold:#C9A24B;--ivory:#F1EAD9;--paper:#F3EEE4;--ink:#1a1614;--muted:#7a746b;--rule:#e0dacf;--a:#0F1D30;--b:#3E7D57}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--paper);color:var(--ink);font-family:-apple-system,Segoe UI,Roboto,sans-serif;font-size:16px;line-height:1.45;-webkit-text-size-adjust:100%}
+.top{position:sticky;top:0;z-index:5;background:var(--navy);color:var(--ivory);padding:calc(14px + env(safe-area-inset-top,0px)) 16px 12px;border-bottom:2px solid var(--gold);display:flex;align-items:center;gap:10px}
+.top .t{flex:1;min-width:0}
+.top .co{font-family:Georgia,serif;font-size:20px;line-height:1.2}
+.top .sub{color:var(--gold);font-size:11px;letter-spacing:1.2px;margin-top:2px;text-transform:uppercase}
+.top button{background:transparent;border:1px solid rgba(201,162,75,.6);color:var(--gold);border-radius:10px;padding:9px 12px;font-size:15px;font-weight:600;cursor:pointer;min-height:44px}
+.wrap{max-width:680px;margin:0 auto;padding:14px 16px calc(40px + env(safe-area-inset-bottom,0px))}
+.upd{color:var(--muted);font-size:12px;margin:0 0 12px}
+.day{font-family:Georgia,serif;font-size:18px;margin:18px 0 8px;display:flex;align-items:baseline;gap:8px}
+.day .n{font-family:-apple-system,Segoe UI,Roboto,sans-serif;font-size:12px;color:var(--muted)}
+.day.today{color:#8a6a1f}
+.job{background:#fff;border:.5px solid var(--rule);border-left:4px solid var(--a);border-radius:12px;padding:12px 14px;margin-bottom:10px}
+.job.b{border-left-color:var(--b)}
+.job .tm{font-size:13px;font-weight:700;color:#8a6a1f;letter-spacing:.3px}
+.job .ti{font-size:17px;font-weight:650;margin:2px 0 4px;overflow-wrap:anywhere}
+.job .loc{display:inline-flex;align-items:center;gap:6px;color:var(--navy);text-decoration:none;font-size:15px;padding:6px 0;overflow-wrap:anywhere}
+.job .loc:before{content:"";width:10px;height:10px;border-radius:50% 50% 50% 0;transform:rotate(-45deg);background:var(--gold);flex:none}
+.job .no{color:#4d4842;font-size:14px;white-space:pre-wrap;overflow-wrap:anywhere;margin-top:6px;padding-top:8px;border-top:.5px solid #eee}
+.job .no a{color:var(--navy)}
+.acts{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
+.acts a{flex:1;min-width:120px;text-align:center;text-decoration:none;background:var(--navy);color:var(--ivory);border-radius:10px;padding:11px 10px;font-size:15px;font-weight:600}
+.acts a.g{background:var(--gold);color:var(--navy)}
+.center{text-align:center;padding:56px 12px;color:var(--muted)}
+.center b{display:block;color:var(--ink);font-size:18px;margin-bottom:6px;font-family:Georgia,serif;font-weight:400}
+.det{margin-top:10px}
+.det>button{width:100%;background:#fff;border:1px solid var(--navy);color:var(--navy);border-radius:10px;padding:11px;font-size:15px;font-weight:650;cursor:pointer}
+.pk{margin-top:10px;border-top:.5px solid #eee;padding-top:10px}
+.pk h4{margin:12px 0 6px;font-size:12px;letter-spacing:1px;color:#8a6a1f;text-transform:uppercase}
+.pk .ch{display:flex;gap:10px;align-items:flex-start;padding:7px 0;border-bottom:.5px solid #f0ece4;font-size:15px}
+.pk .ch input{width:22px;height:22px;flex:none;margin-top:1px;accent-color:#8a6a1f}
+.pk .ch.done span{text-decoration:line-through;color:var(--muted)}
+.pk .it{padding:6px 0;border-bottom:.5px solid #f0ece4}
+.pk .it b{display:block}
+.pk .it ul{margin:2px 0 0 18px;padding:0;color:#5f5953;font-size:14px}
+.pk .note{background:#fbf6ea;border-radius:8px;padding:9px 10px;font-size:14.5px;white-space:pre-wrap}
+.pk .ph{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
+.pk .ph img{width:100%;height:96px;object-fit:cover;border-radius:6px;border:.5px solid var(--rule)}
+.pk .ok{display:inline-block;background:#e3f1e8;color:#2b6a45;border-radius:20px;padding:2px 9px;font-size:12px;font-weight:700}
+.lb{position:fixed;inset:0;background:rgba(0,0,0,.92);display:flex;align-items:center;justify-content:center;z-index:50;padding:10px}
+.lb img{max-width:100%;max-height:100%}
+.ro{display:inline-block;background:rgba(201,162,75,.18);color:var(--gold);border-radius:20px;padding:1px 8px;font-size:10px;letter-spacing:1px;margin-left:6px;vertical-align:2px}
+</style>
+</head>
+<body>
+<div class="top">
+  <div class="t"><div class="co">AIO Pro — My Jobs</div><div class="sub">Installer schedule <span class="ro">VIEW ONLY</span></div></div>
+  <button id="refresh" type="button" aria-label="Refresh">Refresh</button>
+</div>
+<div class="wrap">
+  <div class="upd" id="upd"></div>
+  <div id="app"><div class="center">Loading your jobs…</div></div>
+</div>
+<script>
+/* Read-only worker page. It never writes anything: the only call is the
+   worker_jobs_list function, which returns the jobs the owner shared. */
+(function () {
+  var URL = 'https://frxjedjcfzybflorlyvp.supabase.co';
+  var KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZyeGplZGpjZnp5YmZsb3JseXZwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODYzMzUzNTAsImV4cCI6MjEwMTkxMTM1MH0.shcVYA8vhN8NzYl4KosH5Qn62r1loxSi3uITxOgjPR0';
+  var app = document.getElementById('app');
+  var upd = document.getElementById('upd');
+  var btn = document.getElementById('refresh');
+  var busy = false, loadedOnce = false;
+
+  /* The worker key comes from the link (?k=...). Remember it so a home-screen
+     shortcut without the key still opens the right schedule. */
+  var params = new URLSearchParams(location.search);
+  var wkey = params.get('k') || '';
+  try {
+    if (wkey) localStorage.setItem('aio-worker-key', wkey);
+    else wkey = localStorage.getItem('aio-worker-key') || '';
+  } catch (e) {}
+
+  function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
+  function pad(n) { return (n < 10 ? '0' : '') + n; }
+  function isoOf(d) { return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate()); }
+  function addDays(iso, n) { var d = new Date(iso + 'T00:00:00'); d.setDate(d.getDate() + n); return isoOf(d); }
+  function fmtTime(t) {
+    if (!t) return '';
+    var p = String(t).split(':'), h = Number(p[0]), m = p[1] || '00';
+    if (isNaN(h)) return t;
+    return ((h % 12) || 12) + ':' + m + (h < 12 ? ' AM' : ' PM');
+  }
+  function dayLabel(iso, today) {
+    var d = new Date(iso + 'T00:00:00');
+    var nice = d.toLocaleDateString(undefined, { weekday: 'long', month: 'short', day: 'numeric' });
+    if (iso === today) return 'Today';
+    if (iso === addDays(today, 1)) return 'Tomorrow';
+    if (iso === addDays(today, -1)) return 'Yesterday';
+    return nice;
+  }
+  /* Make phone numbers in notes tappable (calling is not changing anything). */
+  function linkify(text) {
+    return esc(text).replace(/(\+?1?[\s.\-]?\(?\d{3}\)?[\s.\-]?\d{3}[\s.\-]?\d{4})/g, function (m) {
+      return '<a href="tel:' + m.replace(/[^\d+]/g, '') + '">' + m + '</a>';
+    });
+  }
+  function firstPhone(text) {
+    var m = String(text || '').match(/\+?1?[\s.\-]?\(?\d{3}\)?[\s.\-]?\d{3}[\s.\-]?\d{4}/);
+    return m ? m[0].replace(/[^\d+]/g, '') : '';
+  }
+
+  function show(rows) {
+    var today = isoOf(new Date());
+    if (!rows.length) {
+      app.innerHTML = '<div class="center"><b>No jobs right now</b>When Refael assigns you a job it will show up here.</div>';
+      return;
+    }
+    var html = '', lastDay = '';
+    rows.forEach(function (j) {
+      if (j.day !== lastDay) {
+        var count = rows.filter(function (x) { return x.day === j.day; }).length;
+        var sub = (j.day === today || j.day === addDays(today, 1) || j.day === addDays(today, -1))
+          ? new Date(j.day + 'T00:00:00').toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' }) + ' · '
+          : '';
+        html += '<div class="day' + (j.day === today ? ' today' : '') + '">' + esc(dayLabel(j.day, today)) + '<span class="n">' + esc(sub) + count + ' job' + (count === 1 ? '' : 's') + '</span></div>';
+        lastDay = j.day;
+      }
+      var time = j.start_time ? (fmtTime(j.start_time) + (j.end_time ? ' – ' + fmtTime(j.end_time) : '')) : 'All day';
+      var maps = j.location ? 'https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent(j.location) : '';
+      var phone = firstPhone(j.notes) || firstPhone(j.title);
+      html += '<div class="job' + (j.acct === 'B' ? ' b' : '') + '">' +
+        '<div class="tm">' + esc(time) + '</div>' +
+        '<div class="ti">' + esc(j.title || 'Job') + '</div>' +
+        (j.location ? '<a class="loc" href="' + esc(maps) + '" target="_blank" rel="noopener">' + esc(j.location) + '</a>' : '') +
+        (j.notes ? '<div class="no">' + linkify(j.notes) + '</div>' : '') +
+        ((maps || phone) ? '<div class="acts">' +
+          (maps ? '<a class="g" href="' + esc(maps) + '" target="_blank" rel="noopener">Directions</a>' : '') +
+          (phone ? '<a href="tel:' + esc(phone) + '">Call customer</a>' : '') +
+        '</div>' : '') +
+        (j.share_id ? '<div class="det" data-share="' + esc(j.share_id) + '">' + (packets[j.share_id] ? packetHTML(j.share_id) : '<button type="button" data-open="' + esc(j.share_id) + '">Job details — what to bring, scope, photos</button>') + '</div>' : '') +
+      '</div>';
+    });
+    app.innerHTML = html;
+  }
+
+  /* ── Job packet: what to bring, the scope the customer accepted, and the technician's photos ── */
+  var packets = {}, openErr = {};
+  function num(v) { var n = parseFloat(String(v == null ? '' : v).replace(/[^0-9.\-]/g, '')); return isFinite(n) ? n : 0; }
+  function bullets(t) { t = String(t || '').trim(); if (!t) return []; return (t.indexOf('\n') >= 0 ? t.split(/\n+/) : t.split(/;\s+|\.\s+(?=[A-Z0-9])/)).map(function (x) { return x.replace(/^[\s·•\-–]+/, '').trim(); }).filter(Boolean); }
+  function doneKey(sid) { return 'aio-prep-done-' + sid; }
+  function getDone(sid) { try { return JSON.parse(localStorage.getItem(doneKey(sid)) || '[]'); } catch (e) { return []; } }
+  function setDone(sid, list) { try { localStorage.setItem(doneKey(sid), JSON.stringify(list)); } catch (e) {} }
+  function packetHTML(sid) {
+    var pk = packets[sid]; if (!pk) return '';
+    if (pk.err) return '<div class="pk" style="color:#b03d27;font-size:14px">' + esc(pk.err) + '</div>';
+    var pay = pk.payload || {}, h = '<div class="pk">';
+    var signed = pk.status === 'signed';
+    h += signed ? '<span class="ok">SIGNED' + (pk.signer_name ? ' — ' + esc(pk.signer_name) : '') + '</span>' : '<span style="color:var(--muted);font-size:13px">Not signed yet</span>';
+    var done = getDone(sid), prep = Array.isArray(pk.prep) ? pk.prep : [];
+    if (prep.length) {
+      h += '<h4>What to bring / prepare</h4>' + prep.map(function (x, i) { var on = done.indexOf(i) >= 0; return '<label class="ch' + (on ? ' done' : '') + '"><input type="checkbox" data-sid="' + esc(sid) + '" data-i="' + i + '"' + (on ? ' checked' : '') + '><span>' + esc(x) + '</span></label>'; }).join('');
+    }
+    if (pk.notes) h += '<h4>Notes</h4><div class="note">' + esc(pk.notes) + '</div>';
+    if (pk.kind === 'report') {
+      var comps = (pay.components || []).filter(function (c) { return c.status === 'defect'; });
+      if (comps.length) h += '<h4>Needs attention</h4>' + comps.map(function (c) { return '<div class="it"><b>' + esc(c.name) + '</b><ul><li>' + esc(c.condition) + '</li>' + (c.recommended ? '<li>' + esc(c.recommended) + '</li>' : '') + '</ul></div>'; }).join('');
+    } else {
+      var opts = (pay.options || []).filter(function (o) { return (o.items || []).some(function (it) { return it.name || it.desc; }); });
+      var chosen = typeof pk.choice === 'number' ? pk.choice : null, idx = chosen != null ? chosen : 0, m = chosen != null;
+      var o = opts[idx] || opts[0];
+      if (o) {
+        var extras = Array.isArray(pk.extras) ? pk.extras : [];
+        h += '<h4>The work' + (opts.length > 1 ? ' — Option ' + String.fromCharCode(65 + (opts[idx] ? idx : 0)) + (o.name ? ': ' + esc(o.name) : '') + (m ? '' : ' (not chosen yet)') : '') + '</h4>';
+        (o.items || []).forEach(function (it) {
+          if (!(it.name || it.desc)) return;
+          if (it.opt && extras.indexOf(it.name) < 0) return;
+          var bl = bullets(it.desc), q = num(it.qty) || 1;
+          h += '<div class="it"><b>' + (q !== 1 ? q + ' × ' : '') + esc(it.name || 'Item') + (it.opt ? ' (add-on)' : '') + '</b>' + (bl.length ? '<ul>' + bl.map(function (b) { return '<li>' + esc(b) + '</li>'; }).join('') + '</ul>' : '') + '</div>';
+        });
+      }
+      if (pay.found) h += '<h4>What the technician found</h4><div class="note">' + esc(pay.found) + '</div>';
+      if (pay.notes) h += '<h4>Scope notes</h4><div class="note">' + esc(pay.notes) + '</div>';
+    }
+    var cu = pay.customer || {};
+    if (cu.phone) h += '<h4>Customer</h4><div>' + esc(cu.name || '') + ' · <a href="tel:' + esc(String(cu.phone).replace(/[^\d+]/g, '')) + '">' + esc(cu.phone) + '</a></div>';
+    var ph = (pk.photos || []).filter(function (x) { return /^data:image\/jpeg;base64,[A-Za-z0-9+\/=]+$/.test(x); });
+    if (ph.length) h += '<h4>Photos from the visit</h4><div class="ph">' + ph.map(function (x) { return '<img src="' + x + '" alt="">'; }).join('') + '</div>';
+    return h + '</div>';
+  }
+  var loadingPk = {};
+  function openPacket(sid, box) {
+    loadingPk[sid] = true;
+    box.innerHTML = '<div class="pk" style="color:var(--muted);font-size:14px">Loading job details…</div>';
+    fetch(URL + '/rest/v1/rpc/installer_packet', { method: 'POST', headers: { apikey: KEY, Authorization: 'Bearer ' + KEY, 'Content-Type': 'application/json' }, body: JSON.stringify({ p_key: wkey, p_share: sid }) })
+      .then(function (r) { return r.json().then(function (d) { if (!r.ok) throw new Error((d && d.message) || 'HTTP ' + r.status); return d; }); })
+      .then(function (d) { delete loadingPk[sid]; packets[sid] = d || { err: 'No details for this job yet.' }; var cur = app.querySelector('.det[data-share="' + sid + '"]') || box; cur.innerHTML = packetHTML(sid); })
+      .catch(function (err) { delete loadingPk[sid]; box = app.querySelector('.det[data-share="' + sid + '"]') || box; box.innerHTML = '<button type="button" data-open="' + esc(sid) + '">Could not load (' + esc(err.message) + ') — tap to try again</button>'; });
+  }
+  app.addEventListener('click', function (ev) {
+    var b = ev.target.closest('[data-open]'); if (b) { openPacket(b.getAttribute('data-open'), b.parentNode); return; }
+    var im = ev.target.closest('.pk .ph img'); if (im) { var lb = document.createElement('div'); lb.className = 'lb'; lb.innerHTML = '<img src="' + im.src + '" alt="">'; lb.addEventListener('click', function () { lb.remove(); }); document.body.appendChild(lb); }
+  });
+  app.addEventListener('change', function (ev) {
+    var t = ev.target; var sid = t.getAttribute && t.getAttribute('data-sid'); if (!sid) return;
+    var i = Number(t.getAttribute('data-i')), list = getDone(sid), k = list.indexOf(i);
+    if (t.checked && k < 0) list.push(i); if (!t.checked && k >= 0) list.splice(k, 1);
+    setDone(sid, list); var row = t.closest('.ch'); if (row) row.classList.toggle('done', t.checked);
+  });
+
+  function load(after) {
+    if (busy) return;
+    if (!wkey) {
+      app.innerHTML = '<div class="center"><b>Link not complete</b>Please open the worker link Refael sent you.</div>';
+      return;
+    }
+    busy = true; btn.textContent = '…';
+    fetch(URL + '/rest/v1/rpc/worker_jobs_list', {
+      method: 'POST',
+      headers: { apikey: KEY, Authorization: 'Bearer ' + KEY, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ p_key: wkey })
+    })
+      .then(function (r) {
+        if (r.ok) return r.json();
+        return r.text().then(function (t) {
+          var err = new Error('HTTP ' + r.status);
+          err.badKey = /bad worker key/i.test(t);
+          throw err;
+        });
+      })
+      .then(function (rows) {
+        rows = Array.isArray(rows) ? rows : [];
+        loadedOnce = true;
+        if (Object.keys(loadingPk).length && typeof after !== 'function') return;
+        show(rows);
+        if (typeof after === 'function') after();
+        upd.textContent = 'Updated ' + new Date().toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' }) + ' · updates on its own every few minutes';
+      })
+      .catch(function (err) {
+        if (err && err.badKey) {
+          loadedOnce = false;
+          app.innerHTML = '<div class="center"><b>This link is no longer active</b>Ask Refael to send you the new installer link.</div>';
+          upd.textContent = '';
+          return;
+        }
+        if (!loadedOnce) app.innerHTML = '<div class="center"><b>Could not load jobs</b>Check your internet and tap Refresh.</div>';
+        upd.textContent = 'Could not refresh — showing the last list. Check your internet.';
+      })
+      .then(function () { busy = false; btn.textContent = 'Refresh'; });
+  }
+  btn.addEventListener('click', function () {
+    var open = Object.keys(packets); packets = {};
+    load(function () { open.forEach(function (sid) { var box = app.querySelector('.det[data-share="' + sid + '"]'); if (box) openPacket(sid, box); }); });
+  });
+  document.addEventListener('visibilitychange', function () { if (!document.hidden) load(); });
+  setInterval(function () { if (!document.hidden) load(); }, 5 * 60 * 1000);
+  load();
+})();
+</script>
+</body>
+</html>
