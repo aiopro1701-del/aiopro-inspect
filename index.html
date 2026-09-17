@@ -1419,6 +1419,7 @@ function viewSettings() {
         '<div class="row" style="gap:6px;margin-top:4px"><button class="btn btn-ghost" data-act="set-model" data-arg="claude-haiku-4-5-20251001">Cheapest (Haiku)</button><button class="btn btn-ghost" data-act="set-model" data-arg="claude-sonnet-5">Stronger (Sonnet)</button></div>' +
         '<div style="color:var(--muted);font-size:12px;margin-top:6px">Haiku is the cheapest and fine for most inspections. After picking, press Save.</div>' +
       '</div>' +
+      viewTechCard() +
       '<div class="card"><div class="eyebrow">Backup</div>' +
         '<div style="color:var(--muted);font-size:14px;margin-bottom:12px">Everything is stored on this device only. Export a backup file now and then — and use Import to move all your jobs onto a new phone.</div>' +
         '<div class="row">' +
@@ -3101,6 +3102,22 @@ function viewSchedule() {
     '<div class="bottombar"><button class="btn btn-gold btn-primary" data-act="cal-new">+ New job</button></div>' +
   '</div>';
 }
+var APP_BASE = 'https://aiopro1701-del.github.io/aiopro-inspect/';
+function techLink(reset) {
+  var key = ownerKey();
+  if (!key) { alert('Open your setup link once on this phone first.'); return; }
+  if (reset && !confirm('Make a NEW technician link? The old one stops sending emails right away.')) return;
+  cloudRpc(reset ? 'tech_key_reset' : 'tech_key_get', { p_owner: key }).then(function (k) {
+    if (!k) throw new Error('not allowed');
+    window.prompt((reset ? 'New link made. ' : '') + 'Send this to your technician. He opens it once on his phone (in Chrome) and can then email estimates from ' + EST_BRAND.email + ':', APP_BASE + '?techkey=' + encodeURIComponent(k));
+  }).catch(function (err) { alert('Could not get the technician link: ' + ((err && err.message) || err)); });
+}
+function viewTechCard() {
+  if (!ownerKey()) return '';
+  return '<div class="card"><div class="eyebrow">Technician phone</div>' +
+    '<div style="color:var(--muted);font-size:13px;margin-bottom:10px">Lets your technician email estimates from ' + esc(EST_BRAND.email) + '. He opens the link once on his phone.</div>' +
+    '<div class="row" style="gap:8px"><button class="btn btn-gold" data-act="tech-link" style="flex:1">Technician link</button><button class="btn btn-ghost" data-act="tech-reset" style="flex:1">New link</button></div></div>';
+}
 function viewWorkerCard() {
   var on = !!ownerKey();
   return '<div class="card" style="margin-top:12px"><div class="eyebrow">Worker app (view only)</div>' +
@@ -3391,7 +3408,7 @@ function viewEstimate() {
         '<div class="field"><label>What we found — 2–3 plain sentences</label><textarea id="est_found" style="min-height:70px">' + esc(e.found) + '</textarea></div>' +
         '<div class="field" style="margin-bottom:0"><label>Scope notes — one per line (what is not included, measurements, what the customer prepares)</label><textarea id="est_notes" style="min-height:80px">' + esc(e.notes) + '</textarea></div></div>' +
     '</div>' +
-    '<div class="bottombar" style="gap:8px"><button class="btn btn-gold btn-primary" id="est_pdf">Create PDF</button><button class="btn btn-ghost" id="est_share">' + (e.shareId ? 'Shared ✓ — copy link' : 'Share to sign') + '</button></div>' +
+    '<div class="bottombar" style="gap:6px"><button class="btn btn-gold btn-primary" data-act="estmail-open" style="flex:1.4">' + (e.emailedAt ? 'Emailed ✓' : 'Email to customer') + '</button><button class="btn btn-ghost" id="est_pdf" style="flex:0.8">PDF</button><button class="btn btn-ghost" id="est_share" style="flex:0.8">' + (e.shareId ? 'Link ✓' : 'Link') + '</button></div>' +
   '</div>';
 }
 function wireEstimate() {
@@ -3458,7 +3475,7 @@ function wireEstimate() {
     });
   }
   var tax = root.querySelector('#est_tax'); if (tax) tax.addEventListener('input', function () { e.tax = tax.value; e.options.forEach(function (o, i) { estRefreshOpt(i); }); });
-  var pdf = root.querySelector('#est_pdf'); if (pdf) pdf.addEventListener('click', buildEstimatePdf);
+  var pdf = root.querySelector('#est_pdf'); if (pdf) pdf.addEventListener('click', function () { buildEstimatePdf(); });
   var share = root.querySelector('#est_share'); if (share) share.addEventListener('click', shareEstimate);
   var stat = root.querySelector('#est_status'); if (stat) stat.addEventListener('click', checkEstimateStatus);
 }
@@ -3541,13 +3558,14 @@ function estAiBuild() {
 }
 
 /* ── Estimate PDF in Refael's house style ── */
-function buildEstimatePdf() {
+function buildEstimatePdf(opts) {
+  var blobOnly = !!(opts && opts.blobOnly === true);
   var e = estNorm(state.estimate), s = state.settings;
-  if (estDropEmpty(e) && state.view === 'estimate') estRender();
+  if (estDropEmpty(e) && state.view === 'estimate' && !blobOnly) estRender();
   var used = estUsed(e);
-  if (!used.length) { alert('Add at least one service first.'); return; }
+  if (!used.length) { alert('Add at least one service first.'); return null; }
   var unpriced = 0; used.forEach(function (o) { o.items.forEach(function (it) { if ((it.name || it.desc) && !(estNum(it.price) > 0)) unpriced++; }); });
-  if (unpriced && !confirm(unpriced + ' item(s) have no price and will show as "Included". Create the PDF anyway?')) return;
+  if (unpriced && !confirm(unpriced + ' item(s) have no price and will show as "Included". ' + (blobOnly ? 'Send' : 'Create the PDF') + ' anyway?')) return null;
   estEnsureNo(e);
   var jsPDF = window.jspdf.jsPDF, doc = new jsPDF({ unit: 'pt', format: 'letter' });
   var W = CONTENT, y = M;
@@ -3767,44 +3785,136 @@ function buildEstimatePdf() {
   var first = String(cu.name || 'Customer').trim().split(/\s+/)[0].replace(/[^\w-]+/g, '') || 'Customer';
   var fn = company.replace(/[^\w]+/g, '-') + '-Estimate-' + first + '-' + e.no + '.pdf';
   try { upsertEstimate(e); } catch (_) {}
+  if (blobOnly) return { fn: fn, blob: doc.output('blob') };
   savePdf(fn, doc.output('blob'));
   crmEnsureForEstimate(e).then(function () { crmLogEstimate(e, 'created', 'estimate'); });
+  return { fn: fn };
 }
 var CLOUD_URL = 'https://frxjedjcfzybflorlyvp.supabase.co';
 var CLOUD_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZyeGplZGpjZnp5YmZsb3JseXZwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODYzMzUzNTAsImV4cCI6MjEwMTkxMTM1MH0.shcVYA8vhN8NzYl4KosH5Qn62r1loxSi3uITxOgjPR0';
 var CLOUD_BASE = 'https://aiopro1701-del.github.io/aiopro-inspect/estimate-sign.html';
-function shareEstimate() {
-  var e = state.estimate; var s = state.settings;
-  if (!e || !e.options.some(function (o) { return o.items.length; })) { alert('Add at least one item first.'); return; }
-  var id = e.shareId || ('e' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6));
-  estNorm(e); estEnsureNo(e);
-  if (estDropEmpty(e) && state.view === 'estimate') estRender();
-  var payload = { customer: e.customer, tax: e.tax, options: estUsed(e), title: e.title, found: e.found, notes: e.notes, no: e.no, visitDate: e.visitDate, preparedBy: e.preparedBy,
+function estPayload(e) {
+  var s = state.settings;
+  return { customer: e.customer, tax: e.tax, options: estUsed(e), title: e.title, found: e.found, notes: e.notes, no: e.no, visitDate: e.visitDate, preparedBy: e.preparedBy,
     company: { name: s.company, phone: (s.phone && s.phone.trim()) || EST_BRAND.phone, email: (s.email && s.email.trim()) || EST_BRAND.email, address: (s.address && s.address.trim() && s.address.trim() !== 'Greater St. Louis, MO') ? s.address : EST_BRAND.address, terms: s.terms, legal: EST_BRAND.legal, creds: EST_BRAND.creds, web: EST_BRAND.web, owner: EST_BRAND.owner } };
-  var link = CLOUD_BASE + '?id=' + id;
-  var btn = root.querySelector('#est_share'); if (btn) { btn.textContent = 'Sharing…'; btn.disabled = true; }
-  import('https://esm.sh/@supabase/supabase-js@2').then(function (mod) {
+}
+/* Put (or refresh) the estimate on the customer sign page. Resolves with its id. */
+function estEnsureShared(e) {
+  estNorm(e); estEnsureNo(e);
+  var id = e.shareId || ('e' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6));
+  var payload = estPayload(e);
+  return import('https://esm.sh/@supabase/supabase-js@2').then(function (mod) {
     var sb = mod.createClient(CLOUD_URL, CLOUD_KEY);
     return e.shareId
       ? sb.from('shared_estimates').update({ payload: payload }).eq('id', id)
       : sb.from('shared_estimates').insert({ id: id, payload: payload, status: 'sent' });
   }).then(function (res) {
     if (res.error) throw res.error;
-    e.shareId = id; e.shareLink = link; try { upsertEstimate(e); } catch (_) {}
+    e.shareId = id; e.shareLink = CLOUD_BASE + '?id=' + id; try { upsertEstimate(e); } catch (_) {}
+    return id;
+  });
+}
+function shareEstimate() {
+  var e = state.estimate;
+  if (!e || !e.options.some(function (o) { return o.items.length; })) { alert('Add at least one item first.'); return; }
+  if (estDropEmpty(e) && state.view === 'estimate') estRender();
+  var btn = root.querySelector('#est_share'); if (btn) { btn.textContent = 'Sharing…'; btn.disabled = true; }
+  estEnsureShared(e).then(function (id) {
     crmEnsureForEstimate(e).then(function () { crmLogEstimate(e, 'sent', 'estimate'); });
-    if (btn) { btn.textContent = 'Shared ✓ — copy link'; btn.disabled = false; }
-    window.prompt('Send this link to your customer. They can view the estimate' + (estUsed(e).length > 1 ? ', choose an option' : '') + ' and sign — and you\'ll see when they open and sign it:', link);
+    if (btn) { btn.textContent = 'Link ✓'; btn.disabled = false; }
+    window.prompt('Send this link to your customer. They can view the estimate' + (estUsed(e).length > 1 ? ', choose an option' : '') + ' and sign — and you\'ll see when they open and sign it:', CLOUD_BASE + '?id=' + id);
   }).catch(function (err) {
-    if (btn) { btn.textContent = 'Share to sign'; btn.disabled = false; }
+    if (btn) { btn.textContent = 'Link'; btn.disabled = false; }
     alert('Could not share: ' + ((err && err.message) || err) + '\n(Check your internet.)');
   });
+}
+
+/* ── Email the estimate from the AIO Pro Gmail (a small Google Apps Script mailer in that account) ── */
+var MAILER_URL = 'https://script.google.com/macros/s/AKfycbwRYDiA9ImnwXmsWpFSf8CXZAJHGkGAsOFCiOhPtQg-plxSTcYqv5h6dSfzjO-9YzOF/exec';
+function techKey() { try { return localStorage.getItem('aio-tech-key') || ''; } catch (e) { return ''; } }
+function sendKey() { return ownerKey() || techKey(); }
+function blobToB64(blob) { return new Promise(function (res, rej) { var r = new FileReader(); r.onload = function () { res(String(r.result).split(',')[1] || ''); }; r.onerror = function () { rej(new Error('Could not read the PDF.')); }; r.readAsDataURL(blob); }); }
+function estMailDefault(e) {
+  var cu = e.customer || {}, first = String(cu.name || '').trim().split(/\s+/)[0] || 'there';
+  var used = estUsed(e), phone = (state.settings.phone && state.settings.phone.trim()) || EST_BRAND.phone;
+  var when = e.visitDate === isoToday() ? ' today' : (function () { var d = new Date(String(e.visitDate || '') + 'T00:00:00'); return isNaN(d.getTime()) ? '' : ' on ' + d.toLocaleDateString('en-US', { weekday: 'long' }); })();
+  var lines = ['Hi ' + first + ',', '', 'Thank you for having us out' + when + '. Your estimate is attached.', ''];
+  if (used.length > 1) {
+    lines.push((used.length === 2 ? 'There are two ways to do the work' : 'There are three ways to do the work') + ' — choose the one that suits you:');
+    used.forEach(function (o, i) { var nm = estOptName(o); lines.push('- Option ' + estLetter(i) + (nm ? ' — ' + nm : '') + ': ' + money(estTotals(o, e.tax).total).replace(/\.00$/, '')); });
+  } else if (used.length) {
+    lines.push('The work comes to ' + money(estTotals(used[0], e.tax).total).replace(/\.00$/, '') + '.');
+  }
+  lines.push('', 'Tap "View & accept estimate" below to see it and sign online, or call or text us at ' + phone + ' and we will book it in.', '', 'Prices hold for 30 days. Any question at all, just call.');
+  var place = String(cu.addr || '').split(',')[0].trim();
+  var ttl = String(e.title || '').trim().replace(/\s*estimate$/i, '').replace(/\b[a-z]/g, function (c) { return c.toUpperCase(); });
+  var subj = (ttl ? ttl + ' Estimate' : 'Chimney Estimate') + (place ? ' — ' + place : '') + ' (Estimate No. ' + (e.no || '') + ')';
+  return { to: String(cu.email || '').trim(), subject: subj, message: lines.join('\n') };
+}
+function estMailOpen() {
+  var e = state.estimate; if (!e) return;
+  if (!estUsed(e).length) { alert('Add at least one service first.'); return; }
+  estNorm(e); estEnsureNo(e);
+  var d = estMailDefault(e);
+  state.estMail = { est: e, to: d.to, subject: d.subject, message: d.message };
+  state.view = 'estmail'; render(); try { window.scrollTo(0, 0); } catch (_) {}
+}
+function viewEstMail() {
+  var m = state.estMail, e = state.estimate;
+  if (!m || !e || m.est !== e) { state.view = 'estimate'; return viewEstimate(); }
+  var used = estUsed(e);
+  var ready = !!(MAILER_URL && MAILER_URL.indexOf('__') !== 0), key = sendKey();
+  var warn = !ready ? 'Email sending is being set up — use PDF or Link for now.' : !key ? 'This phone is not set up to send yet. Open your setup link once on this phone.' : '';
+  return '<div class="app">' +
+    '<div class="topbar"><button class="iconbtn" data-act="estmail-back">‹</button><div style="flex:1"><h1>Email estimate</h1><div class="sub">From ' + esc(EST_BRAND.email) + '</div></div></div>' +
+    '<div class="screen">' +
+      (warn ? '<div class="card" style="border-color:var(--defect);color:var(--defect);font-size:14px">' + esc(warn) + '</div>' : '') +
+      (m.done ? '<div class="card" style="border-color:var(--ok);color:var(--ok);font-size:15px;font-weight:650">' + esc(m.done) + '</div>' : '') +
+      (m.err ? '<div class="card" style="border-color:var(--defect);color:var(--defect);font-size:14px">' + esc(m.err) + '</div>' : '') +
+      '<div class="card">' +
+        '<div class="field"><label>To (customer email)</label><input id="em_to" type="email" inputmode="email" autocapitalize="off" value="' + esc(m.to) + '" placeholder="name@example.com"></div>' +
+        '<div class="field"><label>Subject</label><input id="em_subj" value="' + esc(m.subject) + '"></div>' +
+        '<div class="field" style="margin-bottom:0"><label>Message</label><textarea id="em_msg" style="min-height:260px">' + esc(m.message) + '</textarea></div>' +
+      '</div>' +
+      '<div class="card" style="font-size:13px;color:var(--muted)">Attached: the estimate PDF (#' + esc(e.no) + (used.length > 1 ? ', ' + used.length + ' options' : '') + '). The email has a <b>View &amp; accept estimate</b> button — the customer signs on the phone and you get an email the moment they sign. You can see when it was opened under <b>Check status</b>.</div>' +
+    '</div>' +
+    '<div class="bottombar" style="gap:8px"><button class="btn btn-gold btn-primary" id="em_send"' + (m.busy || !ready || !key ? ' disabled' : '') + '>' + (m.busy ? 'Sending…' : m.done ? 'Send again' : 'Send email') + '</button><button class="btn btn-ghost" data-act="estmail-back">Back</button></div>' +
+  '</div>';
+}
+function wireEstMail() {
+  if (state.view !== 'estmail' || !state.estMail) return;
+  var m = state.estMail;
+  [['em_to', 'to'], ['em_subj', 'subject'], ['em_msg', 'message']].forEach(function (p) { var el = root.querySelector('#' + p[0]); if (el) el.addEventListener('input', function () { m[p[1]] = el.value; }); });
+  var b = root.querySelector('#em_send'); if (b) b.addEventListener('click', estMailSend);
+}
+function estMailSend() {
+  var m = state.estMail, e = state.estimate;
+  if (!m || !e || m.busy) return;
+  var to = String(m.to || '').trim();
+  function fail(t) { m.busy = false; m.err = t; if (state.view === 'estmail') render(); }
+  if (!/^[^\s@,;]+@[^\s@,;]+\.[^\s@,;]+$/.test(to)) return fail('Enter one valid customer email address.');
+  if (!String(m.subject || '').trim()) return fail('Add a subject.');
+  var key = sendKey(); if (!key) return fail('This phone is not set up to send yet.');
+  if (m.done && !confirm('This estimate was already emailed. Send it again?')) return;
+  var pdf = buildEstimatePdf({ blobOnly: true }); if (!pdf) return;
+  m.busy = true; m.err = ''; m.done = ''; render();
+  if (!e.customer.email) e.customer.email = to;
+  Promise.all([estEnsureShared(e), blobToB64(pdf.blob)]).then(function (r) {
+    return fetch(MAILER_URL, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify({ action: 'send', key: key, id: r[0], to: to, subject: String(m.subject).trim(), message: String(m.message || ''), pdf: r[1], pdfName: pdf.fn, customer: e.customer.name || '' }) });
+  }).then(function (res) { return res.json(); }).then(function (d) {
+    if (!d || !d.ok) { var er = new Error((d && d.error) || 'The mailer did not answer.'); er.server = true; throw er; }
+    e.emailedTo = to; e.emailedAt = Date.now(); try { upsertEstimate(e); } catch (_) {}
+    crmEnsureForEstimate(e).then(function () { crmLogEstimate(e, 'emailed to ' + to, 'estimate'); });
+    m.busy = false; m.done = 'Sent to ' + to + ' ✓'; if (state.view === 'estmail') render();
+  }).catch(function (err) { fail('Not sent: ' + ((err && err.message) || err) + (err && err.server ? '.' : ' — check the internet and try again.')); });
 }
 function checkEstimateStatus() {
   var e = state.estimate; if (!e || !e.shareId) { alert('Share this estimate first, then you can check its status.'); return; }
   var btn = root.querySelector('#est_status'); if (btn) { btn.textContent = 'Checking…'; btn.disabled = true; }
   import('https://esm.sh/@supabase/supabase-js@2').then(function (mod) {
     var sb = mod.createClient(CLOUD_URL, CLOUD_KEY);
-    return sb.from('shared_estimates').select('status,viewed_at,signed_at,signer_name').eq('id', e.shareId).maybeSingle();
+    return sb.from('shared_estimates').select('status,viewed_at,signed_at,signer_name,email_to,emailed_at,opened_at').eq('id', e.shareId).maybeSingle();
   }).then(function (res) {
     if (btn) { btn.textContent = 'Check status'; btn.disabled = false; }
     var d = res.data;
@@ -3813,6 +3923,7 @@ function checkEstimateStatus() {
     var msg = d.status === 'signed' ? ('Signed by ' + (d.signer_name || 'customer') + ' on ' + new Date(d.signed_at).toLocaleString())
       : d.status === 'viewed' ? ('Customer opened it on ' + new Date(d.viewed_at).toLocaleString() + ' — not signed yet.')
       : 'Sent — customer has not opened it yet.';
+    if (d.emailed_at) msg = 'Emailed to ' + (d.email_to || 'customer') + ' on ' + new Date(d.emailed_at).toLocaleString() + '.\n' + (d.opened_at ? 'Email opened: ' + new Date(d.opened_at).toLocaleString() + '.\n' : 'Email not opened yet (some mail apps hide this).\n') + msg;
     alert(msg);
   }).catch(function (err) { if (btn) { btn.textContent = 'Check status'; btn.disabled = false; } alert('Could not check: ' + ((err && err.message) || err)); });
 }
@@ -3827,6 +3938,7 @@ function render() {
   else if (state.view === 'custform') html = viewCustForm();
   else if (state.view === 'estimates') html = viewEstimatesList();
   else if (state.view === 'estimate') html = viewEstimate();
+  else if (state.view === 'estmail') html = viewEstMail();
   else if (state.view === 'chat') html = viewChat();
   else if (state.view === 'clients') html = viewClients();
   else if (state.view === 'client') html = viewClient();
@@ -3841,6 +3953,7 @@ function render() {
   wirePhotoMarks();
   chatWire();
   wireEstimate();
+  wireEstMail();
   wireClients();
   wireMsg();
   var af = root.querySelector('[autofocus]');
@@ -4136,6 +4249,10 @@ root.addEventListener('click', function (e) {
     case 'cev-acct': if (state.editEvent) { state.editEvent.acct = arg; render(); } break;
     case 'cev-worker': if (state.editEvent) { state.editEvent.worker = arg === '1'; render(); } break;
     case 'worker-link': workerLink(false); break;
+    case 'estmail-open': estMailOpen(); break;
+    case 'estmail-back': state.view = 'estimate'; render(); break;
+    case 'tech-link': techLink(false); break;
+    case 'tech-reset': techLink(true); break;
     case 'worker-reset': workerLink(true); break;
     case 'cal-open': { var op = String(arg).split('|'), oSlot = op[0], oId = op[1]; var ce = (state.gcalEvents || []).filter(function (x) { return x.id === oId && x.acct === oSlot; })[0] || (state.gcalEvents || []).filter(function (x) { return x.id === oId; })[0]; if (ce) { state.editEvent = { id: ce.id, acct: ce.acct || 'A', title: ce.title, date: ce.date, time: ce.time, location: ce.location, notes: ce.notes, worker: !!ce.worker }; state.view = 'calevent'; render(); } break; }
     case 'cal-save': gcalSaveEvent(state.editEvent, function () { state.view = 'schedule'; render(); }); break;
@@ -4422,11 +4539,11 @@ function importData() {
 /* One-time setup link: ...?ownerkey=XXXX stores the worker-sharing owner key on this phone. */
 (function () {
   try {
-    var ok = new URLSearchParams(location.search).get('ownerkey');
-    if (ok) {
-      localStorage.setItem('aio-owner-key', ok);
-      history.replaceState(null, '', location.pathname);
-    }
+    var qs = new URLSearchParams(location.search);
+    var ok = qs.get('ownerkey'), tk = qs.get('techkey');
+    if (ok) localStorage.setItem('aio-owner-key', ok);
+    if (tk) localStorage.setItem('aio-tech-key', tk);
+    if (ok || tk) history.replaceState(null, '', location.pathname);
   } catch (e) {}
 })();
 refresh().then(function () { return crmLoadStats(); }).then(function () { if (state.view === 'home') render(); }).catch(function () {});
