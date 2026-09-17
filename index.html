@@ -1075,6 +1075,27 @@ function pickImage() { return pickFile(false); }
 
 /* ── PDF: customer-facing report, letter portrait ──────────── */
 var M = 43, PW = 612, PH = 792, CONTENT = PW - M * 2;
+/* Photos keep their real shape: height/width of an image (0.75 if unknown). */
+function pdfImgRatio(doc, src) {
+  try { var p = doc.getImageProperties(src); if (p && p.width > 0 && p.height > 0) return p.height / p.width; } catch (e) {}
+  return 0.75;
+}
+/* Draw an image inside a box without stretching it: scaled to fit, centred (or left-aligned), on a soft backdrop. */
+function pdfImgFit(doc, src, x, y, w, h, comp, opts) {
+  opts = opts || {};
+  var r = pdfImgRatio(doc, src), iw = w, ih = w * r;
+  if (ih > h) { ih = h; iw = h / r; }
+  if (opts.bg) { doc.setFillColor(opts.bg[0], opts.bg[1], opts.bg[2]); doc.rect(x, y, w, h, 'F'); }
+  var ix = opts.left ? x : x + (w - iw) / 2, iy = opts.top ? y : y + (h - ih) / 2;
+  try { doc.addImage(src, 'JPEG', ix, iy, iw, ih, undefined, comp || 'FAST'); } catch (e) {}
+  return { w: iw, h: ih };
+}
+/* Height for a row of photos: tall enough for the tallest (portrait up to 4:3 upright), never stretched. */
+function pdfRowH(doc, list, cellW, minR, maxR) {
+  var r = 0; list.forEach(function (src) { r = Math.max(r, pdfImgRatio(doc, src)); });
+  return cellW * Math.min(maxR || 1.34, Math.max(minR || 0.56, r || 0.75));
+}
+var PHOTO_BG = [243, 240, 234];
 var INK = [26, 22, 20], MUTED = [122, 116, 110], RULE = [214, 208, 200];
 var SEV = { defect: [176, 61, 39], monitor: [186, 134, 42], ok: [74, 118, 88] };
 var NAVY = [15, 29, 48], GOLD = [176, 138, 58];
@@ -1107,7 +1128,7 @@ function buildReport(job, settings) {
 
   /* Header */
   if (settings.logo) {
-    try { doc.addImage(settings.logo, 'JPEG', M, y, 96, 96 * 0.42, undefined, 'FAST'); } catch (e) {}
+    pdfImgFit(doc, settings.logo, M, y, 96, 96 * 0.42, 'FAST', { left: true, top: true });
   }
   doc.setFont('helvetica', 'bold').setFontSize(15).setTextColor(INK[0], INK[1], INK[2]);
   doc.text(settings.company || 'Chimney Inspection', M + (settings.logo ? 110 : 0), y + 14);
@@ -1144,10 +1165,10 @@ function buildReport(job, settings) {
   if (ovList.length) {
     doc.setFont('helvetica', 'bold').setFontSize(9).setTextColor(MUTED[0], MUTED[1], MUTED[2]);
     doc.text('THIS PROPERTY AND CHIMNEY', M, y); y += 12;
-    var owc = Math.min(3, ovList.length), ogw = (CONTENT - (owc - 1) * 8) / owc, ogh = ogw * 0.72;
+    var owc = Math.min(3, ovList.length), ogw = (CONTENT - (owc - 1) * 8) / owc, ogh = pdfRowH(doc, ovList.slice(0, 3).map(function (o) { return o.src; }), ogw, 0.56, 1.34);
     y = ensure(y, ogh + 20);
     ovList.slice(0, 3).forEach(function (o, i) {
-      try { doc.addImage(o.src, 'JPEG', M + i * (ogw + 8), y, ogw, ogh, undefined, 'FAST'); } catch (e) {}
+      pdfImgFit(doc, o.src, M + i * (ogw + 8), y, ogw, ogh, 'FAST', { bg: PHOTO_BG });
       doc.setFont('helvetica', 'normal').setFontSize(7.5).setTextColor(MUTED[0], MUTED[1], MUTED[2]);
       doc.text(String(o.label), M + i * (ogw + 8), y + ogh + 9, { maxWidth: ogw });
     });
@@ -1185,11 +1206,12 @@ function buildReport(job, settings) {
       if (rec) y = wrapped(doc, 'Recommended: ' + rec, M, y, CONTENT, 9.5, MUTED) + 2;
       var photos = Object.keys(r.photos || {}).map(function (k) { return r.photos[k]; }).filter(Boolean);
       if (photos.length) {
-        var pw = (CONTENT - 16) / 3, ph = pw * 0.72;
+        var pw = (CONTENT - 16) / 3;
         for (var i = 0; i < photos.length; i += 3) {
+          var ph = pdfRowH(doc, photos.slice(i, i + 3), pw, 0.56, 1.34);
           y = ensure(y, ph + 8);
           for (var j = 0; j < 3 && i + j < photos.length; j++) {
-            try { doc.addImage(photos[i + j], 'JPEG', M + j * (pw + 8), y, pw, ph, undefined, 'FAST'); } catch (e) {}
+            pdfImgFit(doc, photos[i + j], M + j * (pw + 8), y, pw, ph, 'FAST', { bg: PHOTO_BG });
           }
           y += ph + 8;
         }
@@ -1844,7 +1866,7 @@ function buildChatReport(data, images, settings, modeName) {
   var used = {};
   function drawHeader(cover) {
     var top = M;
-    if (settings.logo) { try { doc.addImage(settings.logo, 'JPEG', M, top, 108, 108 * 0.42, undefined, 'FAST'); } catch (e) {} }
+    if (settings.logo) pdfImgFit(doc, settings.logo, M, top, 108, 108 * 0.42, 'FAST', { left: true, top: true });
     var tx = M + (settings.logo ? 122 : 0);
     doc.setFont('helvetica', 'bold').setFontSize(cover ? 16 : 12).setTextColor(NAVY[0], NAVY[1], NAVY[2]);
     doc.text(settings.company || 'AIO Pro Chimney', tx, top + (cover ? 16 : 12));
@@ -1880,15 +1902,17 @@ function buildChatReport(data, images, settings, modeName) {
   }
   function kv(rows) { table(rows); }
   function photos2(list, ratio) {
-    ratio = ratio || 0.68; var gap = 8, pw = (CONTENT - gap) / 2, ph = pw * ratio;
+    var gap = 8, pw = (CONTENT - gap) / 2;
     for (var i = 0; i < list.length; i += 2) {
+      var ph = pdfRowH(doc, list.slice(i, i + 2), pw, 0.56, 1.34);
       ensure(ph + 8);
       for (var j = 0; j < 2 && i + j < list.length; j++) {
-        try { doc.addImage(list[i + j], 'JPEG', M + j * (pw + gap), y, pw, ph, undefined, 'SLOW'); } catch (e) {}
+        pdfImgFit(doc, list[i + j], M + j * (pw + gap), y, pw, ph, 'SLOW', { bg: PHOTO_BG });
         doc.setDrawColor(RULE[0], RULE[1], RULE[2]).setLineWidth(0.5); doc.rect(M + j * (pw + gap), y, pw, ph);
       }
       y += ph + 8;
     }
+    y += 10;
   }
   function pickDiagrams() {
     var t = ((data.appliance && (data.appliance.type + ' ' + data.appliance.fuel)) || '') + ' ' + (modeName || '') + ' ' + (data.title || '');
@@ -1910,8 +1934,8 @@ function buildChatReport(data, images, settings, modeName) {
   var c = data.customer || {};
   head('Customer information');
   if (images[0]) {
-    var iw = CONTENT, ih = iw * 0.56; ensure(ih + 8);
-    try { doc.addImage(images[0], 'JPEG', M, y, iw, ih, undefined, 'SLOW'); } catch (e) {}
+    var iw = CONTENT, ih = iw * Math.min(0.75, Math.max(0.5, pdfImgRatio(doc, images[0]))); ensure(ih + 8);
+    pdfImgFit(doc, images[0], M, y, iw, ih, 'SLOW', { bg: PHOTO_BG });
     doc.setDrawColor(RULE[0], RULE[1], RULE[2]).setLineWidth(0.5); doc.rect(M, y, iw, ih);
     y += ih + 10; used[0] = true;
   }
@@ -1923,7 +1947,7 @@ function buildChatReport(data, images, settings, modeName) {
   var p = data.property || {};
   if (p.stories || p.roof || p.systemLocation || p.roomLocation || images[1]) {
     head('Property information');
-    if (images[1]) { var iw2 = CONTENT * 0.62, ih2 = iw2 * 0.72; ensure(ih2 + 6); try { doc.addImage(images[1], 'JPEG', M, y, iw2, ih2, undefined, 'SLOW'); } catch (e) {} y += ih2 + 8; used[1] = true; }
+    if (images[1]) { var iw2 = CONTENT * 0.62, ih2 = iw2 * Math.min(1.1, Math.max(0.5, pdfImgRatio(doc, images[1]))); ensure(ih2 + 6); pdfImgFit(doc, images[1], M, y, iw2, ih2, 'SLOW', { left: true }); y += ih2 + 8; used[1] = true; }
     kv([['Stories', p.stories], ['Roof material & pitch', p.roof], ['System location', p.systemLocation], ['Room location', p.roomLocation]]);
     y += 6;
   }
@@ -2083,7 +2107,7 @@ function buildChatReport(data, images, settings, modeName) {
   head('Acknowledgment & signature');
   y = wrapped(doc, 'This inspection covered the readily accessible areas of the chimney and connected appliance visible at the time of service, to the NFPA 211 standard for the level performed. Areas that cannot be seen without removing parts of the chimney or the structure are not included. No warranty is given as to the future safe use of the system, as use and conditions can change after the inspection. By signing, the customer acknowledges receipt of this report.', M, y, CONTENT, 9.5, MUTED) + 16;
   ensure(110);
-  if (data._signature) { try { doc.addImage(data._signature, 'JPEG', M, y, 200, 68, undefined, 'FAST'); } catch (e) {} }
+  if (data._signature) pdfImgFit(doc, data._signature, M, y, 200, 68, 'FAST', { left: true });
   doc.setDrawColor(INK[0], INK[1], INK[2]).setLineWidth(0.6);
   doc.line(M, y + 74, M + 240, y + 74);
   doc.line(PW - M - 200, y + 74, PW - M, y + 74);
