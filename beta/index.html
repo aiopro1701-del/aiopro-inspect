@@ -152,6 +152,8 @@ input, textarea, select { font-family: inherit; font-size: 16px; }
   border: 1px solid var(--rule); border-radius: var(--radius);
   background: #FFF; color: var(--ink);
 }
+.addr-row { display: flex; gap: 6px; margin-top: 6px; }
+.addr-row input, .addr-row select { min-width: 0; }
 .field textarea { min-height: 92px; resize: vertical; line-height: 1.5; }
 .field input:focus, .field textarea:focus { outline: 2px solid var(--ember); outline-offset: -1px; }
 
@@ -1079,7 +1081,7 @@ var M = 43, PW = 612, PH = 792, CONTENT = PW - M * 2;
 var APP_DIR = (/^https?:$/.test(location.protocol) && location.hostname) ? location.origin + location.pathname.replace(/[^\/]*$/, '') : 'https://aiopro1701-del.github.io/aiopro-inspect/';
 var IS_BETA = /\/beta\/$/.test(APP_DIR);
 /* Refael's field knowledge — the bot answers from this. Kept word-for-word stable so it is cached (cheap). */
-var AIO_KB = "AIO PRO CHIMNEY \u2014 FIELD KNOWLEDGE (from the owner, Refael Maman). Use this to answer the technician the way Refael would.\n\nWHO WE ARE\n- AIOPRO LLC, trading as AIO Pro Chimney. 1505 North and South Rd, St. Louis, MO 63130. Phone (314) 379-2871. Email Aiopro1701@gmail.com. aioprochimney.com.\n- Licensed general contractor, insured, CSIA member, NCSG member, BBB accredited. Greater St. Louis; east as far as Belleville and O'Fallon, IL. A Kansas City employee can take Kansas City jobs.\n- Owner: Refael Maman. The office = Refael.\n\nWHO USES THE APP\n- Owner (Refael): everything.\n- Technician: visits the house, finds the problem, prices it, presents it, closes it. Most of the work is technician and customer face to face. The technician is still learning and calls Refael on most jobs; that is fine and expected.\n- Installer: does the booked job. Needs to know when and where, what to bring, and what the technician found (photos + scope).\n\nWHAT THE TECHNICIAN MAY AND MAY NOT SAY\n- Prices: he may give prices and approximate (+/-) ranges, and he may adjust a price or give a discount (see Selling).\n- Dates: never promise a date. Scheduling always goes through the office: \"Refael will call you to book it.\"\n- Warranty: never promise warranty terms. \"The warranty is written on the estimate; Refael confirms it.\"\n- If he does not know something: say \"Let me confirm that with Refael\" and call him. Never guess about safety, code, or warranty.\n- Never run down another company. Never argue with the customer.\n\nMONEY RULES\n- Minimum service charge is usually $49. Sometimes the estimate visit is free, but not often.\n- Deposit: 20% to 40% of the job, depending on the size of the job. Balance on completion unless agreed otherwise.\n- Estimate prices hold for 30 days.\n- Price goes up with: roof pitch (steep = harder/slower, may need extra safety gear), job difficulty, how hard the chimney is to reach (height, stories, trees, lift or scaffold needed), and how much material is needed (liner length, size of the chimney top, number of flues).\n- Access equipment (boom lift, scaffold) is priced as its own line so the customer sees it.\n- Anything that may change once opened up: say so in the scope notes \u2014 \"if we find more once it is opened, we stop and agree the difference with you before continuing.\"\n\nHOW REFAEL WRITES AN ESTIMATE\n- One scope by default: the work he recommends. Add Option B (or C) ONLY when the customer has a real choice (keep the stove vs. new stove, stainless vs. galvanized, vent-free vs. vented gas). Each option has its own full total. \"Choose one \u2014 you do not need both.\"\n- Add-ons the customer can take or leave (a vent cap, a second liner) are listed separately as optional.\n- Each line: a clear name, 3-7 short scope lines specific to this house (sizes, lengths, where), and a price.\n- Explain the cause in plain words (\"a square damper cannot seal a round liner\"), then the fix. Safety items first and clearly: \"This one should not wait.\"\n- Scope notes say what is NOT included and what the customer prepares.\n- Tone: plain, confident, respectful. No jargon, no code numbers, no sales filler.\n\nSELLING (coach the technician)\n- Before the price: show the customer the photos, explain what is wrong, why it happened, and what happens if it waits.\n- Present the recommended scope first, with the total. If there is a real choice, present Option A and Option B side by side.\n- \"It's too expensive\": 1) Acknowledge (\"I understand, it's a real number.\"). 2) Ask (\"What matters most to you \u2014 the lowest price today, or fixing it so it doesn't come back?\" / \"What budget did you have in mind?\"). 3) Advise:\n  a) Split it: the safety / water-stopping part now, the rest later (becomes Option A / B).\n  b) Show the value: materials, labor, cleanup, photos, written warranty, licensed and insured, CSIA/NCSG.\n  c) Deposit 20-40% now, balance when done.\n  d) A discount is a closing tool, tied to a decision today or booking now. Give it once, clearly (\"If we book it today I can take $X off\").\n- \"I need to think about it\": ask what is holding them back; offer to email the estimate now with the Sign button; tell them Refael will follow up.\n- \"I'm getting other quotes\": that's fine; point to the written scope and warranty so they compare the same work. Never bash competitors.\n- Close: ask for the decision. \"Shall I send it to your email so you can sign it on your phone?\"\n\nSAFETY \u2014 STOP AND TELL THE CUSTOMER\n- Gas leak found (bubbles on leak test, smell): the appliance must not be used until repaired; if they smell gas, shut the supply and call the gas utility. Call Refael.\n- Blocked flue (debris, animal nest, collapsed tile) on a furnace or water heater: do not operate that appliance until cleared/lined. CO risk.\n- Unlined or badly cracked flue on a wood fireplace: do not use until repaired.\n- Disconnected or rusted-through vent connector: do not operate.\n- Creosote glaze or heavy buildup: no fires until swept.\n- Say it in one calm sentence, write it on the estimate, and call Refael.\n\nWHAT TO CHECK AND PHOTOGRAPH (standard order, bottom up)\n1. Front of the house (cover photo), then the appliance / fireplace.\n2. Firebox: cracks, gaps in joints, missing panels; hearth extension and clearances.\n3. Damper and throat: opens/closes and seals; damper type vs. flue shape.\n4. Smoke chamber: voids, rough/unparged brick, creosote.\n5. Flue and liner: camera scan if possible; clay tile cracks, offsets, missing mortar; liner size and material; debris.\n6. Appliance vents (furnace/water heater): connector condition, slope, clearance (single-wall 6\", B-vent 1\"), draft.\n7. Attic / basement where accessible: water stains, clearances, framing.\n8. Roof and exterior: flashing, cricket (chimney wider than 30\"), crown cracks, cap/spark arrestor, chase cover rust, brick and mortar, height (3-2-10 rule).\n9. Measurements that set the price: flue size (inside dimensions), liner length (roofline to appliance + above the top), chimney top size (for cap/chase cover), number of flues, stories, roof pitch, access.\n\nHOW TO MEASURE (short)\n- Liner length: from the appliance connection (or smoke chamber) to the top of the flue tile + about 1 ft; count stories (about 10 ft each) if you cannot measure directly.\n- Flue size: inside width x depth of the clay tile (or diameter for round); the liner is sized to the appliance outlet.\n- Chase cover / cap: outside length x width of the top (crown or chase), plus the flue tile height above the crown.\n- Chimney height above the roof: at least 3 ft above where it passes the roof and 2 ft higher than anything within 10 ft.\n\nWHEN TO CALL REFAEL\n- Any safety hazard, any job over a few thousand dollars, anything not in the price list, anything structural, any date/warranty question, any customer who is unhappy, and whenever unsure.";
+var AIO_KB = "AIO PRO CHIMNEY \u2014 FIELD KNOWLEDGE (from the owner, Refael Maman). Use this to answer the technician the way Refael would.\n\nWHO WE ARE\n- AIOPRO LLC, trading as AIO Pro Chimney. 1505 North and South Rd, St. Louis, MO 63130. Phone (314) 379-2871. Email Aiopro1701@gmail.com. aioprochimney.com.\n- Licensed general contractor, insured, CSIA member, NCSG member, BBB accredited. Greater St. Louis; east as far as Belleville and O'Fallon, IL. A Kansas City employee can take Kansas City jobs.\n- Owner: Refael Maman. The office = Refael.\n\nWHO USES THE APP\n- Owner (Refael): everything.\n- Technician: visits the house, finds the problem, prices it, presents it, closes it. Most of the work is technician and customer face to face. The technician is still learning and calls Refael on most jobs; that is fine and expected.\n- Installer: does the booked job. Needs to know when and where, what to bring, and what the technician found (photos + scope).\n\nWHAT THE TECHNICIAN MAY AND MAY NOT SAY\n- Prices: he may give prices and approximate (+/-) ranges, and he may adjust a price or give a discount (see Selling).\n- Dates: never promise a date. Scheduling always goes through the office: \"Refael will call you to book it.\"\n- Warranty: never promise warranty terms. \"The warranty is written on the estimate; Refael confirms it.\"\n- If he does not know something: say \"Let me confirm that with Refael\" and call him. Never guess about safety, code, or warranty.\n- Never run down another company. Never argue with the customer.\n\nMONEY RULES\n- Minimum service charge is usually $49. Sometimes the estimate visit is free, but not often.\n- Deposit: 20% to 40% of the job, depending on the size of the job. Balance on completion unless agreed otherwise.\n- Estimate prices hold for 30 days.\n- Price goes up with: roof pitch (steep = harder/slower, may need extra safety gear), job difficulty, how hard the chimney is to reach (height, stories, trees, lift or scaffold needed), and how much material is needed (liner length, size of the chimney top, number of flues).\n- Access equipment (boom lift, scaffold) is priced as its own line so the customer sees it.\n- Anything that may change once opened up: say so in the scope notes \u2014 \"if we find more once it is opened, we stop and agree the difference with you before continuing.\"\n\nHOW REFAEL WRITES AN ESTIMATE\n- One scope by default: the work he recommends. Add Option B (or C) ONLY when the customer has a real choice (keep the stove vs. new stove, stainless vs. galvanized, vent-free vs. vented gas). Each option has its own full total. \"Choose one \u2014 you do not need both.\"\n- Add-ons the customer can take or leave (a vent cap, a second liner) are listed separately as optional.\n- Each line: a clear name, 3-7 short scope lines specific to this house (sizes, lengths, where), and a price.\n- Explain the cause in plain words (\"a square damper cannot seal a round liner\"), then the fix. Safety items first and clearly: \"This one should not wait.\"\n- Scope notes say what is NOT included and what the customer prepares.\n- Tone: plain, confident, respectful. No jargon, no code numbers, no sales filler.\n\nSELLING (coach the technician)\n- Before the price: show the customer the photos, explain what is wrong, why it happened, and what happens if it waits.\n- Present the recommended scope first, with the total. If there is a real choice, present Option A and Option B side by side.\n- \"It's too expensive\": 1) Acknowledge (\"I understand, it's a real number.\"). 2) Ask (\"What matters most to you \u2014 the lowest price today, or fixing it so it doesn't come back?\" / \"What budget did you have in mind?\"). 3) Advise:\n  a) Split it: the safety / water-stopping part now, the rest later (becomes Option A / B).\n  b) Show the value: materials, labor, cleanup, photos, written warranty, licensed and insured, CSIA/NCSG.\n  c) Deposit 20-40% now, balance when done.\n  d) A discount is a closing tool, tied to a decision today or booking now. Give it once, clearly (\"If we book it today I can take $X off\").\n- \"I need to think about it\": ask what is holding them back; offer to email the estimate now with the Sign button; tell them Refael will follow up.\n- \"I'm getting other quotes\": that's fine; point to the written scope and warranty so they compare the same work. Never bash competitors.\n- Close: ask for the decision. \"Shall I send it to your email so you can sign it on your phone?\"\n\nSAFETY \u2014 STOP AND TELL THE CUSTOMER\n- Gas leak found (bubbles on leak test, smell): the appliance must not be used until repaired; if they smell gas, shut the supply and call the gas utility. Call Refael.\n- Blocked flue (debris, animal nest, collapsed tile) on a furnace or water heater: do not operate that appliance until cleared/lined. CO risk.\n- Unlined or badly cracked flue on a wood fireplace: do not use until repaired.\n- Disconnected or rusted-through vent connector: do not operate.\n- Creosote glaze or heavy buildup: no fires until swept.\n- Say it in one calm sentence, write it on the estimate, and call Refael.\n\nWHAT TO CHECK AND PHOTOGRAPH (standard order, bottom up)\n- First find out what system it is (wood fireplace, gas logs in a fireplace, direct-vent gas, vent-free gas, insert/stove, furnace or water heater flue) and check only the parts that system has. Vent-free gas has no flue: no damper, liner or roof checks.\n- Level 1: inside the home and from the ground only \u2014 no roof or attic. Level 2 adds attic/basement, roof when safe, and a camera scan.\n1. Front of the house (cover photo), then the appliance / fireplace.\n2. Firebox: cracks, gaps in joints, missing panels; hearth extension and clearances.\n3. Damper and throat: opens/closes and seals; damper type vs. flue shape.\n4. Smoke chamber: voids, rough/unparged brick, creosote.\n5. Flue and liner: camera scan if possible; clay tile cracks, offsets, missing mortar; liner size and material; debris.\n6. Appliance vents (furnace/water heater): connector condition, slope, clearance (single-wall 6\", B-vent 1\"), draft.\n7. Attic / basement where accessible: water stains, clearances, framing.\n8. Roof and exterior: flashing, cricket (chimney wider than 30\"), crown cracks, cap/spark arrestor, chase cover rust, brick and mortar, height (3-2-10 rule).\n9. Measurements that set the price: flue size (inside dimensions), liner length (roofline to appliance + above the top), chimney top size (for cap/chase cover), number of flues, stories, roof pitch, access.\n\nHOW TO MEASURE (short)\n- Liner length: from the appliance connection (or smoke chamber) to the top of the flue tile + about 1 ft; count stories (about 10 ft each) if you cannot measure directly.\n- Flue size: inside width x depth of the clay tile (or diameter for round); the liner is sized to the appliance outlet.\n- Chase cover / cap: outside length x width of the top (crown or chase), plus the flue tile height above the crown.\n- Chimney height above the roof: at least 3 ft above where it passes the roof and 2 ft higher than anything within 10 ft.\n\nWHEN TO CALL REFAEL\n- Any safety hazard, any job over a few thousand dollars, anything not in the price list, anything structural, any date/warranty question, any customer who is unhappy, and whenever unsure.";
 /* Photos keep their real shape: height/width of an image (0.75 if unknown). */
 function pdfImgRatio(doc, src) {
   try { var p = doc.getImageProperties(src); if (p && p.width > 0 && p.height > 0) return p.height / p.width; } catch (e) {}
@@ -1467,7 +1469,7 @@ function viewInspect() {
         '<div style="flex:1"><h1>New inspection</h1><div class="sub">' + esc(tpl.name) + (job.jobType ? ' · ' + esc(jobTypeName(job.jobType)) : '') + '</div></div></div>' +
       '<div class="screen"><div class="card">' +
         '<div class="field"><label>Customer name</label><input data-model="customer.name" value="' + esc(c.name) + '" autofocus></div>' +
-        '<div class="field"><label>Service address</label><input data-model="customer.address" value="' + esc(c.address) + '"></div>' +
+        addrHTML('Service address', c.address, 'data-model="customer.address"') +
         '<div class="field"><label>Phone</label><input data-model="customer.phone" inputmode="tel" value="' + esc(c.phone) + '"></div>' +
         '<div class="field"><label>Email (report is sent here)</label><input data-model="customer.email" inputmode="email" value="' + esc(c.email || '') + '"></div>' +
       '</div>' +
@@ -1640,18 +1642,28 @@ function chatSystem(mode) {
   var m = CHAT_MODES[mode] || CHAT_MODES.level1;
   var depth = (state.chat && state.chat.depth) || 'full';
   if (mode === 'estimate') return estChatSystem(depth);
-  var who = depth === 'pro' ? 'the owner (an experienced professional)' : 'a technician';
-  var lead = depth === 'pro'
-    ? 'Keep it efficient — this is an experienced pro. Ask ONLY what you truly need, accept short answers, do not over-explain or hand-hold, and move quickly toward the report. Still make sure the key parts of the system are covered so the report has no holes. '
-    : 'LEAD the inspection — do not wait for the technician to know what to do. At each step tell them exactly what to look at and what to check (clearances, cracks, gaps, blockage, rust, missing parts), then request the specific photo you need. Do not assume they know what to look for; make sure every part of the system is covered before the report. ';
-  return 'You are the master chimney inspector and estimator for ' + (state.settings.company || 'AIO Pro Chimney') + ' (Greater St. Louis), guiding ' + who + ' in the field through ' + m.focus + '. '
-    + 'Talk like a sharp, friendly expert: ONE short step at a time, plain language, no code jargon. '
-    + lead
-    + 'Work the system IN ORDER, from the bottom up: first the appliance / firebox and hearth, then the damper and throat, then the smoke chamber, then the flue and liner, then the chimney exterior and termination on the roof. '
-    + 'Begin by asking for a photo of the FRONT of the house, then a photo facing the fireplace or water heater. '
-    + 'Judge conditions using NFPA 211 and the 2021 IRC chapter 10, but never quote section numbers. '
-    + 'Red drawing on a photo marks the spots being flagged as problems - address those. '
-    + 'Keep each reply to 1-3 short sentences. When you have covered the system and have enough to produce the customer ' + m.out + ', tell them to tap Create report.';
+  var who = depth === 'pro' ? 'the owner (an experienced pro)' : 'a technician who is still learning';
+  var level = mode === 'level2'
+    ? 'LEVEL 2: everything in Level 1, plus the accessible attic, basement and crawl space around the chimney, the roof and chimney top only if the technician says it is safe to go up, and a camera scan of the flue if the system has one. Ask once whether they can get on the roof before any roof check. '
+    : mode === 'invoice'
+      ? 'This visit is for an invoice: ask only what work was done and anything worth noting, then stop. '
+      : 'LEVEL 1: only what can be seen from inside the home and from the ground — the appliance, firebox, damper, the flue as far as a flashlight shows from below, the connection and the clearances, and the chimney exterior as seen from the ground. Do NOT send the technician onto the roof or into the attic. What could not be seen goes in the report limitations. ';
+  var coach = depth === 'pro'
+    ? 'This is an experienced pro: no explanations, just the next check. '
+    : 'The technician is still learning: for each check say in a few words what to look for (for example cracks, gaps, rust, missing parts, clearance to wood). ';
+  return 'You are the senior inspector for ' + (state.settings.company || 'AIO Pro Chimney') + ' (Greater St. Louis), working with ' + who + ' who is on site doing ' + m.focus + '. '
+    + 'The technician is the one standing there: you follow what they tell you and help them cover the right checks quickly. '
+    + 'RULES. '
+    + '1) Never guess. From a photo, say only what is plainly visible, in a few words. If you are not sure what something is (logs or rocks, vented or vent-free, masonry or factory-built), ask one short question instead of assuming. Never call out a problem (ash, soot, creosote, cracks, rust, damage) unless it is clearly visible or the technician says so; if something might be a problem, ask them to confirm it. Do not call a measurement good or bad unless you are sure of the rule; for an appliance, the manufacturer\'s label sets clearances, so ask them to compare with the label. '
+    + '2) What the technician says is the fact. If they correct you or say something does not apply, accept it in a few words and move on. Never argue and never ask again something already answered. '
+    + '3) Only check parts that exist in THIS system. Vent-free gas (no flue): no damper, smoke chamber, liner, flue or roof checks — check the unit, burner and logs or media, pilot / oxygen sensor, gas valve and leak check, clearances to the mantel and walls, and a CO alarm in the room. Direct-vent gas: check the vent pipe and its outside termination instead of a chimney flue. Factory-built fireplace: no masonry or smoke chamber questions. Gas logs in a masonry fireplace: the damper and the flue do matter. Furnace or water heater flue: connector, slope, clearances and draft. '
+    + '4) ' + level
+    + '5) Be efficient: one step per message, 1-2 short sentences, plain words. No markdown, no asterisks, no headings. Join small checks into one step. Accept short answers like "good", "ok", "n/a", "skip". Ask for a photo only when it adds something to the report. '
+    + coach
+    + 'FLOW. First message: ask for a photo of the front of the house and one of the appliance, and ask what kind of system it is (wood fireplace, gas logs in a fireplace, direct-vent gas, vent-free gas, insert or stove, furnace or water heater flue). '
+    + 'Once you know the system: in one line, name the few checks that apply to it (for example "4 quick checks: firebox, burner and pilot, gas valve, clearances"), then go one at a time, starting each with "Check 2 of 4 —". '
+    + 'After the last check ask once "Anything else you noticed?", then say "Done — tap Report." '
+    + 'Judge conditions by NFPA 211 and the 2021 IRC chapter 10 without quoting section numbers. Red drawing on a photo marks what the technician is flagging — ask about it or note it.';
 }
 /* "Ask Refael": the technician's pocket coach — answers from the field knowledge. */
 function coachSystem() {
@@ -1793,7 +1805,7 @@ function chatReport() {
     + '"lineItems":[{"description":"repair or service","qty":1,"unitPrice":0,"amount":0}],'
     + '"subtotal":0,"tax":0,"total":0,"deposit":0,'
     + '"limitations":"short plain note on what was and was not accessible in this inspection"}. '
-    + 'Cover every part you discussed as its own component, including the chimney exterior. '
+    + 'Include a component ONLY for parts that exist in this system and were actually checked in the conversation. Write only what the technician said or what is plainly visible in the photos — never add a problem that was not confirmed. Parts that were not checked or not accessible go in "limitations", not in components. '
     + (chat.mode === 'estimate' || chat.mode === 'invoice'
         ? 'This is a PRICED document. Price ONLY from the owner\'s catalog below — use the catalog name as the description and the catalog price as unitPrice, never invent or change a price. If a needed repair is not in the catalog, add it with unitPrice 0 and description ending "(price to be confirmed)". amount = qty*unitPrice; compute subtotal, tax (0 unless taxes were discussed), and total. OWNER CATALOG (name | price): ' + CATALOG.filter(function (c) { return c.price > 0; }).map(function (c) { return c.name + ' | ' + c.price; }).join('; ') + '. '
         : 'Leave lineItems empty (this is a plain inspection, no prices). ')
@@ -1805,9 +1817,11 @@ function chatReport() {
     parsed._signature = chat.signature; parsed._signedAt = chat.signedAt;
     if (chat.customer) {
       var pc = parsed.customer || {};
+      var ap = chat.customer.address ? addrSplit(chat.customer.address) : null;
       parsed.customer = Object.assign({}, pc, {
         name: chat.customer.name || pc.name || '',
-        address: chat.customer.address || pc.address || '',
+        address: ap ? ap.street : (pc.address || ''),
+        cityStateZip: ap ? addrCityLine(chat.customer.address) : (pc.cityStateZip || ''),
         phone: chat.customer.phone || pc.phone || '',
         email: chat.customer.email || pc.email || ''
       });
@@ -1819,9 +1833,122 @@ function chatReport() {
     var fn = 'AIO-Pro-Chimney-' + (chat.mode === 'level2' ? 'Level-2-' : '') + 'Inspection-' + who + '-' + new Date().toISOString().slice(0, 10) + '.pdf';
     var prevShare = chat.lastReport && chat.lastReport.shareId;
     chat.lastReport = { data: parsed, imgs: imgs, blob: blob, fn: fn, mode: chat.mode, modeName: CHAT_MODES[chat.mode].name, shareId: prevShare || '', at: Date.now() };
-    chat.reportBusy = false; render();
+    chat.reportBusy = false;
+    repEditOpen(true);
     savePdf(fn, blob);
   }).catch(function (err) { chat.reportBusy = false; chat.err = err.message; render(); });
+}
+/* ── Edit the finished report: every word, the items, prices, discount — then rebuild the PDF ── */
+function repEditOpen(fresh) {
+  var chat = state.chat, rep = chat && chat.lastReport; if (!rep) return;
+  var d = JSON.parse(JSON.stringify(rep.data || {}));
+  d.customer = d.customer || {};
+  d.components = Array.isArray(d.components) ? d.components : [];
+  d.lineItems = (Array.isArray(d.lineItems) ? d.lineItems : []).filter(function (it) { return it && (String(it.description || '').trim() || Number(it.unitPrice) || Number(it.amount)); })
+    .map(function (it) { var q = Number(it.qty) || 1, up = Number(it.unitPrice); if (!up && Number(it.amount)) up = Number(it.amount) / q; return { description: it.description || '', qty: q, unitPrice: up || 0 }; });
+  var sub = d.lineItems.reduce(function (a, it) { return a + it.qty * it.unitPrice; }, 0);
+  var base = sub - Number(d.discount || 0);
+  if (d.taxPct == null) d.taxPct = base > 0 && Number(d.tax) ? Math.round(Number(d.tax) / base * 10000) / 100 : 0;
+  d._addr = [d.customer.address, d.customer.cityStateZip].filter(function (x) { return x && String(x).trim(); }).join(', ');
+  state.repEdit = { rep: rep, d: d, fresh: !!fresh, msg: fresh ? 'The report is ready and the PDF is opening. Change anything below, then tap Save & update PDF.' : '' };
+  state.view = 'repedit'; render(); try { window.scrollTo(0, 0); } catch (_) {}
+}
+function repTotals(d) {
+  var sub = (d.lineItems || []).reduce(function (a, it) { return a + (Number(it.qty) || 0) * (Number(it.unitPrice) || 0); }, 0);
+  var disc = Math.min(sub, Math.max(0, Number(d.discount) || 0));
+  var tax = Math.round((sub - disc) * (Number(d.taxPct) || 0)) / 100;
+  return { sub: sub, disc: disc, tax: tax, total: sub - disc + tax, deposit: Math.max(0, Number(d.deposit) || 0) };
+}
+function repTotalsHTML(d) {
+  var t = repTotals(d);
+  if (!(d.lineItems || []).length) return '';
+  return '<div style="font-size:14px;line-height:1.8;text-align:right">Subtotal ' + money(t.sub) + (t.disc ? '<br>Discount -' + money(t.disc) : '') + (t.tax ? '<br>Tax ' + money(t.tax) : '') + '<br><b style="font-size:17px">Total ' + money(t.total) + '</b>' + (t.deposit ? '<br>Deposit ' + money(t.deposit) : '') + '</div>';
+}
+function viewRepEdit() {
+  var st = state.repEdit;
+  if (!st || !state.chat || state.chat.lastReport !== st.rep) { state.view = state.chat ? 'chat' : 'home'; return state.chat ? viewChat() : viewHome(); }
+  var d = st.d, c = d.customer, priced = st.rep.mode === 'estimate' || st.rep.mode === 'invoice' || d.lineItems.length > 0;
+  function inp(label, path, val, extra) { return '<div class="field"><label>' + label + '</label><input data-r="' + path + '" value="' + esc(val == null ? '' : val) + '"' + (extra || '') + '></div>'; }
+  function ta(label, path, val, h) { return '<div class="field"><label>' + label + '</label><textarea data-r="' + path + '" style="min-height:' + (h || 80) + 'px">' + esc(val || '') + '</textarea></div>'; }
+  var SB = [['ok', 'Good', 'var(--ok)'], ['monitor', 'Monitor', 'var(--monitor)'], ['defect', 'Needs attention', 'var(--defect)']];
+  var comps = d.components.map(function (cp, i) {
+    return '<div class="card" style="border-left:4px solid ' + (cp.status === 'defect' ? 'var(--defect)' : cp.status === 'monitor' ? 'var(--monitor)' : 'var(--ok)') + '">' +
+      '<div class="row" style="gap:8px;align-items:flex-end"><div class="field" style="flex:1;margin-bottom:8px"><label>Item ' + (i + 1) + '</label><input data-r="components.' + i + '.name" value="' + esc(cp.name || '') + '"></div>' +
+      '<button class="btn btn-ghost" data-act="rep-comp-del" data-arg="' + i + '" aria-label="Remove item" style="flex:0 0 48px;margin-bottom:8px;padding:0">✕</button></div>' +
+      '<div class="row" style="gap:6px;margin-bottom:10px">' + SB.map(function (b) { var on = (cp.status || 'ok') === b[0]; return '<button class="btn ' + (on ? '' : 'btn-ghost') + '" data-act="rep-status" data-arg="' + i + '|' + b[0] + '" style="flex:1;min-height:40px;padding:0 6px;font-size:13px;' + (on ? 'background:' + b[2] + ';color:#fff;border-color:' + b[2] : '') + '">' + b[1] + '</button>'; }).join('') + '</div>' +
+      ta('What was found', 'components.' + i + '.condition', cp.condition, 60) +
+      ta(/estimate|invoice/i.test(st.rep.modeName || '') ? 'What we recommend (leave empty if nothing)' : 'Recommendation (shown in the email)', 'components.' + i + '.recommended', cp.recommended, 50) +
+    '</div>';
+  }).join('');
+  var lis = d.lineItems.map(function (it, i) {
+    return '<div style="border-bottom:1px solid var(--rule);padding-bottom:8px;margin-bottom:10px">' +
+      '<div class="row" style="gap:8px;align-items:flex-end"><div class="field" style="flex:1;margin-bottom:6px"><label>Line ' + (i + 1) + '</label><input data-r="lineItems.' + i + '.description" value="' + esc(it.description) + '"></div>' +
+      '<button class="btn btn-ghost" data-act="rep-li-del" data-arg="' + i + '" aria-label="Remove line" style="flex:0 0 48px;margin-bottom:6px;padding:0">✕</button></div>' +
+      '<div class="row" style="gap:8px"><div class="field" style="flex:0 0 80px;margin-bottom:0"><label>Qty</label><input data-r="lineItems.' + i + '.qty" data-num="1" inputmode="decimal" value="' + esc(it.qty) + '"></div>' +
+      '<div class="field" style="flex:1;margin-bottom:0"><label>Price each ($)</label><input data-r="lineItems.' + i + '.unitPrice" data-num="1" inputmode="decimal" value="' + esc(it.unitPrice) + '"></div></div></div>';
+  }).join('');
+  return '<div class="app">' +
+    '<div class="topbar"><button class="iconbtn" data-act="rep-back">‹</button><div style="flex:1;min-width:0"><h1>Edit report</h1><div class="sub">' + esc(st.rep.modeName || '') + (st.dirty ? ' · not saved' : '') + '</div></div></div>' +
+    '<div class="screen">' +
+      (st.msg ? '<div class="card" style="font-size:14px;border-color:' + (st.err ? 'var(--defect);color:var(--defect)' : 'var(--ok)') + '">' + esc(st.msg) + '</div>' : '') +
+      (st.rep.lockedSigned ? '<div class="card" style="border-color:var(--defect);color:var(--defect);font-size:14px">The customer already signed this report online. Changes here will not change the signed copy.</div>' : '') +
+      '<div class="card"><div class="eyebrow">Customer</div>' + inp('Name', 'customer.name', c.name) + inp('Phone', 'customer.phone', c.phone, ' inputmode="tel"') + inp('Email', 'customer.email', c.email, ' inputmode="email" autocapitalize="off"') +
+        addrHTML('Service address', d._addr, 'data-r="_addr"') + '</div>' +
+      '<div class="card"><div class="eyebrow">Report</div>' + inp('Title', 'title', d.title) + ta('Level of inspection', 'levelOfInspection', d.levelOfInspection, 50) + ta('Overall diagnosis', 'summary', d.summary, 110) + '</div>' +
+      '<div class="eyebrow" style="margin:6px 2px 8px">What was checked (' + d.components.length + ')</div>' + comps +
+      '<button class="btn btn-ghost" data-act="rep-comp-add" style="width:100%;margin-bottom:14px">+ Add an item</button>' +
+      '<div class="card">' + ta('Conclusion', 'conclusion', d.conclusion, 80) + '</div>' +
+      '<div class="card"><div class="eyebrow">Prices' + (priced ? '' : ' (optional)') + '</div>' + lis +
+        '<button class="btn btn-ghost" data-act="rep-li-add" style="width:100%;margin-bottom:10px">+ Add a price line</button>' +
+        (d.lineItems.length ? '<div class="row" style="gap:8px"><div class="field" style="flex:1"><label>Discount ($)</label><input data-r="discount" data-num="1" inputmode="decimal" value="' + esc(d.discount || '') + '"></div>' +
+          '<div class="field" style="flex:1"><label>Tax %</label><input data-r="taxPct" data-num="1" inputmode="decimal" value="' + esc(d.taxPct || '') + '"></div>' +
+          '<div class="field" style="flex:1"><label>Deposit ($)</label><input data-r="deposit" data-num="1" inputmode="decimal" value="' + esc(d.deposit || '') + '"></div></div>' : '') +
+        '<div id="rep_totals">' + repTotalsHTML(d) + '</div></div>' +
+      '<div class="card">' + ta('Limitations (what could not be checked)', 'limitations', d.limitations, 60) + '</div>' +
+    '</div>' +
+    '<div class="bottombar" style="gap:6px"><button class="btn btn-gold btn-primary" data-act="rep-save" style="flex:1.5">Save &amp; update PDF</button><button class="btn btn-ghost" data-act="rep-pdf" style="flex:0.8">Open PDF</button><button class="btn btn-ghost" data-act="rep-mail" style="flex:0.8">Email</button></div>' +
+  '</div>';
+}
+function repSetPath(obj, path, val) {
+  var ks = path.split('.'), o = obj;
+  for (var i = 0; i < ks.length - 1; i++) { if (o[ks[i]] == null) return; o = o[ks[i]]; }
+  o[ks[ks.length - 1]] = val;
+}
+function wireRepEdit() {
+  var st = state.repEdit; if (state.view !== 'repedit' || !st) return;
+  root.querySelectorAll('[data-r]').forEach(function (el) {
+    el.addEventListener('input', function () {
+      var v = el.value;
+      if (el.getAttribute('data-num')) v = v.replace(/[^0-9.]/g, '');
+      repSetPath(st.d, el.getAttribute('data-r'), el.getAttribute('data-num') ? (v === '' ? '' : Number(v)) : v);
+      if (!st.dirty) { st.dirty = true; var sub = root.querySelector('.topbar .sub'); if (sub) sub.textContent = (st.rep.modeName || '') + ' · not saved'; }
+      if (el.getAttribute('data-num')) { var t = root.querySelector('#rep_totals'); if (t) t.innerHTML = repTotalsHTML(st.d); }
+    });
+  });
+}
+function repSave(then) {
+  var st = state.repEdit; if (!st) return false;
+  var d = JSON.parse(JSON.stringify(st.d)), rep = st.rep;
+  var ap = addrSplit(d._addr || '');
+  d.customer.address = ap.street; d.customer.cityStateZip = addrCityLine(d._addr || ''); delete d._addr;
+  d.components = d.components.filter(function (cp) { return String(cp.name || '').trim() || String(cp.condition || '').trim(); });
+  d.lineItems = d.lineItems.filter(function (it) { return String(it.description || '').trim() || Number(it.unitPrice); })
+    .map(function (it) { var q = Number(it.qty) || 1, up = Number(it.unitPrice) || 0; return { description: String(it.description || '').trim(), qty: q, unitPrice: up, amount: Math.round(q * up * 100) / 100 }; });
+  var t = repTotals(d);
+  d.subtotal = t.sub; d.discount = t.disc; d.tax = t.tax; d.total = t.total; d.deposit = t.deposit;
+  try { rep.blob = buildChatReport(d, rep.imgs, state.settings, rep.modeName); }
+  catch (err) { st.err = true; st.msg = 'Could not build the PDF: ' + ((err && err.message) || err); render(); return false; }
+  rep.data = d; rep.at = Date.now();
+  st.d = JSON.parse(JSON.stringify(d)); st.d._addr = [d.customer.address, d.customer.cityStateZip].filter(Boolean).join(', ');
+  st.dirty = false; st.err = false; st.msg = 'Saved. The PDF is updated.';
+  if (state.chat && state.chat.customer && d.customer) { state.chat.customer.email = d.customer.email || state.chat.customer.email; }
+  if (then) then(); else render();
+  return true;
+}
+function repBack() {
+  var st = state.repEdit;
+  if (st && st.dirty && !confirm('Leave without saving your changes?')) return;
+  state.repEdit = null; state.view = 'chat'; render(); chatScroll();
 }
 function chatScroll() { var el = root.querySelector('#chatScroll'); if (el) el.scrollTop = el.scrollHeight; }
 /* Original, offline reference diagrams drawn as vector in the PDF (not copies of
@@ -2048,10 +2175,12 @@ function buildChatReport(data, images, settings, modeName) {
     var applText = ((data.appliance && (data.appliance.type + ' ' + data.appliance.fuel)) || '').toLowerCase() + ' ' + (modeName || '').toLowerCase();
     var isWH = /water heater|furnace|boiler|b-?vent|gas vent/.test(applText);
     var isFactory = /prefab|factory|zero.?clear|air.?cooled|metal/.test(applText);
+    var isVentFree = /vent.?free|ventless|unvented/.test(applText + ' ' + String(data.summary || '').toLowerCase());
     var DIAG_H = { draft: 210, clearance: 175, anatomy: 240, factory: 240, termination: 185 };
     function diagFor(name) {
       var n = String(name || '').toLowerCase();
       if (/hearth|firebox|facing|clearance/.test(n)) return ['clearance', 'Firebox clearance to combustibles'];
+      if (isVentFree && !/hearth|firebox|facing|clearance/.test(n)) return null;
       if (/flue|liner|vent/.test(n)) return isWH ? ['draft', 'Gas appliance venting & draft'] : (isFactory ? ['factory', 'Factory-built fireplace anatomy'] : ['anatomy', 'Masonry chimney anatomy']);
       if (/exterior|flashing|chase|crown|cricket|cap|roof/.test(n)) return ['termination', 'Termination — the 3-2-10 rule'];
       return null;
@@ -2126,13 +2255,14 @@ function buildChatReport(data, images, settings, modeName) {
       if (strong) { doc.setFillColor(244, 242, 238); doc.rect(M + colD, y, cQ + cU + cA, 18, 'FD'); } else { doc.rect(M + colD, y, cQ + cU + cA, 18, 'D'); }
       doc.setFont('helvetica', strong ? 'bold' : 'normal').setFontSize(strong ? 10.5 : 9.5).setTextColor(INK[0], INK[1], INK[2]);
       doc.text(lbl, M + colD + 7, y + 12);
-      doc.text(money(val), M + CONTENT - 6, y + 12, { align: 'right' });
+      doc.text((val < 0 ? '-' : '') + money(Math.abs(val)), M + CONTENT - 6, y + 12, { align: 'right' });
       y += 18;
     }
     var subtotal = (data.subtotal != null && data.subtotal !== '') ? Number(data.subtotal) : sub;
-    var tax = Number(data.tax || 0);
-    var total = (data.total != null && data.total !== '') ? Number(data.total) : subtotal + tax;
+    var tax = Number(data.tax || 0), disc = Number(data.discount || 0);
+    var total = (data.total != null && data.total !== '') ? Number(data.total) : subtotal - disc + tax;
     totalRow('Subtotal', subtotal, false);
+    if (disc) totalRow('Discount', -disc, false);
     if (tax) totalRow('Tax', tax, false);
     totalRow(/invoice/i.test(modeName) ? 'Total due' : 'Estimated total', total, true);
     if (Number(data.deposit || 0)) totalRow('Deposit to schedule', Number(data.deposit), false);
@@ -2252,7 +2382,7 @@ function viewCustForm() {
       (c.crm ? '<div class="card" style="border-color:var(--ok)"><div style="font-size:14px"><b>' + esc(c.crm.name || 'Existing customer') + '</b> — existing customer. Change anything below if needed.</div></div>'
              : crmPickerHTML('cust_pick')) +
       '<div class="card">' +
-        f('Customer name', 'name') + f('Phone', 'phone', 'tel') + f('Email (report is sent here)', 'email', 'email') + f('Service address', 'address') +
+        f('Customer name', 'name') + f('Phone', 'phone', 'tel') + f('Email (report is sent here)', 'email', 'email') + addrHTML('Service address', c.address, 'data-model="client.address"') +
       '</div>' +
       '<div class="card"><div class="eyebrow">Who is doing this inspection?</div>' +
         '<div class="row" style="gap:8px">' +
@@ -2274,7 +2404,7 @@ function viewChat() {
     var imgs = (m.images || []).map(function (src) { return '<img src="' + src + '" style="max-width:130px;border-radius:8px;margin:4px 4px 0 0">'; }).join('');
     return '<div style="display:flex;justify-content:' + (mine ? 'flex-end' : 'flex-start') + ';margin-bottom:10px">' +
       '<div style="max-width:82%;padding:9px 12px;border-radius:12px;background:' + (mine ? 'var(--soot)' : '#fff') + ';color:' + (mine ? 'var(--ivory)' : 'var(--ink)') + ';border:0.5px solid var(--rule)">' +
-      (m.text ? '<div style="font-size:14px;line-height:1.5;white-space:pre-wrap">' + esc(m.text) + '</div>' : '') + imgs + '</div></div>';
+      (m.text ? '<div style="font-size:14px;line-height:1.5;white-space:pre-wrap">' + esc(m.text).replace(/\*\*([^*\n]+)\*\*/g, '<b>$1</b>').replace(/^#{1,4}\s+/gm, '') + '</div>' : '') + imgs + '</div></div>';
   }).join('');
   var pend = (chat.pending && chat.pending.photos || []).map(function (src, idx) {
     return '<div style="display:inline-block;vertical-align:top;margin:0 8px 8px 0;text-align:center">' +
@@ -2315,7 +2445,7 @@ function viewChat() {
       '<div style="position:sticky;top:0;z-index:4;display:flex;gap:6px;overflow-x:auto;padding:8px 12px;background:var(--paper,#f3eee4);border-bottom:0.5px solid var(--rule)">' +
       '<button class="btn btn-ghost" data-act="chat-estimate" style="padding:6px 12px;min-height:38px;white-space:nowrap">Estimate</button>' +
       '<button class="btn btn-ghost" data-act="chat-report" style="padding:6px 12px;min-height:38px;white-space:nowrap"' + (chat.reportBusy ? ' disabled' : '') + '>' + (chat.reportBusy ? 'Building…' : 'Report') + '</button>' +
-      (chat.lastReport ? '<button class="btn btn-gold" data-act="report-mail" style="padding:6px 12px;min-height:38px;white-space:nowrap">Email report</button>' : '') +
+      (chat.lastReport ? '<button class="btn btn-ghost" data-act="rep-edit" style="padding:6px 12px;min-height:38px;white-space:nowrap">Edit / PDF</button><button class="btn btn-gold" data-act="report-mail" style="padding:6px 12px;min-height:38px;white-space:nowrap">Email report</button>' : '') +
       '<button class="btn btn-ghost" data-act="chat-sign" style="padding:6px 12px;min-height:38px;white-space:nowrap">Sign' + (chat.signature ? ' ✓' : '') + '</button>' +
       '</div>') +
     '<div class="screen" id="chatScroll">' + bubbles +
@@ -2367,6 +2497,69 @@ function sigClear() {
   var canvas = root.querySelector('#sigCanvas'); if (!canvas) return;
   var ctx = canvas.getContext('2d'); ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, canvas.width, canvas.height);
   if (state.chat) state.chat._sig = false;
+}
+
+/* ── Address in four boxes (street / city / state / ZIP), saved as one line ── */
+var US_STATES = 'AL AK AZ AR CA CO CT DE DC FL GA HI IA ID IL IN KS KY LA MA MD ME MI MN MO MS MT NC ND NE NH NJ NM NV NY OH OK OR PA RI SC SD TN TX UT VA VT WA WI WV WY'.split(' ');
+function addrSplit(a) {
+  var out = { street: '', city: '', state: '', zip: '' };
+  var t = String(a || '').replace(/\s+/g, ' ').trim().replace(/,?\s*(USA|U\.S\.A\.|US|United States)$/i, '').trim();
+  if (!t) return out;
+  var m = /[,\s]+(\d{5})(?:-\d{4})?$/.exec(t);
+  if (m) { out.zip = m[1]; t = t.slice(0, m.index).trim(); }
+  m = /[,\s]+([A-Za-z]{2})\.?$/.exec(t);
+  if (m && US_STATES.indexOf(m[1].toUpperCase()) >= 0) { out.state = m[1].toUpperCase(); t = t.slice(0, m.index).trim(); }
+  m = /[,\s]+(Missouri|Illinois|Kansas)$/i.exec(t);
+  if (!out.state && m) { out.state = { missouri: 'MO', illinois: 'IL', kansas: 'KS' }[m[1].toLowerCase()]; t = t.slice(0, m.index).trim(); }
+  t = t.replace(/,\s*$/, '');
+  var parts = t.split(',').map(function (x) { return x.trim(); }).filter(Boolean);
+  if (parts.length >= 2) { out.city = parts.pop(); out.street = parts.join(', '); }
+  else out.street = parts[0] || '';
+  return out;
+}
+function addrJoin(p) {
+  var street = String(p.street || '').trim(), city = String(p.city || '').trim(), st = String(p.state || '').trim().toUpperCase(), zip = String(p.zip || '').trim();
+  if (!street && !city && !zip) return '';
+  var tail = [st, zip].filter(Boolean).join(' ');
+  return [street, city, tail].filter(Boolean).join(', ');
+}
+function addrCityLine(a) { var p = addrSplit(a); return addrJoin({ city: p.city, state: p.city || p.zip ? p.state : '', zip: p.zip }); }
+function addrHTML(label, value, bind) {
+  var p = addrSplit(value), st = p.state || 'MO';
+  var opts = US_STATES.map(function (x) { return '<option' + (x === st ? ' selected' : '') + '>' + x + '</option>'; }).join('');
+  return '<div class="field addr-box"><label>' + label + '</label>' +
+    '<input type="hidden" ' + bind + ' value="' + esc(value || '') + '">' +
+    '<input class="addr-p" data-p="street" placeholder="Street address" autocomplete="address-line1" value="' + esc(p.street) + '">' +
+    '<div class="addr-row">' +
+      '<input class="addr-p" data-p="city" placeholder="City" autocomplete="address-level2" style="flex:1 1 auto" value="' + esc(p.city) + '">' +
+      '<select class="addr-p" data-p="state" aria-label="State" style="flex:0 0 74px">' + opts + '</select>' +
+      '<input class="addr-p" data-p="zip" placeholder="ZIP" inputmode="numeric" maxlength="5" autocomplete="postal-code" style="flex:0 0 88px" value="' + esc(p.zip) + '">' +
+    '</div></div>';
+}
+function wireAddr() {
+  root.querySelectorAll('.addr-box').forEach(function (box) {
+    var hid = box.querySelector('input[type=hidden]');
+    function part(k) { return box.querySelector('[data-p="' + k + '"]'); }
+    function sync() {
+      var v = addrJoin({ street: part('street').value, city: part('city').value, state: part('state').value, zip: part('zip').value });
+      if (v === hid.value) return;
+      hid.value = v; hid.dispatchEvent(new Event('input', { bubbles: true }));
+    }
+    box.querySelectorAll('.addr-p').forEach(function (el) { el.addEventListener('input', sync); el.addEventListener('change', sync); });
+    var zip = part('zip');
+    zip.addEventListener('input', function () {
+      zip.value = zip.value.replace(/\D/g, '').slice(0, 5);
+      if (zip.value.length !== 5 || part('city').value.trim()) { sync(); return; }
+      var want = zip.value;
+      fetch('https://api.zippopotam.us/us/' + want).then(function (r) { return r.ok ? r.json() : null; }).then(function (d) {
+        var pl = d && d.places && d.places[0];
+        if (!pl || zip.value !== want || part('city').value.trim()) return;
+        part('city').value = String(pl['place name'] || '').replace(/^Saint\s/, 'St. ');
+        if (pl['state abbreviation']) part('state').value = pl['state abbreviation'];
+        sync();
+      }).catch(function () {});
+    });
+  });
 }
 
 /* ══ Customers (CRM) ═════════════════════════════════════════
@@ -2502,7 +2695,7 @@ function viewClients() {
   var moveN = crmLocalToMove();
   var banner = crmOn()
     ? (moveN ? '<div class="card" style="border-color:var(--gold)"><div style="font-size:14px;margin-bottom:8px">' + moveN + ' customer(s) are saved only on this phone.</div><button class="btn btn-gold" id="crm_move" style="width:100%">Move them into your customer list</button></div>' : '')
-    : '<div class="card" style="border-color:var(--gold);font-size:14px">Showing customers saved on this phone only. Open your setup link once on this phone to see all your customers.</div>';
+    : '<div class="card" style="border-color:var(--gold);font-size:14px">Showing customers saved on this phone only. Set up this phone to see all your customers.' + pairSetupBtn('clients') + '</div>';
   return '<div class="app">' +
     '<div class="topbar"><button class="iconbtn" data-act="home">‹</button><div style="flex:1"><h1>Customers</h1><div class="sub" id="crm_total">' + (state.crmStats ? state.crmStats.all + ' customers' : (crmOn() ? 'Your customer list' : 'This phone')) + '</div></div></div>' +
     '<div class="screen">' + banner + '<div id="crm_import_msg">' + crmImportHTML() + '</div>' +
@@ -2592,7 +2785,7 @@ function viewClientForm(c) {
     '<div class="topbar"><button class="iconbtn" data-act="crm-cancel">‹</button><div style="flex:1"><h1>' + (c.id ? 'Edit customer' : 'New customer') + '</h1></div></div>' +
     '<div class="screen">' +
       (state.crmMsg && state.crmMsg.err ? '<div style="color:var(--defect);font-size:13px;margin-bottom:8px">' + esc(state.crmMsg.text) + '</div>' : '') +
-      '<div class="card">' + f('Name', 'name') + f('Phone', 'phone', 'tel', 'tel') + f('Email', 'email', 'email', 'email') + f('Address', 'address') + '</div>' +
+      '<div class="card">' + f('Name', 'name') + f('Phone', 'phone', 'tel', 'tel') + f('Email', 'email', 'email', 'email') + addrHTML('Address', d.address, 'class="crm-f" data-k="address"') + '</div>' +
       '<div class="card">' + f('Next service due', 'next', 'date') + f('Tags (brand, source — e.g. AIO Pro, Google, referral)', 'tags') +
         '<div class="field" style="margin-bottom:0"><label>Notes</label><textarea class="crm-f" data-k="notes">' + esc(d.notes || '') + '</textarea></div></div>' +
     '</div>' +
@@ -2871,7 +3064,7 @@ function crmImportRows(XLSX, wb) {
   });
 }
 function crmImportFile() {
-  if (!crmOn()) { alert('Open your setup link on this device first.'); return; }
+  if (!crmOn()) { pairOpen(state.view); return; }
   var inp = document.createElement('input');
   inp.type = 'file'; inp.accept = '.xlsx,.xls,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
   inp.onchange = function () {
@@ -3128,7 +3321,7 @@ function workerSync(slot, range, events) {
 }
 function workerLink(reset) {
   var key = ownerKey();
-  if (!key) { alert('Worker sharing is not set up on this phone yet. Open the setup link once on this phone.'); return; }
+  if (!key) { pairOpen(state.view); return; }
   if (reset && !confirm('Make a NEW worker link? The old link will stop working right away.')) return;
   cloudRpc(reset ? 'worker_key_reset' : 'worker_key_get', { p_owner: key }).then(function (wk) {
     if (!wk) throw new Error('not allowed');
@@ -3172,10 +3365,94 @@ function viewSchedule() {
     '<div class="bottombar"><button class="btn btn-gold btn-primary" data-act="cal-new">+ New job</button></div>' +
   '</div>';
 }
+/* ── Set up this phone (owner): a 6-digit code goes to the AIO Pro Gmail, the phone types it in ── */
+function pairOpen(back) { state.pair = { back: back || state.view, step: 1 }; state.view = 'pair'; render(); try { window.scrollTo(0, 0); } catch (_) {} }
+function pairSetupBtn(back, label) { return '<button class="btn btn-gold" data-act="pair-open" data-arg="' + esc(back || '') + '" style="margin-top:10px;width:100%">' + esc(label || 'Set up this phone') + '</button>'; }
+function viewPair() {
+  var p = state.pair || (state.pair = { back: 'settings', step: 1 });
+  var on = !!ownerKey(), tech = !on && !!techKey();
+  var body;
+  if (on && !p.justDone) {
+    body = '<div class="card" style="border-color:var(--ok)"><div style="font-size:16px;font-weight:650;color:var(--ok)">This phone is set up ✓</div><div style="color:var(--muted);font-size:13px;margin-top:6px">It can email estimates and reports, see customers and share jobs with the installer.</div></div>';
+  } else if (p.justDone) {
+    body = '<div class="card" style="border-color:var(--ok)"><div style="font-size:18px;font-weight:700;color:var(--ok)">Done — this phone is set up ✓</div><div style="color:var(--muted);font-size:14px;margin-top:6px">You can send emails now. Nothing else to do.</div></div>';
+  } else {
+    body = (tech ? '<div class="card" style="font-size:14px">This phone is already set up as the <b>technician</b> phone. Only do this if you are Refael.</div>' : '') +
+      '<div class="card">' +
+        '<div class="eyebrow">Step 1</div>' +
+        '<div style="font-size:15px;line-height:1.5;margin-bottom:10px">We email a 6-digit code to <b>' + esc(EST_BRAND.email) + '</b>. Only Refael can open it.</div>' +
+        '<button class="btn ' + (p.id ? 'btn-ghost' : 'btn-gold btn-primary') + '" data-act="pair-send" style="width:100%"' + (p.busy ? ' disabled' : '') + '>' + (p.busy === 'send' ? 'Sending…' : p.id ? 'Send a new code' : 'Email me the code') + '</button>' +
+      '</div>' +
+      (p.id ? '<div class="card"><div class="eyebrow">Step 2</div>' +
+        '<div style="font-size:15px;line-height:1.5;margin-bottom:8px">Open the email <b>“AIO Pro app code”</b> and type the code here:</div>' +
+        '<input id="pair_code" inputmode="numeric" autocomplete="one-time-code" maxlength="7" placeholder="123456" value="' + esc(p.code || '') + '" style="width:100%;font-size:28px;letter-spacing:8px;text-align:center;padding:12px;border:1px solid var(--rule);border-radius:10px">' +
+        '<button class="btn btn-gold btn-primary" data-act="pair-ok" style="width:100%;margin-top:10px"' + (p.busy ? ' disabled' : '') + '>' + (p.busy === 'ok' ? 'Checking…' : 'Confirm') + '</button>' +
+        '<div style="color:var(--muted);font-size:12px;margin-top:8px">The code works for 10 minutes. The technician sets up his phone with the link you send him (Settings → Technician link).</div>' +
+      '</div>' : '');
+  }
+  return '<div class="app">' +
+    '<div class="topbar"><button class="iconbtn" data-act="pair-back">‹</button><div style="flex:1"><h1>Set up this phone</h1><div class="sub">Owner</div></div></div>' +
+    '<div class="screen">' +
+      (p.msg ? '<div class="card" style="font-size:14px;border-color:' + (p.err ? 'var(--defect);color:var(--defect)' : 'var(--ok);color:var(--ok)') + '">' + esc(p.msg) + '</div>' : '') +
+      body +
+    '</div>' +
+    '<div class="bottombar"><button class="btn ' + (p.justDone || on ? 'btn-gold btn-primary' : 'btn-ghost') + '" data-act="pair-back">' + (p.justDone || on ? 'Continue' : 'Back') + '</button></div>' +
+  '</div>';
+}
+function wirePair() {
+  if (state.view !== 'pair' || !state.pair) return;
+  var el = root.querySelector('#pair_code'); if (!el) return;
+  el.addEventListener('input', function () { state.pair.code = el.value; if (el.value.replace(/\D/g, '').length === 6 && !state.pair.busy && !state.pair.autoTried) { state.pair.autoTried = true; pairOk(); } });
+  el.addEventListener('keydown', function (e) { if (e.key === 'Enter') { e.preventDefault(); pairOk(); } });
+  if (!state.pair.code) { try { el.focus(); } catch (_) {} }
+}
+function pairSend() {
+  var p = state.pair; if (!p || p.busy) return;
+  p.busy = 'send'; p.msg = ''; p.err = false; render();
+  fetch(MAILER_URL, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ action: 'pair' }) })
+    .then(function (r) { return r.json(); })
+    .then(function (d) {
+      if (!d || !d.ok || !d.id) throw new Error((d && d.error) || 'no answer');
+      p.id = d.id; p.code = ''; p.autoTried = false; p.busy = false; p.msg = 'Code sent to ' + EST_BRAND.email + '. Check that inbox.'; p.err = false;
+      if (state.view === 'pair') render();
+    })
+    .catch(function (err) {
+      var t = (err && err.message) || String(err);
+      p.busy = false; p.err = true;
+      p.msg = /unknown action/.test(t) ? 'The mailer needs its update first (Apps Script → Deploy → New version).' : 'Could not send the code: ' + t;
+      if (state.view === 'pair') render();
+    });
+}
+function pairOk() {
+  var p = state.pair; if (!p || p.busy || !p.id) return;
+  var code = String(p.code || '').replace(/\D/g, '');
+  if (code.length !== 6) { p.msg = 'Type the 6 digits from the email.'; p.err = true; render(); return; }
+  p.busy = 'ok'; p.msg = ''; render();
+  cloudRpc('pair_finish', { p_id: p.id, p_code: code }).then(function (k) {
+    p.busy = false;
+    if (!k) { p.err = true; p.msg = 'That code is not right. Check the newest email and try again.'; p.code = ''; p.autoTried = false; render(); return; }
+    try { localStorage.setItem('aio-owner-key', k); } catch (_) {}
+    p.justDone = true; p.id = ''; p.code = ''; p.msg = ''; p.err = false;
+    if (state.estMail) { state.estMail.err = ''; }
+    render();
+    try { crmLoadStats(); } catch (_) {}
+  }).catch(function (err) { p.busy = false; p.err = true; p.msg = (err && err.message) || 'Could not check the code — check the internet.'; p.autoTried = false; render(); });
+}
+function pairBack() {
+  var p = state.pair || {};
+  var back = p.back && p.back !== 'pair' ? p.back : 'settings';
+  state.pair = null;
+  if (back === 'estmail' && !state.estMail) back = 'home';
+  if (back === 'chat' && !state.chat) back = 'home';
+  if (back === 'estimate' && !state.estimate) back = 'home';
+  if (back === 'clients') { crmAction('clients'); return; }
+  state.view = back; render();
+  if (back === 'schedule' && gcalConnectedSlots().length) gcalFetch();
+}
 var APP_BASE = APP_DIR;
 function techLink(reset) {
   var key = ownerKey();
-  if (!key) { alert('Open your setup link once on this phone first.'); return; }
+  if (!key) { pairOpen(state.view); return; }
   if (reset && !confirm('Make a NEW technician link? The old one stops sending emails right away.')) return;
   cloudRpc(reset ? 'tech_key_reset' : 'tech_key_get', { p_owner: key }).then(function (k) {
     if (!k) throw new Error('not allowed');
@@ -3183,7 +3460,10 @@ function techLink(reset) {
   }).catch(function (err) { alert('Could not get the technician link: ' + ((err && err.message) || err)); });
 }
 function viewTechCard() {
-  if (!ownerKey()) return '';
+  if (!ownerKey()) {
+    if (techKey()) return '<div class="card"><div class="eyebrow">This phone</div><div style="font-size:14px">Set up as the <b>technician</b> phone ✓ — you can email estimates and reports.</div></div>';
+    return '<div class="card" style="border-color:var(--gold,#C9A24B)"><div class="eyebrow">This phone</div><div style="font-size:14px">Not set up yet. Refael: set it up once to send emails, see customers and share jobs. Technician: open the link Refael sent you.</div>' + pairSetupBtn('settings', 'Set up this phone (Refael)') + '</div>';
+  }
   return '<div class="card"><div class="eyebrow">Technician phone</div>' +
     '<div style="color:var(--muted);font-size:13px;margin-bottom:10px">Lets your technician email estimates from ' + esc(EST_BRAND.email) + '. He opens the link once on his phone.</div>' +
     '<div class="row" style="gap:8px"><button class="btn btn-gold" data-act="tech-link" style="flex:1">Technician link</button><button class="btn btn-ghost" data-act="tech-reset" style="flex:1">New link</button></div></div>';
@@ -3195,7 +3475,7 @@ function viewWorkerCard() {
       ? '<div class="muted" style="font-size:13px;margin:4px 0 10px">Your installer sees only the jobs you mark <b>Installer can see</b> — time, address, what to bring, the scope and the photos. He cannot change anything. The list updates every time you open this screen.</div>' +
         (state.workerSyncErr ? '<div style="color:var(--defect);font-size:13px;margin-bottom:8px">Last update to the worker list failed: ' + esc(state.workerSyncErr) + '. Tap ⟳ to try again.</div>' : '') +
         '<div class="row" style="gap:8px"><button class="btn btn-gold" data-act="worker-link" style="flex:1">Installer link</button><button class="btn btn-ghost" data-act="worker-reset" style="flex:1">New link</button></div>'
-      : '<div class="muted" style="font-size:13px;margin-top:4px">Worker sharing is not set up on this phone yet. Open the setup link once on this phone.</div>') +
+      : '<div class="muted" style="font-size:13px;margin-top:4px">Installer sharing is not set up on this phone yet.</div>' + pairSetupBtn('schedule')) +
   '</div>';
 }
 function viewCalEvent() {
@@ -3227,7 +3507,7 @@ function viewAppt() {
   return '<div class="app">' +
     '<div class="topbar"><button class="iconbtn" data-act="schedule">‹</button><div style="flex:1"><h1>' + esc(a.clientName || 'New job') + '</h1></div></div>' +
     '<div class="screen">' +
-      '<div class="card">' + f('Customer', 'clientName') + f('Phone', 'phone', 'tel') + f('Address', 'address') + '</div>' +
+      '<div class="card">' + f('Customer', 'clientName') + f('Phone', 'phone', 'tel') + addrHTML('Address', a.address, 'data-model="appt.address"') + '</div>' +
       '<div class="card">' + f('Date (YYYY-MM-DD)', 'date') + f('Time', 'time') + f('Type', 'type') + f('Assigned to (employee)', 'assignedTo') +
         '<div class="field" style="margin-bottom:0"><label>Notes</label><textarea data-model="appt.notes">' + esc(a.notes || '') + '</textarea></div></div>' +
       '<div class="card"><div class="eyebrow">Actions</div><div class="row" style="gap:6px;flex-wrap:wrap">' +
@@ -3476,7 +3756,7 @@ function viewEstimate() {
   return '<div class="app">' +
     '<div class="topbar"><button class="iconbtn" data-act="est-back">‹</button><div style="flex:1"><h1>Estimate' + (e.no ? ' #' + e.no : '') + '</h1><div class="sub">' + esc(e.title || 'Your catalog · your prices') + '</div></div></div>' +
     '<div class="screen">' + quick + (e.crmId ? '' : crmPickerHTML('est_pick')) +
-      '<div class="card"><div class="eyebrow">Customer & job' + (e.crmId ? ' · linked ✓' : '') + '</div>' + cf('Name', 'name') + cf('Phone', 'phone', 'tel') + cf('Email', 'email', 'email') + cf('Property address', 'addr') +
+      '<div class="card"><div class="eyebrow">Customer & job' + (e.crmId ? ' · linked ✓' : '') + '</div>' + cf('Name', 'name') + cf('Phone', 'phone', 'tel') + cf('Email', 'email', 'email') + addrHTML('Property address', e.customer.addr, 'id="est_addr"') +
         '<div class="field"><label>Job title (e.g. Furnace vent, Chimney liner)</label><input id="est_title" value="' + esc(e.title) + '"></div>' +
         '<div class="row" style="gap:8px"><div class="field" style="flex:1;margin-bottom:0"><label>Date of visit</label><input id="est_vdate" value="' + esc(e.visitDate) + '"></div><div class="field" style="flex:1;margin-bottom:0"><label>Prepared by</label><input id="est_prep" value="' + esc(e.preparedBy) + '"></div></div></div>' +
       '<div id="est_opts">' + renderEstOptionsHTML() + '</div>' +
@@ -3903,7 +4183,7 @@ function estPayload(e) {
 /* Put (or refresh) a document online through the key-checked functions. A signed one is left as it is. */
 function cloudShare(kind, id, payload, photos) {
   var key = sendKey();
-  if (!key) return Promise.reject(new Error('This phone is not set up yet — open your setup link once.'));
+  if (!key) return Promise.reject(new Error('This phone is not set up yet — Settings → Set up this phone.'));
   return cloudRpc('share_put', { p_key: key, p_id: id, p_kind: kind, p_payload: payload }).then(function () {
     if (!photos || !photos.length) return { id: id, signed: false };
     return aiCopies(photos.slice(0, 12), 1100).then(function (small) {
@@ -4019,6 +4299,14 @@ function reportMailDefault(rep) {
   if (bad.length) { L.push('', 'NEEDS ATTENTION'); bad.forEach(function (c) { L.push('· ' + (c.name || 'Item') + ' — ' + String(c.condition || '').replace(/\.$/, '') + (c.recommended ? '. ' + String(c.recommended).replace(/\.$/, '') : '')); }); }
   if (mon.length) { L.push('', 'KEEP AN EYE ON'); mon.forEach(function (c) { L.push('· ' + (c.name || 'Item') + ' — ' + String(c.condition || '').replace(/\.$/, '')); }); }
   if (d.conclusion) L.push('', String(d.conclusion).trim());
+  var li = (Array.isArray(d.lineItems) ? d.lineItems : []).filter(function (it) { return it && String(it.description || '').trim(); });
+  if (li.length) {
+    L.push('', 'PRICES');
+    li.forEach(function (it) { var amt = it.amount != null && it.amount !== '' ? Number(it.amount) : (Number(it.qty) || 1) * (Number(it.unitPrice) || 0); L.push(String(it.description).trim() + (Number(it.qty) > 1 ? ' (x' + Number(it.qty) + ')' : '') + (amt ? ' — ' + money0(amt) : '')); });
+    if (Number(d.discount)) L.push('Discount — -' + money0(Number(d.discount)));
+    if (Number(d.tax)) L.push('Tax — ' + money0(Number(d.tax)));
+    if (d.total != null && d.total !== '') L.push('TOTAL — ' + money0(Number(d.total)));
+  }
   L.push('', 'TO MOVE FORWARD', 'Tap "View report" to read it with the photos, then "Sign" to confirm you received it.' + (bad.length ? ' If you would like the repairs priced, just reply or call me at ' + phone + '.' : ' Any question, call or text me at ' + phone + '.'));
   var subj = 'Chimney Inspection Report' + (street ? ' — ' + street : '');
   return { to: String(cu.email || '').trim(), subject: subj, message: L.join('\n') };
@@ -4070,12 +4358,12 @@ function viewEstMail() {
   if (!m || (!isRep && (!state.estimate || m.est !== state.estimate)) || (isRep && !m.rep)) { state.view = isRep ? 'chat' : 'estimate'; return isRep ? viewChat() : viewEstimate(); }
   var e = state.estimate, used = isRep ? [] : estUsed(e);
   var ready = !!(MAILER_URL && MAILER_URL.indexOf('__') !== 0), key = sendKey();
-  var warn = !ready ? 'Email sending is being set up — use PDF or Link for now.' : !key ? 'This phone is not set up to send yet. Open your setup link once on this phone.' : '';
+  var warn = !ready ? 'Email sending is being set up — use PDF or Link for now.' : !key ? 'This phone is not set up to send yet. Refael: tap below — it takes a minute. Technician: open the link Refael sent you.' : '';
   var what = isRep ? 'the inspection report PDF' + ((m.rep.imgs || []).length ? ' and its photos online' : '') : 'the estimate PDF (#' + esc(e.no) + (used.length > 1 ? ', ' + used.length + ' options' : '') + ')';
   return '<div class="app">' +
     '<div class="topbar"><button class="iconbtn" data-act="estmail-back">‹</button><div style="flex:1"><h1>' + (isRep ? 'Email report' : 'Email estimate') + '</h1><div class="sub">From ' + esc(EST_BRAND.email) + '</div></div></div>' +
     '<div class="screen">' +
-      (warn ? '<div class="card" style="border-color:var(--defect);color:var(--defect);font-size:14px">' + esc(warn) + '</div>' : '') +
+      (warn ? '<div class="card" style="border-color:var(--defect);color:var(--defect);font-size:14px">' + esc(warn) + (ready && !key ? pairSetupBtn('estmail') : '') + '</div>' : '') +
       (m.done ? '<div class="card" style="border-color:var(--ok);color:var(--ok);font-size:15px;font-weight:650">' + esc(m.done) + '</div>' : '') +
       (m.err ? '<div class="card" style="border-color:var(--defect);color:var(--defect);font-size:14px">' + esc(m.err) + '</div>' : '') +
       '<div class="card">' +
@@ -4126,7 +4414,7 @@ function mailAiWrite() {
 }
 function reportPayload(rep) {
   var d = rep.data || {}, s = state.settings;
-  return { base: APP_DIR, title: d.title || 'Chimney Inspection Report', modeName: rep.modeName, date: isoToday(), customer: { name: (d.customer || {}).name || '', addr: (d.customer || {}).address || '', phone: (d.customer || {}).phone || '', email: (d.customer || {}).email || '' },
+  return { base: APP_DIR, title: d.title || 'Chimney Inspection Report', modeName: rep.modeName, date: isoToday(), customer: { name: (d.customer || {}).name || '', addr: [(d.customer || {}).address, (d.customer || {}).cityStateZip].filter(function (x) { return x && String(x).trim(); }).join(', '), phone: (d.customer || {}).phone || '', email: (d.customer || {}).email || '' },
     levelOfInspection: d.levelOfInspection || '', summary: d.summary || '', property: d.property || {}, appliance: d.appliance || {},
     components: (Array.isArray(d.components) ? d.components : []).map(function (c) { return { name: c.name || '', status: c.status || '', condition: c.condition || '', recommended: c.recommended || '' }; }),
     conclusion: d.conclusion || '', limitations: d.limitations || '', preparedBy: (d.customer || {}).preparedBy || EST_BRAND.preparedBy,
@@ -4144,7 +4432,7 @@ function estMailSend() {
   function fail(t) { m.busy = false; m.err = t; if (state.view === 'estmail') render(); }
   if (!/^[^\s@,;]+@[^\s@,;]+\.[^\s@,;]+$/.test(to)) return fail('Enter one valid customer email address.');
   if (!String(m.subject || '').trim()) return fail('Add a subject.');
-  var key = sendKey(); if (!key) return fail('This phone is not set up to send yet.');
+  var key = sendKey(); if (!key) return fail('This phone is not set up to send yet — tap "Set up this phone" above.');
   if (m.done && !confirm('This was already emailed. Send it again?')) return;
   var pdf = isRep ? { fn: m.rep.fn, blob: m.rep.blob } : buildEstimatePdf({ blobOnly: true });
   if (!pdf) return;
@@ -4282,6 +4570,8 @@ function render() {
   else if (state.view === 'calevent') html = viewCalEvent();
   else if (state.view === 'appt') html = viewAppt();
   else if (state.view === 'settings') html = viewSettings();
+  else if (state.view === 'pair') html = viewPair();
+  else if (state.view === 'repedit') html = viewRepEdit();
   else html = viewHome();
   root.innerHTML = html;
   wireInputs();
@@ -4291,6 +4581,9 @@ function render() {
   wireEstMail();
   wireClients();
   wireMsg();
+  wirePair();
+  wireRepEdit();
+  wireAddr();
   var af = root.querySelector('[autofocus]');
   if (af) { try { af.focus(); } catch (e) {} }
 }
@@ -4588,8 +4881,24 @@ root.addEventListener('click', function (e) {
     case 'estmail-open': estMailOpen('estimate'); break;
     case 'report-mail': estMailOpen('report'); break;
     case 'est-schedule': estSchedule(); break;
-    case 'estmail-back': state.view = (state.estMail && state.estMail.kind === 'report') ? 'chat' : 'estimate'; render(); break;
+    case 'estmail-back':
+      if (state.estMail && state.estMail.back === 'repedit-reopen' && state.chat && state.chat.lastReport) { repEditOpen(false); break; }
+      state.view = (state.estMail && state.estMail.kind === 'report') ? 'chat' : 'estimate'; render(); break;
     case 'tech-link': techLink(false); break;
+    case 'pair-open': pairOpen(arg || state.view); break;
+    case 'pair-send': pairSend(); break;
+    case 'pair-ok': { var pc = root.querySelector('#pair_code'); if (pc && state.pair) state.pair.code = pc.value; pairOk(); break; }
+    case 'pair-back': pairBack(); break;
+    case 'rep-edit': repEditOpen(false); break;
+    case 'rep-back': repBack(); break;
+    case 'rep-save': repSave(); try { window.scrollTo(0, 0); } catch (_) {} break;
+    case 'rep-pdf': { var rs = state.repEdit; if (!rs) break; if (rs.dirty) { if (repSave(function () { render(); savePdf(rs.rep.fn, rs.rep.blob); })) {} } else savePdf(rs.rep.fn, rs.rep.blob); break; }
+    case 'rep-mail': { var rm = state.repEdit; if (!rm) break; var go = function () { state.repEdit = null; estMailOpen('report'); state.estMail.back = 'repedit-reopen'; }; if (rm.dirty) repSave(go); else go(); break; }
+    case 'rep-status': { var sp = String(arg).split('|'), ce2 = state.repEdit && state.repEdit.d.components[Number(sp[0])]; if (ce2) { ce2.status = sp[1]; state.repEdit.dirty = true; render(); } break; }
+    case 'rep-comp-add': if (state.repEdit) { state.repEdit.d.components.push({ name: '', status: 'ok', condition: '', recommended: '', photos: [] }); state.repEdit.dirty = true; render(); setTimeout(function () { var ins = root.querySelectorAll('[data-r$=".name"]'); if (ins.length) { ins[ins.length - 1].focus(); } }, 0); } break;
+    case 'rep-comp-del': if (state.repEdit && confirm('Remove this item from the report?')) { state.repEdit.d.components.splice(Number(arg), 1); state.repEdit.dirty = true; render(); } break;
+    case 'rep-li-add': if (state.repEdit) { state.repEdit.d.lineItems.push({ description: '', qty: 1, unitPrice: '' }); state.repEdit.dirty = true; render(); } break;
+    case 'rep-li-del': if (state.repEdit) { state.repEdit.d.lineItems.splice(Number(arg), 1); state.repEdit.dirty = true; render(); } break;
     case 'tech-reset': techLink(true); break;
     case 'worker-reset': workerLink(true); break;
     case 'cal-open': { var op = String(arg).split('|'), oSlot = op[0], oId = op[1]; var ce = (state.gcalEvents || []).filter(function (x) { return x.id === oId && x.acct === oSlot; })[0] || (state.gcalEvents || []).filter(function (x) { return x.id === oId; })[0]; if (ce) { state.editEvent = { id: ce.id, acct: ce.acct || 'A', title: ce.title, date: ce.date, time: ce.time, location: ce.location, notes: ce.notes, worker: !!ce.worker, share: ce.share || '', shareLabel: ce.share ? 'a linked estimate' : '' }; state.view = 'calevent'; render(); } break; }
