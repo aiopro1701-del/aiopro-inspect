@@ -2,13 +2,19 @@
    Network-first for the app HTML so a new deploy shows up immediately when
    online; the cache is only a fallback for offline. Other assets use
    cache-first with a background refresh. Bump CACHE when this file changes. */
-var CACHE = 'aiopro-inspect-v4';
+var CACHE = 'aiopro-inspect-v5';
 var ASSETS = [
   './',
   './index.html',
   './manifest.webmanifest',
   './icons/icon.svg'
 ];
+
+/* Only the app at the root of this scope counts as "the app" (not the /beta/ test copy). */
+function isAppPath(p) {
+  var root = new URL(self.registration.scope).pathname;
+  return p === root || p === root + 'index.html';
+}
 
 self.addEventListener('install', function (e) {
   e.waitUntil(
@@ -41,13 +47,13 @@ self.addEventListener('fetch', function (e) {
           /* Only the main app is stored as index.html; other pages
              (worker.html, estimate-sign.html) are stored under their own URL. */
           var p = new URL(req.url).pathname;
-          var isApp = /\/$/.test(p) || /\/index\.html$/.test(p);
+          var isApp = isAppPath(p);
           caches.open(CACHE).then(function (c) { c.put(isApp ? './index.html' : req, copy); });
         }
         return res;
       }).catch(function () {
         var path = new URL(req.url).pathname;
-        var appPage = /\/$/.test(path) || /\/index\.html$/.test(path);
+        var appPage = isAppPath(path);
         return caches.match(req, { ignoreSearch: true }).then(function (m) { return m || (appPage ? caches.match('./index.html') : undefined); });
       })
     );
