@@ -3967,12 +3967,14 @@ function estMailDefault(e) {
   var street = streetOf(cu.addr), photos = estPhotos(e).length;
   var L = ['Hello ' + firstNameOf(cu.name) + ',', '', 'Thank you for having us out' + (street ? ' to ' + street : '') + '. Your estimate is attached' + (photos ? ', with the photographs' : '') + '.'];
   if (String(e.found || '').trim()) { L.push('', 'WHAT WE FOUND', String(e.found).trim()); }
-  function lines(o) {
+  /* Each item: its name and price, then the scope lines that say exactly what is done at this house. */
+  function item(it, max, out) {
+    out.push((it.name || 'Service') + (estNum(it.price) > 0 ? ' — ' + money0(estLine(it)) : ' (included)'));
+    estBulletsFrom(it.desc).slice(0, max).forEach(function (b) { out.push('· ' + b.replace(/\.$/, '')); });
+  }
+  function lines(o, max) {
     var out = [];
-    o.items.forEach(function (it) {
-      if (!estReal(it) || it.opt) return;
-      out.push('· ' + (it.name || 'Service') + (estNum(it.price) > 0 ? ' — ' + money0(estLine(it)) : ' — included'));
-    });
+    o.items.forEach(function (it) { if (estReal(it) && !it.opt) item(it, max, out); });
     return out;
   }
   var addOns = [];
@@ -3980,11 +3982,7 @@ function estMailDefault(e) {
   if (used.length === 1) {
     var o = used[0], t = estTotals(o, e.tax);
     L.push('', 'THE WORK');
-    o.items.forEach(function (it) {
-      if (!estReal(it) || it.opt) return;
-      L.push((it.name || 'Service') + (estNum(it.price) > 0 ? ' — ' + money0(estLine(it)) : ''));
-      estBulletsFrom(it.desc).slice(0, 4).forEach(function (b) { L.push('· ' + b.replace(/\.$/, '')); });
-    });
+    L = L.concat(lines(o, 5));
     if (t.disc) L.push('Discount — -' + money0(t.disc));
     if (t.tax) L.push('Tax — ' + money0(t.tax));
     L.push('TOTAL — ' + money0(t.total));
@@ -3995,14 +3993,14 @@ function estMailDefault(e) {
       L.push('', 'Option ' + estLetter(i) + (nm ? ' — ' + nm : '') + ' — ' + money0(t.total));
       if (o.summary) L.push(o.summary);
       var split = i > 0 ? estSplitFromA(used[0], o) : null;
-      if (split) { L.push('· Everything in Option A — ' + money0(split.base.reduce(function (a2, it) { return a2 + estLine(it); }, 0))); split.rest.forEach(function (it) { if (!it.opt) L.push('· ' + (it.name || 'Service') + ' — ' + money0(estLine(it))); }); }
-      else L = L.concat(lines(o));
+      if (split) { L.push('Everything in Option A — ' + money0(split.base.reduce(function (a2, it) { return a2 + estLine(it); }, 0))); split.rest.forEach(function (it) { if (!it.opt) item(it, 4, L); }); }
+      else L = L.concat(lines(o, 4));
     });
     L.push('', used.length === 2 ? 'Choose one — you do not need both.' : 'Choose one — you only need one.');
   }
   if (addOns.length) {
     L.push('', 'OPTIONAL ADD-ONS (not in the total)');
-    addOns.forEach(function (it) { L.push('· ' + (it.name || 'Add-on') + (estNum(it.price) > 0 ? ' — ' + money0(estLine(it)) : '')); });
+    addOns.forEach(function (it) { item(it, 2, L); });
   }
   var notes = String(e.notes || '').split(/\n+/).map(function (l) { return l.replace(/^[\s·•\-–]+/, '').trim(); }).filter(function (l) { return l && !/valid/i.test(l); });
   if (notes.length) { L.push('', 'GOOD TO KNOW'); notes.slice(0, 5).forEach(function (n) { L.push('· ' + n); }); }
@@ -4028,8 +4026,8 @@ function reportMailDefault(rep) {
 /* The message as HTML: capital headings, bullet lists, priced lines in a neat table. */
 function mailHtml(text) {
   var out = [], list = [], rows = [];
-  function flushList() { if (list.length) { out.push('<ul style="margin:4px 0 14px 18px;padding:0">' + list.map(function (l) { return '<li style="margin:3px 0">' + esc(l) + '</li>'; }).join('') + '</ul>'); list = []; } }
-  function flushRows() { if (rows.length) { out.push('<table role="presentation" style="border-collapse:collapse;width:100%;max-width:520px;margin:4px 0 14px">' + rows.join('') + '</table>'); rows = []; } }
+  function flushList() { if (list.length) { out.push('<ul style="margin:2px 0 12px 18px;padding:0;color:#44403c">' + list.map(function (l) { return '<li style="margin:3px 0">' + esc(l) + '</li>'; }).join('') + '</ul>'); list = []; } }
+  function flushRows() { if (rows.length) { out.push('<table role="presentation" style="border-collapse:collapse;width:100%;max-width:520px;margin:4px 0 4px">' + rows.join('') + '</table>'); rows = []; } }
   String(text || '').split('\n').forEach(function (raw) {
     var l = raw.replace(/\s+$/, '');
     var bullet = /^\s*[·•\-]\s+(.*)$/.exec(l);
