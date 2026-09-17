@@ -3130,7 +3130,7 @@ function viewAppt() {
   '</div>';
 }
 
-/* ── Estimate builder (catalog + 3 options) ───────────────── */
+/* ── Estimate builder (catalog · one scope, optional Option B / C) ── */
 var CATALOG = [
 {name:"Inspection",price:99,description:"NFPA 211 inspection of accessible portions of the chimney — firebox, smoke chamber, flue liner/clay tile, visual from attic or basement; examine bricks, siding, flashing, cricket, crown, cap."},
 {name:"Chimney sweep",price:279,description:"Top-to-bottom clean using a rotary brush to remove dust, dirt, and creosote; brush the flue, clean smoke chamber, cap, and firebox."},
@@ -3193,42 +3193,54 @@ var RUST = [179, 84, 30], SAND = [242, 239, 234], CREAM = [249, 245, 241];
 /* The cheapest capable model does the estimate: text only, no photos. */
 var EST_AI_MODEL = 'claude-haiku-4-5-20251001';
 
-/* One-tap starting points. Every price comes from the catalog; everything stays editable. */
+/* One-tap starting points: the usual scope for each job. Every price comes from the catalog; everything stays editable.
+   Option B / C are added by hand only when the customer really has a choice. */
 var EST_PACKAGES = [
-  { id: 'leak', name: 'Leak / water', options: [
-    { name: 'Good', summary: 'Stops the active leak at the flashing.', items: ['Flashing repair'] },
-    { name: 'Better', summary: 'New flashing and a sealed crown, so water has no way in from the top.', items: ['Flashing replacement', 'Chimney Crown Coat Waterproofing'] },
-    { name: 'Best', summary: 'Full water protection: flashing, crown, brick sealant and a new cap.', items: ['Flashing replacement', 'Chimney Crown Coat Waterproofing', 'Water Sealant for Chimney Brickwork', 'Cap replacement'] } ] },
-  { id: 'top', name: 'Top of chimney', options: [
-    { name: 'Good', summary: 'Repairs the damaged clay at the top of the flue.', items: ['Top clay flue repair'] },
-    { name: 'Better', summary: 'New clay tile section, sealed crown and a code-compliant cap.', items: ['Install New Clay Tile + Seal Crown + Chimney Cap'] },
-    { name: 'Best', summary: 'New tile, sealed crown, a heavy-duty cap and a waterproof crown coat.', items: ['Install New Clay Tile + Seal Crown + Chimney Cap', 'Cap replacement', 'Chimney Crown Coat Waterproofing'] } ] },
-  { id: 'liner', name: 'Liner / flue', options: [
-    { name: 'Good', summary: 'Seals the existing flue so it vents safely again.', items: ['Heat shield'] },
-    { name: 'Better', summary: 'Clay tile flue out, new stainless liner in.', items: ['Full clay tile flue replacement with stainless liner'] },
-    { name: 'Best', summary: 'New stainless liner, rebuilt smoke chamber and a top-mount damper cap.', items: ['Clay-to-Stainless Liner for Wood Fireplace (+ Smoke Chamber + Damper Cap)'] } ] },
-  { id: 'firebox', name: 'Firebox / smoke chamber', options: [
-    { name: 'Good', summary: 'Seals the cracks and open joints in the firebox.', items: ['Fireplace mortar repair'] },
-    { name: 'Better', summary: 'Firebox repaired and the smoke chamber parged smooth.', items: ['Fireplace mortar repair', 'Smoke chamber parging'] },
-    { name: 'Best', summary: 'New firebox panels, smooth smoke chamber and an energy-tight damper cap.', items: ['Firebox panel replacement', 'Smoke chamber parging', 'Damper cap'] } ] },
-  { id: 'animal', name: 'Animal', options: [
-    { name: 'Good', summary: 'Animal and nesting removed, system sanitized.', items: ['Animal removal'] },
-    { name: 'Better', summary: 'Removal plus a new cap so they cannot get back in.', items: ['Animal removal', 'Cap replacement'] },
-    { name: 'Best', summary: 'Removal, new cap, and a full sweep so the flue is clean and safe.', items: ['Animal removal', 'Cap replacement', 'Chimney sweep'] } ] },
-  { id: 'gas', name: 'Gas fireplace', options: [
-    { name: 'Good', summary: 'Burner cleaned, media replaced, tested.', items: ['Gas Burner & Fireplace Maintenance'] },
-    { name: 'Better', summary: 'Burner service plus a new gas valve.', items: ['Gas Burner & Fireplace Maintenance', 'Gas Valve Replacement'] },
-    { name: 'Best', summary: 'Burner service, new valve and a new gas log set.', items: ['Gas Burner & Fireplace Maintenance', 'Gas Valve Replacement', 'Gas log system'] } ] },
-  { id: 'annual', name: 'Sweep & care', options: [
-    { name: 'Good', summary: 'Full sweep, top to bottom.', items: ['Chimney sweep'] },
-    { name: 'Better', summary: 'Sweep plus a breathable water sealant on the brick.', items: ['Chimney sweep', 'Water Sealant for Chimney Brickwork'] },
-    { name: 'Best', summary: 'Sweep, brick sealant and a waterproof crown coat.', items: ['Chimney sweep', 'Water Sealant for Chimney Brickwork', 'Chimney Crown Coat Waterproofing'] } ] }
+  { id: 'leak', name: 'Leak / water', summary: 'New flashing and a sealed crown, so water has no way in from the top.', items: ['Flashing replacement', 'Chimney Crown Coat Waterproofing'] },
+  { id: 'top', name: 'Top of chimney', summary: 'New clay tile section, sealed crown and a code-compliant cap.', items: ['Install New Clay Tile + Seal Crown + Chimney Cap'] },
+  { id: 'liner', name: 'Liner / flue', summary: 'Clay tile flue out, new stainless liner in.', items: ['Full clay tile flue replacement with stainless liner'] },
+  { id: 'firebox', name: 'Firebox / smoke chamber', summary: 'Firebox repaired and the smoke chamber parged smooth.', items: ['Fireplace mortar repair', 'Smoke chamber parging'] },
+  { id: 'animal', name: 'Animal', summary: 'Animal and nesting removed, and a new cap so they cannot get back in.', items: ['Animal removal', 'Cap replacement'] },
+  { id: 'gas', name: 'Gas fireplace', summary: 'Burner cleaned, media replaced, tested.', items: ['Gas Burner & Fireplace Maintenance'] },
+  { id: 'annual', name: 'Sweep & care', summary: 'Full sweep, top to bottom.', items: ['Chimney sweep'] }
 ];
 
 function estPrepDefault() { try { return localStorage.getItem('aio-est-prep') || EST_BRAND.preparedBy; } catch (e) { return EST_BRAND.preparedBy; } }
 function newEstimate() {
   return { customer: { name: '', phone: '', email: '', addr: '' }, title: '', found: '', notes: '', preparedBy: estPrepDefault(), visitDate: isoToday(), no: null, tax: 0, active: 0,
-    options: [ { name: 'Good', summary: '', items: [], disc: 0 }, { name: 'Better', summary: '', items: [], disc: 0 }, { name: 'Best', summary: '', items: [], disc: 0 } ] };
+    options: [ estBlankOpt() ] };
+}
+function estBlankOpt() { return { name: '', summary: '', items: [], disc: 0 }; }
+/* Option B / C that starts with everything in Option A: show those lines once, as "Everything in Option A". */
+function estReal(it) { return !!(it && (it.name || it.desc || estNum(it.price))); }
+function estItemKey(it) { return [String(it.name || '').trim(), String(it.desc || '').trim(), estNum(it.qty), estNum(it.price)].join('\u0001'); }
+function estHasReal(o) { return !!(o && o.items && o.items.some(estReal)); }
+/* Before a PDF or a share: empty options go, so the letters the tech sees are the letters the customer sees. */
+function estDropEmpty(e) {
+  if (!e || !e.options || e.options.length < 2) return false;
+  var keep = e.options.filter(estHasReal);
+  if (!keep.length || keep.length === e.options.length) return false;
+  e.options = keep; state.estCat = null; return true;
+}
+function estSplitFromA(a, o) {
+  var base = (a && a.items || []).filter(estReal), mine = (o && o.items || []).filter(estReal);
+  if (!base.length || mine.length <= base.length || estNum(a.disc)) return null;
+  var used = mine.map(function () { return false; });
+  var ok = base.every(function (b) { var k = estItemKey(b); for (var j = 0; j < mine.length; j++) { if (!used[j] && estItemKey(mine[j]) === k) { used[j] = true; return true; } } return false; });
+  if (!ok) return null;
+  return { base: base, rest: mine.filter(function (it, j) { return !used[j]; }) };
+}
+function estLetter(i) { return String.fromCharCode(65 + i); }
+/* Old tier names mean nothing to the customer — options are A / B / C plus an optional short name. */
+function estOptName(o) { var nm = String((o && o.name) || '').trim(); return /^(good|better|best|option\s*\w?\d*)$/i.test(nm) ? '' : nm; }
+/* Saved estimates from the Good/Better/Best version: drop the empty extra options. */
+function estCompact(e) {
+  if (!e || !e.options || !e.options.length) return e;
+  var keep = e.options.filter(function (o, i) { return i === 0 || estHasReal(o); });
+  if (!estHasReal(keep[0]) && keep.length > 1) keep.shift();
+  e.options = keep.slice(0, 3);
+  e.options.forEach(function (o) { o.name = estOptName(o); });
+  return e;
 }
 /* Older saved estimates lack the newer fields — fill them in. */
 function estNorm(e) {
@@ -3239,7 +3251,6 @@ function estNorm(e) {
   if (!e.visitDate) { var vd = new Date(e.updatedAt || Date.now()); e.visitDate = vd.getFullYear() + '-' + String(vd.getMonth() + 1).padStart(2, '0') + '-' + String(vd.getDate()).padStart(2, '0'); }
   if (!e.options || !e.options.length) e.options = newEstimate().options;
   e.options.forEach(function (o) { if (!o.items) o.items = []; if (typeof o.summary !== 'string') o.summary = ''; });
-  if (!(e.active >= 0 && e.active < e.options.length)) e.active = 0;
   return e;
 }
 function estEnsureNo(e) {
@@ -3249,10 +3260,10 @@ function estEnsureNo(e) {
   e.no = n; return n;
 }
 var EST_KEY = 'aio-estimates';
-function loadEstimates() { try { return (JSON.parse(localStorage.getItem(EST_KEY)) || []).map(estNorm); } catch (e) { return []; } }
+function loadEstimates() { try { return (JSON.parse(localStorage.getItem(EST_KEY)) || []).map(function (x) { return estCompact(estNorm(x)); }); } catch (e) { return []; } }
 function saveEstimates(l) { try { localStorage.setItem(EST_KEY, JSON.stringify(l)); } catch (e) {} }
 function estUsed(e) { return e.options.filter(function (o) { return o.items.some(function (it) { return it.name || it.desc || estNum(it.price); }); }); }
-function estHeadline(e) { var u = estUsed(e); if (!u.length) return 0; var pick = u.length >= 2 ? u[1] : u[0]; return estTotals(pick, e.tax).total; }
+function estHeadline(e) { var u = estUsed(e); if (!u.length) return 0; return estTotals(u[0], e.tax).total; }
 function upsertEstimate(e) { if (!e.id) e.id = 'es-' + Date.now() + '-' + Math.random().toString(36).slice(2, 6); e.updatedAt = Date.now(); var l = loadEstimates(); var i = l.findIndex(function (x) { return x.id === e.id; }); if (i >= 0) l[i] = e; else l.unshift(e); saveEstimates(l); return e; }
 function removeEstimate(id) { saveEstimates(loadEstimates().filter(function (e) { return e.id !== id; })); }
 function viewEstimatesList() {
@@ -3276,48 +3287,73 @@ function estBulletsFrom(text) {
   return parts.map(function (p) { p = p.replace(/^[\s·•\-–]+/, '').trim(); if (!p) return ''; p = p.charAt(0).toUpperCase() + p.slice(1); return /[.!?]$/.test(p) ? p : p + '.'; }).filter(Boolean);
 }
 function applyPackage(e, pkg) {
-  pkg.options.forEach(function (po, i) {
-    var o = e.options[i] || (e.options[i] = { name: po.name, summary: '', items: [], disc: 0 });
-    o.name = po.name; o.summary = po.summary || ''; o.disc = 0;
-    o.items = po.items.map(function (nm) { var s = CATALOG.filter(function (c) { return c.name === nm; })[0]; return s ? estCatItem(s) : { name: nm, desc: '', qty: 1, price: 0 }; });
-  });
+  e.options = [{ name: '', summary: pkg.summary || '', disc: 0,
+    items: pkg.items.map(function (nm) { var c = CATALOG.filter(function (x) { return x.name === nm; })[0]; return c ? estCatItem(c) : { name: nm, desc: '', qty: 1, price: 0 }; }) }];
   if (!e.title) e.title = pkg.name;
-  e.active = e.options.length > 1 ? 1 : 0;
 }
 function renderEstCatHTML(q) { q = (q || '').toLowerCase(); var list = CATALOG.filter(function (s) { return !q || s.name.toLowerCase().indexOf(q) >= 0 || (s.description || '').toLowerCase().indexOf(q) >= 0; }); return list.map(function (s) { return '<button class="est-add" data-name="' + esc(s.name) + '" style="display:flex;width:100%;justify-content:space-between;gap:10px;text-align:left;padding:10px;border:none;border-bottom:1px solid var(--rule);background:#fff"><span><b>' + esc(s.name) + '</b><br><span style="color:var(--muted);font-size:12px">' + esc((s.description || '').slice(0, 80)) + '…</span></span><span style="color:var(--ember);white-space:nowrap;font-weight:650">' + (s.price ? money(s.price) : 'set price') + '</span></button>'; }).join('') || '<div style="padding:10px;color:var(--muted)">No match.</div>'; }
-function renderEstTabsHTML() { var e = state.estimate; return e.options.map(function (o, i) { var n = estTotals(o, e.tax).total; return '<button class="est-tab btn ' + (i === e.active ? 'btn-gold btn-primary' : 'btn-ghost') + '" data-i="' + i + '" style="flex:1;min-width:30%;padding:8px 6px;font-size:13px;line-height:1.3">' + esc(o.name || ('Option ' + (i + 1))) + '<br>' + (o.items.length ? money(n) : '—') + '</button>'; }).join(''); }
-function renderEstPanelHTML() {
-  var e = state.estimate; var o = e.options[e.active];
-  var h = '<div class="row" style="gap:8px"><div class="field" style="flex:1"><label>Option name</label><input id="est_oname" value="' + esc(o.name) + '"></div></div>' +
-    '<div class="field"><label>One line for the customer (what this option does)</label><input id="est_osum" value="' + esc(o.summary || '') + '" placeholder="e.g. New flashing and a sealed crown"></div>';
-  if (!o.items.length) h += '<div style="color:var(--muted);font-size:13px;margin-bottom:6px">Empty — this option will not show on the PDF. Add from the catalog, pick a quick start, or "+ Blank line".</div>';
+/* Which option card has the catalog open (-1 = none). A fresh, empty estimate opens it for the main scope. */
+function estCatFor(e) {
+  if (state.estCat && state.estCat.est === e) return state.estCat.o;
+  return (e.options.length === 1 && !e.options[0].items.length) ? 0 : -1;
+}
+function estCatQuery(e) { return (state.estCat && state.estCat.est === e && state.estCat.q) || ''; }
+function renderEstOptTotalHTML(i) {
+  var e = state.estimate, o = e.options[i], t = estTotals(o, e.tax), multi = e.options.length > 1;
+  return '<div class="tally" style="margin-top:8px">' + '<div><div class="l">Subtotal</div><div class="n" style="font-size:15px">' + money(t.sub) + '</div></div>' + (t.disc ? '<div><div class="l">Discount</div><div class="n" style="font-size:15px">-' + money(t.disc) + '</div></div>' : '') + (t.tax ? '<div><div class="l">Tax</div><div class="n" style="font-size:15px">' + money(t.tax) + '</div></div>' : '') + '<div><div class="l">' + (multi ? 'Option ' + estLetter(i) + ' total' : 'Total') + '</div><div class="n" style="font-size:17px;color:var(--ember)">' + money(t.total) + '</div></div></div>';
+}
+function renderEstOptHTML(i) {
+  var e = state.estimate, o = e.options[i], multi = e.options.length > 1, L = estLetter(i);
+  var open = estCatFor(e) === i;
+  var h = '<div class="card est-opt" data-o="' + i + '"' + (i > 0 ? ' style="border-left:4px solid var(--ember)"' : '') + '>' +
+    '<div class="row" style="align-items:center;gap:8px;margin-bottom:8px"><div class="eyebrow" style="flex:1;margin:0">' + (multi ? 'Option ' + L : 'The work') + '</div>' +
+    (i > 0 ? '<button class="btn btn-ghost est-rmopt" data-o="' + i + '" style="min-height:34px;padding:0 10px;font-size:13px">Remove ' + L + '</button>' : '') + '</div>';
+  if (multi) h += '<div class="field"><label>Short name — what makes this option different</label><input class="est-of" data-of="name" data-o="' + i + '" value="' + esc(o.name || '') + '" placeholder="' + (i === 0 ? 'e.g. Keep your stove' : 'e.g. New stove insert') + '"></div>';
+  h += '<div class="field"><label>One line for the customer' + (multi ? '' : ' (optional)') + '</label><input class="est-of" data-of="summary" data-o="' + i + '" value="' + esc(o.summary || '') + '" placeholder="' + (i === 0 ? 'e.g. New flashing and a sealed crown' : 'e.g. Everything in Option A, and a new stove') + '"></div>';
+  if (i > 0 && !o.items.length && e.options[0].items.length) h += '<button class="btn btn-ghost est-copya" data-o="' + i + '" style="width:100%;margin-bottom:8px">Copy everything from Option A, then change it</button>';
+  if (!o.items.length) h += '<div style="color:var(--muted);font-size:13px;margin-bottom:6px">No services yet' + (multi ? ' — an empty option does not show on the PDF' : '') + '. Tap + Add service.</div>';
   o.items.forEach(function (it, idx) {
     var noPrice = !(estNum(it.price) > 0);
     var nb = estBulletsFrom(it.desc).length;
     h += '<div class="card" style="padding:10px;margin-bottom:8px' + (noPrice ? ';border-color:var(--defect)' : '') + '">' +
-      '<div class="row" style="gap:8px"><input class="est-f" data-f="name" data-i="' + idx + '" value="' + esc(it.name) + '" placeholder="Service name" style="flex:1;font-weight:650"><button class="btn btn-ghost est-del" data-i="' + idx + '" style="min-height:38px;padding:0 12px" aria-label="Remove">✕</button></div>' +
-      '<div class="row" style="gap:8px;margin-top:6px;align-items:center"><span style="color:' + (noPrice ? 'var(--defect)' : 'var(--muted)') + ';font-size:12px;flex:1">' + (noPrice ? 'Set a price' : 'Qty × Price') + '</span><input class="est-f" data-f="qty" data-i="' + idx + '" inputmode="decimal" value="' + esc(it.qty) + '" style="width:56px"><input class="est-f" data-f="price" data-i="' + idx + '" inputmode="decimal" value="' + esc(it.price) + '" style="width:90px"><span class="est-lt" data-i="' + idx + '" style="min-width:78px;text-align:right;font-weight:650">' + money(estLine(it)) + '</span></div>' +
-      '<details style="margin-top:6px"><summary style="color:var(--muted);font-size:13px;cursor:pointer">Scope lines (' + nb + ') — one per line</summary><textarea class="est-f" data-f="desc" data-i="' + idx + '" style="width:100%;min-height:110px;margin-top:6px;border:1px solid var(--rule);border-radius:8px;padding:8px">' + esc(it.desc || '') + '</textarea></details>' +
+      '<div class="row" style="gap:8px"><input class="est-f" data-f="name" data-o="' + i + '" data-i="' + idx + '" value="' + esc(it.name) + '" placeholder="Service name" style="flex:1;font-weight:650"><button class="btn btn-ghost est-del" data-o="' + i + '" data-i="' + idx + '" style="min-height:38px;padding:0 12px" aria-label="Remove">✕</button></div>' +
+      '<div class="row" style="gap:8px;margin-top:6px;align-items:center"><span style="color:' + (noPrice ? 'var(--defect)' : 'var(--muted)') + ';font-size:12px;flex:1">' + (noPrice ? 'Set a price' : 'Qty × Price') + '</span><input class="est-f" data-f="qty" data-o="' + i + '" data-i="' + idx + '" inputmode="decimal" value="' + esc(it.qty) + '" style="width:56px"><input class="est-f" data-f="price" data-o="' + i + '" data-i="' + idx + '" inputmode="decimal" value="' + esc(it.price) + '" style="width:90px"><span class="est-lt" data-i="' + idx + '" style="min-width:78px;text-align:right;font-weight:650">' + money(estLine(it)) + '</span></div>' +
+      '<details style="margin-top:6px"><summary style="color:var(--muted);font-size:13px;cursor:pointer">Scope lines (' + nb + ') — one per line</summary><textarea class="est-f" data-f="desc" data-o="' + i + '" data-i="' + idx + '" style="width:100%;min-height:110px;margin-top:6px;border:1px solid var(--rule);border-radius:8px;padding:8px">' + esc(it.desc || '') + '</textarea></details>' +
     '</div>';
   });
+  h += '<div class="row" style="gap:8px;margin-top:4px"><button class="btn ' + (open ? 'btn-gold btn-primary' : 'btn-ghost') + ' est-opencat" data-o="' + i + '" style="flex:1">' + (open ? 'Close list' : '+ Add service') + '</button><button class="btn btn-ghost est-blank" data-o="' + i + '" style="flex:1">+ Blank line</button></div>';
+  if (open) h += '<input class="est-search" data-o="' + i + '" value="' + esc(estCatQuery(e)) + '" placeholder="Search: liner, sweep, damper, flashing…" style="width:100%;min-height:46px;padding:11px;border:1px solid var(--rule);border-radius:8px;margin-top:8px"><div class="est-cat" style="max-height:240px;overflow:auto;border:1px solid var(--rule);border-radius:8px;margin-top:8px">' + renderEstCatHTML(estCatQuery(e)) + '</div>';
+  h += '<div class="row" style="gap:10px;margin-top:10px"><div class="field" style="flex:1;margin-bottom:0"><label>Discount ($)</label><input class="est-of" data-of="disc" data-o="' + i + '" inputmode="decimal" value="' + esc(o.disc || 0) + '"></div><div style="flex:1"></div></div>' +
+    '<div class="est-tot" data-o="' + i + '">' + renderEstOptTotalHTML(i) + '</div></div>';
   return h;
 }
-function renderEstTotalsHTML() { var e = state.estimate; var o = e.options[e.active]; var t = estTotals(o, e.tax); return '<div class="tally" style="margin-top:8px">' + '<div><div class="l">Subtotal</div><div class="n" style="font-size:15px">' + money(t.sub) + '</div></div>' + (t.disc ? '<div><div class="l">Discount</div><div class="n" style="font-size:15px">-' + money(t.disc) + '</div></div>' : '') + (t.tax ? '<div><div class="l">Tax</div><div class="n" style="font-size:15px">' + money(t.tax) + '</div></div>' : '') + '<div><div class="l">' + esc(o.name) + ' total</div><div class="n" style="font-size:17px;color:var(--ember)">' + money(t.total) + '</div></div></div>'; }
-function estRefreshDOM() { var e = state.estimate; var o = e.options[e.active]; o.items.forEach(function (it, idx) { var el = root.querySelector('.est-lt[data-i="' + idx + '"]'); if (el) el.textContent = money(estLine(it)); }); var tt = root.querySelector('#est_totals'); if (tt) tt.innerHTML = renderEstTotalsHTML(); var tb = root.querySelector('#est_tabs'); if (tb) tb.innerHTML = renderEstTabsHTML(); }
+function renderEstOptionsHTML() {
+  var e = state.estimate, n = e.options.length;
+  var h = e.options.map(function (o, i) { return renderEstOptHTML(i); }).join('');
+  if (n < 3) h += '<button class="btn btn-ghost" id="est_addopt" style="width:100%;border-style:dashed;margin-bottom:4px">+ Add Option ' + estLetter(n) + '</button>' +
+    '<div style="color:var(--muted);font-size:12px;margin:0 2px 12px">' + (n === 1 ? 'Only when the customer has a real choice — e.g. keep the stove or put in a new one. They pick one.' : 'A third way to do the job. The customer still picks one.') + '</div>';
+  return h;
+}
+function estRefreshOpt(i) {
+  var e = state.estimate, card = root.querySelector('.est-opt[data-o="' + i + '"]'); if (!card || !e.options[i]) return;
+  e.options[i].items.forEach(function (it, idx) { var el = card.querySelector('.est-lt[data-i="' + idx + '"]'); if (el) el.textContent = money(estLine(it)); });
+  var tt = card.querySelector('.est-tot'); if (tt) tt.innerHTML = renderEstOptTotalHTML(i);
+}
+/* Re-render the estimate without jumping the page back to the top. */
+function estRender() { var y = window.scrollY || 0; render(); try { window.scrollTo(0, y); } catch (_) {} }
 function estChatReady() { var c = state.chat; return !!(c && c.messages && c.messages.length >= 3); }
 function viewEstimate() {
   var e = estNorm(state.estimate || (state.estimate = newEstimate()));
-  var o = e.options[e.active];
   var ai = (state.estAi && (!state.estAi.forId || state.estAi.forId === e)) ? state.estAi : {};
   function cf(label, key, mode) { return '<div class="field"><label>' + label + '</label><input id="est_' + key + '"' + (mode ? ' inputmode="' + mode + '"' : '') + ' value="' + esc(e.customer[key] || '') + '"></div>'; }
   var quick = '<div class="card"><div class="eyebrow">Quick start</div>' +
     (estChatReady()
       ? '<button class="btn btn-gold btn-primary" id="est_ai" style="width:100%;margin-bottom:8px"' + (ai.busy ? ' disabled' : '') + '>' + (ai.busy ? 'Building from the visit…' : 'Build from this visit (AI)') + '</button>' +
-        '<div style="color:var(--muted);font-size:12px;margin-bottom:10px">Reads the job chat and fills the options from your catalog, at your prices. Costs about a cent.</div>'
+        '<div style="color:var(--muted);font-size:12px;margin-bottom:10px">Reads the job chat and fills in the work from your catalog, at your prices. Costs about a cent.</div>'
       : '<div style="color:var(--muted);font-size:12px;margin-bottom:8px">Tip: talk the job through in the chat first — then Estimate builds itself from the visit.</div>') +
     (ai.err ? '<div style="color:var(--defect);font-size:13px;margin-bottom:8px">' + esc(ai.err) + '</div>' : '') +
     (ai.done ? '<div style="color:var(--ok);font-size:13px;margin-bottom:8px">' + esc(ai.done) + '</div>' : '') +
-    '<div style="color:var(--muted);font-size:12px;margin-bottom:6px">Or start from a package (Good / Better / Best):</div>' +
+    '<div style="color:var(--muted);font-size:12px;margin-bottom:6px">Or start from a common job:</div>' +
     '<div id="est_pkgs" class="row" style="gap:6px;flex-wrap:wrap">' + EST_PACKAGES.map(function (p) { return '<button class="btn btn-ghost est-pkg" data-pkg="' + p.id + '" style="padding:6px 10px;font-size:13px;min-height:36px">' + esc(p.name) + '</button>'; }).join('') + '</div></div>';
   return '<div class="app">' +
     '<div class="topbar"><button class="iconbtn" data-act="est-back">‹</button><div style="flex:1"><h1>Estimate' + (e.no ? ' #' + e.no : '') + '</h1><div class="sub">' + esc(e.title || 'Your catalog · your prices') + '</div></div></div>' +
@@ -3325,12 +3361,8 @@ function viewEstimate() {
       '<div class="card"><div class="eyebrow">Customer & job' + (e.crmId ? ' · linked ✓' : '') + '</div>' + cf('Name', 'name') + cf('Phone', 'phone', 'tel') + cf('Email', 'email', 'email') + cf('Property address', 'addr') +
         '<div class="field"><label>Job title (e.g. Furnace vent, Chimney liner)</label><input id="est_title" value="' + esc(e.title) + '"></div>' +
         '<div class="row" style="gap:8px"><div class="field" style="flex:1;margin-bottom:0"><label>Date of visit</label><input id="est_vdate" value="' + esc(e.visitDate) + '"></div><div class="field" style="flex:1;margin-bottom:0"><label>Prepared by</label><input id="est_prep" value="' + esc(e.preparedBy) + '"></div></div></div>' +
-      '<div class="card"><div class="eyebrow">Add from your catalog</div><input id="est_search" placeholder="Search: liner, sweep, damper, flashing…" style="width:100%;min-height:46px;padding:11px;border:1px solid var(--rule);border-radius:8px"><div id="est_cat" style="max-height:220px;overflow:auto;border:1px solid var(--rule);border-radius:8px;margin-top:8px">' + renderEstCatHTML('') + '</div></div>' +
-      '<div class="card"><div class="eyebrow">Options (leave any empty to skip it)</div><div id="est_tabs" class="row" style="gap:6px;flex-wrap:wrap;margin-bottom:10px">' + renderEstTabsHTML() + '</div><div id="est_panel">' + renderEstPanelHTML() + '</div>' +
-        '<div class="row" style="gap:10px;margin-top:8px"><div class="field" style="flex:1;margin-bottom:0"><label>Tax %</label><input id="est_tax" inputmode="decimal" value="' + esc(e.tax || 0) + '"></div><div class="field" style="flex:1;margin-bottom:0"><label>' + esc(o.name) + ' discount ($)</label><input id="est_disc" inputmode="decimal" value="' + esc(o.disc || 0) + '"></div></div>' +
-        '<div id="est_totals">' + renderEstTotalsHTML() + '</div>' +
-        '<div class="row" style="gap:8px;margin-top:10px"><button class="btn btn-ghost" id="est_blank" style="flex:1">+ Blank line</button>' + (e.shareId ? '<button class="btn btn-ghost" id="est_status" style="flex:1">Check status</button>' : '') + '</div>' +
-      '</div>' +
+      '<div id="est_opts">' + renderEstOptionsHTML() + '</div>' +
+      '<div class="card"><div class="row" style="gap:10px;align-items:flex-end"><div class="field" style="flex:1;margin-bottom:0"><label>Tax %' + (e.options.length > 1 ? ' (all options)' : '') + '</label><input id="est_tax" inputmode="decimal" value="' + esc(e.tax || 0) + '"></div>' + (e.shareId ? '<button class="btn btn-ghost" id="est_status" style="flex:1">Check status</button>' : '<div style="flex:1"></div>') + '</div></div>' +
       '<div class="card"><div class="eyebrow">For the customer (optional)</div>' +
         '<div class="field"><label>What we found — 2–3 plain sentences</label><textarea id="est_found" style="min-height:70px">' + esc(e.found) + '</textarea></div>' +
         '<div class="field" style="margin-bottom:0"><label>Scope notes — one per line (what is not included, measurements, what the customer prepares)</label><textarea id="est_notes" style="min-height:80px">' + esc(e.notes) + '</textarea></div></div>' +
@@ -3348,32 +3380,63 @@ function wireEstimate() {
   bind('est_prep', function (v) { e.preparedBy = v; try { localStorage.setItem('aio-est-prep', v); } catch (_) {} });
   bind('est_found', function (v) { e.found = v; });
   bind('est_notes', function (v) { e.notes = v; });
-  bind('est_osum', function (v) { e.options[e.active].summary = v; });
-  var search = root.querySelector('#est_search'); if (search) search.addEventListener('input', function () { var c = root.querySelector('#est_cat'); if (c) c.innerHTML = renderEstCatHTML(search.value); });
-  var cat = root.querySelector('#est_cat'); if (cat) cat.addEventListener('click', function (ev) { var b = ev.target.closest('.est-add'); if (!b) return; var s = CATALOG.filter(function (x) { return x.name === b.getAttribute('data-name'); })[0]; if (!s) return; e.options[e.active].items.push(estCatItem(s)); render(); });
   var pk = root.querySelector('#est_pkgs'); if (pk) pk.addEventListener('click', function (ev) {
     var b = ev.target.closest('.est-pkg'); if (!b) return;
     var p = EST_PACKAGES.filter(function (x) { return x.id === b.getAttribute('data-pkg'); })[0]; if (!p) return;
-    if (estUsed(e).length && !confirm('Replace the current options with the "' + p.name + '" package?')) return;
-    applyPackage(e, p); state.estAi = null; render();
+    if (estUsed(e).length && !confirm('Replace the current work' + (e.options.length > 1 ? ' and all options' : '') + ' with "' + p.name + '"?')) return;
+    applyPackage(e, p); state.estAi = null; state.estCat = null; estRender();
   });
   var aib = root.querySelector('#est_ai'); if (aib) aib.addEventListener('click', function () {
-    if (estUsed(e).length && !confirm('Replace the current options with what the AI builds from the visit?')) return;
+    if (estUsed(e).length && !confirm('Replace the current work with what the AI builds from the visit?')) return;
     estAiBuild();
   });
-  var tabs = root.querySelector('#est_tabs'); if (tabs) tabs.addEventListener('click', function (ev) { var b = ev.target.closest('.est-tab'); if (!b) return; e.active = Number(b.getAttribute('data-i')); render(); });
-  var oname = root.querySelector('#est_oname'); if (oname) oname.addEventListener('input', function () { e.options[e.active].name = oname.value; var tb = root.querySelector('#est_tabs'); if (tb) tb.innerHTML = renderEstTabsHTML(); });
-  var panel = root.querySelector('#est_panel');
-  if (panel) {
-    panel.addEventListener('input', function (ev) { var f = ev.target.getAttribute && ev.target.getAttribute('data-f'); if (!f) return; var i = Number(ev.target.getAttribute('data-i')); var it = e.options[e.active].items[i]; if (!it) return; it[f] = ev.target.value; if (f === 'qty' || f === 'price') estRefreshDOM(); });
-    panel.addEventListener('click', function (ev) { var d = ev.target.closest('.est-del'); if (!d) return; e.options[e.active].items.splice(Number(d.getAttribute('data-i')), 1); render(); });
+  var opts = root.querySelector('#est_opts');
+  if (opts) {
+    opts.addEventListener('input', function (ev) {
+      var t = ev.target; if (!t.getAttribute) return;
+      var oi = Number(t.getAttribute('data-o')), o = e.options[oi]; if (!o) return;
+      if (t.classList.contains('est-search')) { state.estCat = { est: e, o: oi, q: t.value }; var card = t.closest('.est-opt'), list = card && card.querySelector('.est-cat'); if (list) list.innerHTML = renderEstCatHTML(t.value); return; }
+      var of = t.getAttribute('data-of');
+      if (of) { o[of] = t.value; if (of === 'disc') estRefreshOpt(oi); return; }
+      var f = t.getAttribute('data-f'); if (!f) return;
+      var it = o.items[Number(t.getAttribute('data-i'))]; if (!it) return;
+      it[f] = t.value; if (f === 'qty' || f === 'price') estRefreshOpt(oi);
+    });
+    opts.addEventListener('click', function (ev) {
+      var t = ev.target.closest('button'); if (!t) return;
+      if (t.id === 'est_addopt') {
+        if (e.options.length >= 3) return;
+        e.options.push(estBlankOpt()); var ni = e.options.length - 1;
+        state.estCat = { est: e, o: e.options[0].items.length ? -1 : ni, q: '' };
+        estRender();
+        var nc = root.querySelector('.est-opt[data-o="' + ni + '"]'); if (nc && nc.scrollIntoView) nc.scrollIntoView({ block: 'start', behavior: 'smooth' });
+        return;
+      }
+      var card = t.closest('.est-opt'); if (!card) return;
+      var oi = Number(card.getAttribute('data-o')), o = e.options[oi]; if (!o) return;
+      if (t.classList.contains('est-add')) {
+        var c = CATALOG.filter(function (x) { return x.name === t.getAttribute('data-name'); })[0]; if (!c) return;
+        o.items.push(estCatItem(c)); state.estCat = { est: e, o: oi, q: estCatQuery(e) }; estRender(); return;
+      }
+      if (t.classList.contains('est-del')) { o.items.splice(Number(t.getAttribute('data-i')), 1); estRender(); return; }
+      if (t.classList.contains('est-blank')) { o.items.push({ name: '', desc: '', qty: 1, price: 0 }); estRender(); return; }
+      if (t.classList.contains('est-opencat')) { state.estCat = { est: e, o: estCatFor(e) === oi ? -1 : oi, q: '' }; estRender(); return; }
+      if (t.classList.contains('est-copya')) {
+        o.items = JSON.parse(JSON.stringify(e.options[0].items)); o.disc = e.options[0].disc || 0;
+        state.estCat = { est: e, o: oi, q: '' }; estRender(); return;
+      }
+      if (t.classList.contains('est-rmopt')) {
+        if (oi === 0) return;
+        var L = estLetter(oi);
+        if (o.items.length && !confirm('Remove Option ' + L + ' and its ' + o.items.length + ' service(s)?')) return;
+        e.options.splice(oi, 1); state.estCat = null; estRender(); return;
+      }
+    });
   }
-  var tax = root.querySelector('#est_tax'); if (tax) tax.addEventListener('input', function () { e.tax = tax.value; estRefreshDOM(); });
-  var disc = root.querySelector('#est_disc'); if (disc) disc.addEventListener('input', function () { e.options[e.active].disc = disc.value; estRefreshDOM(); });
+  var tax = root.querySelector('#est_tax'); if (tax) tax.addEventListener('input', function () { e.tax = tax.value; e.options.forEach(function (o, i) { estRefreshOpt(i); }); });
   var pdf = root.querySelector('#est_pdf'); if (pdf) pdf.addEventListener('click', buildEstimatePdf);
   var share = root.querySelector('#est_share'); if (share) share.addEventListener('click', shareEstimate);
   var stat = root.querySelector('#est_status'); if (stat) stat.addEventListener('click', checkEstimateStatus);
-  var blank = root.querySelector('#est_blank'); if (blank) blank.addEventListener('click', function () { e.options[e.active].items.push({ name: '', desc: '', qty: 1, price: 0 }); render(); });
 }
 
 /* ── AI: build the estimate from the job chat (text only, cheap model, catalog prices only) ── */
@@ -3391,14 +3454,16 @@ function estAiPrompt(chat) {
     + 'RULES:\n'
     + '- Choose catalog services by their number ("n"). The owner\'s price is applied automatically — never invent or change a price.\n'
     + '- If the visit needs work that is not in the catalog, add it as {"custom":"short service name"}; the owner will price it.\n'
-    + '- Options: "Good" = fixes the safety / code problem only. "Better" = the recommended fix, adds what stops the problem coming back. "Best" = the complete long-term solution. If the job has only one sensible scope, return ONE option.\n'
+    + '- Return ONE option by default: the work you recommend for this house. Add a second option (Option B), or at most a third (Option C), ONLY when the visit shows a real choice between different ways to do the job — e.g. keep the existing stove vs. a new stove, stainless vs. galvanized, repair vs. replace. Never Good / Better / Best tiers, never options that only add extras.\n'
+    + '- Each option is complete on its own with its full price: if Option B is "everything in Option A, and ...", repeat Option A\'s items in it.\n'
+    + '- name: only when there is more than one option — 2 to 5 words saying what makes that option different, e.g. "Keep your stove", "New stove insert". Leave name empty for a single option.\n'
     + '- For every item write 3 to 7 short scope lines specific to THIS house (sizes, lengths, locations, materials mentioned in the visit), in the owner\'s plain, confident customer voice, e.g. "Listed vent cap installed at the termination." or "Site left clean and the finished work photographed for you." No code section numbers, no jargon, no sales filler.\n'
-    + '- summary: one plain sentence per option that the homeowner understands.\n'
+    + '- summary: one plain sentence per option that the homeowner understands, e.g. "Everything in Option A, and the stove is replaced with a new one."\n'
     + '- title: 2 to 4 words naming the job, e.g. "Furnace vent", "Chimney liner", "Chimney leak repair".\n'
     + '- found: 2 to 3 plain sentences — what was found and why it matters. Only what the visit supports.\n'
     + '- notes: 2 to 5 short scope notes: what is NOT included, anything measured on the visit that may change once opened up ("we stop and agree the difference with you before continuing"), and anything the customer prepares.\n'
     + 'Return ONLY JSON, no markdown:\n'
-    + '{"title":"","found":"","options":[{"name":"Good","summary":"","items":[{"n":0,"qty":1,"lines":["",""]},{"custom":"","qty":1,"lines":[""]}]}],"notes":[""]}\n\n'
+    + '{"title":"","found":"","options":[{"name":"","summary":"","items":[{"n":0,"qty":1,"lines":["",""]},{"custom":"","qty":1,"lines":[""]}]}],"notes":[""]}\n\n'
     + 'CATALOG (n | name | owner price | standard scope):\n' + cat + '\n\n'
     + 'FIELD VISIT (technician and inspector chat):\n' + estTranscript(chat);
 }
@@ -3414,13 +3479,12 @@ function estApplyAi(e, data) {
       var nm = String(it.custom || '').trim(); if (!nm) return null;
       return { name: nm, desc: lines.join('\n'), qty: qty, price: 0 };
     }).filter(Boolean);
-    return { name: String(po.name || ['Good', 'Better', 'Best'][oi]).trim(), summary: String(po.summary || '').trim(), items: items, disc: 0 };
+    return { name: estOptName(po), summary: String(po.summary || '').trim(), items: items, disc: 0 };
   }).filter(function (o) { return o.items.length; });
   if (!built.length) throw new Error('The AI did not return any services — add a bit more detail in the chat and try again.');
-  var names = ['Good', 'Better', 'Best'];
-  while (built.length < 3) built.push({ name: names[built.length], summary: '', items: [], disc: 0 });
+  if (built.length === 1) built[0].name = '';
   e.options = built;
-  e.active = estUsed(e).length > 1 ? 1 : 0;
+  if (state.estCat && state.estCat.est === e) state.estCat = null;
   if (data.title) e.title = String(data.title).trim();
   if (data.found) e.found = String(data.found).trim();
   if (Array.isArray(data.notes)) e.notes = data.notes.map(function (n) { return String(n || '').trim(); }).filter(Boolean).join('\n');
@@ -3445,16 +3509,17 @@ function estAiBuild() {
     var unpriced = estApplyAi(e, parsed);
     try { if (e.id) upsertEstimate(e); } catch (_) {}
     state.estAi = { forId: e, done: 'Built from the visit. Check the prices and scope lines' + (unpriced ? ' — ' + unpriced + ' item(s) need a price (red).' : '.') };
-    if (state.view === 'estimate') render();
+    if (state.view === 'estimate') estRender();
   }).catch(function (err) {
     state.estAi = { forId: e, err: (err && err.message) || 'AI request failed.' };
-    if (state.view === 'estimate') render();
+    if (state.view === 'estimate') estRender();
   });
 }
 
 /* ── Estimate PDF in Refael's house style ── */
 function buildEstimatePdf() {
   var e = estNorm(state.estimate), s = state.settings;
+  if (estDropEmpty(e) && state.view === 'estimate') estRender();
   var used = estUsed(e);
   if (!used.length) { alert('Add at least one service first.'); return; }
   var unpriced = 0; used.forEach(function (o) { o.items.forEach(function (it) { if ((it.name || it.desc) && !(estNum(it.price) > 0)) unpriced++; }); });
@@ -3499,13 +3564,13 @@ function buildEstimatePdf() {
   }
   function fmtDate(v) { var d = new Date(String(v || '') + 'T00:00:00'); return isNaN(d.getTime()) ? String(v || '') : d.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }); }
   function optLabel(o, i) {
+    var nm = estOptName(o);
     if (!multi) {
-      var nm = String(o.name || '').trim();
-      if (nm && !/^(good|better|best|option \d+)$/i.test(nm)) return nm;
+      if (nm) return nm;
       if (o.items.length === 1) return o.items[0].name || 'Scope of work';
       return (e.title ? e.title + ' — ' : '') + 'full scope';
     }
-    return 'Option ' + (i + 1) + ' — ' + (o.name || '');
+    return 'Option ' + estLetter(i) + (nm ? ' — ' + nm : '');
   }
   function optSummary(o) {
     if (o.summary) return o.summary;
@@ -3558,17 +3623,13 @@ function buildEstimatePdf() {
   used.forEach(function (o, i) {
     var t = estTotals(o, e.tax);
     doc.setFont('helvetica', 'bold').setFontSize(10.5);
-    var nl = doc.splitTextToSize(optLabel(o, i), lwid - 16 - (multi && i === 1 && used.length === 3 ? 80 : 0));
+    var nl = doc.splitTextToSize(optLabel(o, i), lwid - 16);
     doc.setFont('helvetica', 'normal').setFontSize(8.8);
     var sl = doc.splitTextToSize(optSummary(o), lwid - 16);
     var h = 12 + nl.length * 13 + sl.length * 11 + 6;
     ens(h);
     fill(CREAM); doc.rect(M, y, W, h, 'F'); draw(RULE, 0.5); doc.rect(M, y, lwid, h, 'S'); doc.rect(M + lwid, y, pw, h, 'S');
     doc.setFont('helvetica', 'bold').setFontSize(10.5); ink(INK); doc.text(nl, M + 8, y + 15);
-    if (multi && i === 1 && used.length === 3) {
-      var tagW = 72; fill(RUST); doc.rect(M + lwid - tagW - 8, y + 6, tagW, 13, 'F');
-      doc.setFont('helvetica', 'bold').setFontSize(7); doc.setTextColor(255, 255, 255); doc.text('RECOMMENDED', M + lwid - tagW / 2 - 8, y + 15, { align: 'center' });
-    }
     doc.setFont('helvetica', 'normal').setFontSize(8.8); ink(MUTED); doc.text(sl, M + 8, y + 15 + nl.length * 13);
     doc.setFont('helvetica', 'bold').setFontSize(12); ink(INK); doc.text(money(t.total), PW - M - 8, y + h / 2 + 4, { align: 'right' });
     y += h;
@@ -3581,7 +3642,7 @@ function buildEstimatePdf() {
     doc.setFont('helvetica', 'bold').setFontSize(16); doc.text(money(tt.total).replace(/\.00$/, ''), PW - M - 8, y + 23, { align: 'right' });
     y += bh + 4;
   } else {
-    y += 18; para('Choose the option that fits you best — the full scope of each is set out below, and you tick your choice on the last page.', 9.5, MUTED);
+    y += 18; para((used.length === 2 ? 'Two ways to do the work. Choose one — you do not need both.' : 'Three ways to do the work. Choose one — you only need one.') + ' The full scope of each is set out below, and you tick your choice on the last page.', 9.5, MUTED);
   }
 
   /* What we found */
@@ -3603,16 +3664,14 @@ function buildEstimatePdf() {
     doc.text('SCOPE', M + 8, y + 13); doc.text('PRICE', PW - M - 8, y + 13, { align: 'right' });
     y += 20;
     var n = 0;
-    o.items.forEach(function (it) {
-      if (!(it.name || it.desc || estNum(it.price))) return;
+    function row(name, bullets, qtyNote, priceText) {
       n++;
       doc.setFont('helvetica', 'bold').setFontSize(10.5);
-      var nl = doc.splitTextToSize(String(it.name || 'Service'), cwid - 16);
+      var nl = doc.splitTextToSize(String(name), cwid - 16);
       doc.setFont('helvetica', 'normal').setFontSize(8.8);
       var bl = [];
-      estBulletsFrom(it.desc).forEach(function (b) { doc.splitTextToSize('·  ' + b, cwid - 16).forEach(function (ln, k) { bl.push(k ? '    ' + ln : ln); }); });
-      var q = estNum(it.qty) || 1;
-      if (q !== 1) bl.push('Qty ' + q + ' × ' + money(estNum(it.price)));
+      bullets.forEach(function (b) { doc.splitTextToSize('·  ' + b, cwid - 16).forEach(function (ln, k) { bl.push(k ? '    ' + ln : ln); }); });
+      if (qtyNote) bl.push(qtyNote);
       if (bl.length > 45) bl = bl.slice(0, 44).concat(['    …']);
       var h = 12 + nl.length * 13 + bl.length * 11.5 + 8;
       if (y + h > PH - 52) { doc.addPage(); y = M + 6; }
@@ -3622,15 +3681,25 @@ function buildEstimatePdf() {
       doc.setFont('helvetica', 'bold').setFontSize(10.5); ink(INK); doc.text(nl, M + nw + 8, y + 15);
       doc.setFont('helvetica', 'normal').setFontSize(8.8); ink(MUTED); doc.text(bl, M + nw + 8, y + 15 + nl.length * 13);
       doc.setFont('helvetica', 'bold').setFontSize(10.5); ink(INK);
-      doc.text(estNum(it.price) > 0 ? money(estLine(it)) : 'Included', PW - M - 8, y + h / 2 + 4, { align: 'right' });
+      doc.text(priceText, PW - M - 8, y + h / 2 + 4, { align: 'right' });
       y += h;
+    }
+    var split = oi > 0 ? estSplitFromA(used[0], o) : null;
+    if (split) {
+      var baseSum = split.base.reduce(function (a2, it) { return a2 + estLine(it); }, 0);
+      row('Everything in Option A', split.base.map(function (it) { return it.name || 'Service'; }), '', money(baseSum));
+    }
+    (split ? split.rest : o.items).forEach(function (it) {
+      if (!estReal(it)) return;
+      var q = estNum(it.qty) || 1;
+      row(it.name || 'Service', estBulletsFrom(it.desc), q !== 1 ? 'Qty ' + q + ' × ' + money(estNum(it.price)) : '', estNum(it.price) > 0 ? money(estLine(it)) : 'Included');
     });
     function sumRow(label, val) { ens(22); draw(RULE, 0.5); doc.rect(M, y, W - prw, 20, 'S'); doc.rect(M + W - prw, y, prw, 20, 'S'); doc.setFont('helvetica', 'normal').setFontSize(9.5); ink(INK); doc.text(label, M + W - prw - 8, y + 13, { align: 'right' }); doc.text(val, PW - M - 8, y + 13, { align: 'right' }); y += 20; }
     if (t.disc) sumRow('Discount', '-' + money(t.disc));
     if (t.tax) sumRow('Tax (' + estNum(e.tax) + '%)', money(t.tax));
     ens(26); fill(RUST); doc.rect(M, y, W, 24, 'F'); draw([255, 255, 255], 0.5); doc.line(M + W - prw, y, M + W - prw, y + 24);
     doc.setTextColor(255, 255, 255); doc.setFont('helvetica', 'bold').setFontSize(11);
-    doc.text(multi ? (o.name || 'Option') + ' total' : 'TOTAL', M + W - prw - 8, y + 16, { align: 'right' });
+    doc.text(multi ? 'Option ' + estLetter(oi) + ' total' : 'TOTAL', M + W - prw - 8, y + 16, { align: 'right' });
     doc.text(money(t.total), PW - M - 8, y + 16, { align: 'right' });
     y += 24;
   });
@@ -3685,6 +3754,7 @@ function shareEstimate() {
   if (!e || !e.options.some(function (o) { return o.items.length; })) { alert('Add at least one item first.'); return; }
   var id = e.shareId || ('e' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6));
   estNorm(e); estEnsureNo(e);
+  if (estDropEmpty(e) && state.view === 'estimate') estRender();
   var payload = { customer: e.customer, tax: e.tax, options: estUsed(e), title: e.title, found: e.found, notes: e.notes, no: e.no, visitDate: e.visitDate, preparedBy: e.preparedBy,
     company: { name: s.company, phone: (s.phone && s.phone.trim()) || EST_BRAND.phone, email: (s.email && s.email.trim()) || EST_BRAND.email, address: (s.address && s.address.trim() && s.address.trim() !== 'Greater St. Louis, MO') ? s.address : EST_BRAND.address, terms: s.terms, legal: EST_BRAND.legal, creds: EST_BRAND.creds, web: EST_BRAND.web, owner: EST_BRAND.owner } };
   var link = CLOUD_BASE + '?id=' + id;
@@ -3699,7 +3769,7 @@ function shareEstimate() {
     e.shareId = id; e.shareLink = link; try { upsertEstimate(e); } catch (_) {}
     crmEnsureForEstimate(e).then(function () { crmLogEstimate(e, 'sent', 'estimate'); });
     if (btn) { btn.textContent = 'Shared ✓ — copy link'; btn.disabled = false; }
-    window.prompt('Send this link to your customer. They can view all 3 options and sign — and you\'ll see when they open and sign it:', link);
+    window.prompt('Send this link to your customer. They can view the estimate' + (estUsed(e).length > 1 ? ', choose an option' : '') + ' and sign — and you\'ll see when they open and sign it:', link);
   }).catch(function (err) {
     if (btn) { btn.textContent = 'Share to sign'; btn.disabled = false; }
     alert('Could not share: ' + ((err && err.message) || err) + '\n(Check your internet.)');
@@ -3987,7 +4057,7 @@ root.addEventListener('click', function (e) {
       if (state.chat && state.chat.customer && state.chat.customer.crmId && !ee.crmId) { ee.crmId = state.chat.customer.crmId; ee.crmCloud = !!state.chat.customer.crmCloud; }
       if (state.chat && state.chat.customer) { var c2 = state.chat.customer; ee.customer = { name: c2.name || ee.customer.name || '', phone: c2.phone || ee.customer.phone || '', email: c2.email || ee.customer.email || '', addr: c2.address || ee.customer.addr || '' }; }
       if (state.chat) state.chat.estimate = ee;
-      state.estimate = estNorm(ee); if (!(state.estAi && state.estAi.busy)) state.estAi = null; state.view = 'estimate'; render();
+      state.estimate = estCompact(estNorm(ee)); if (!(state.estAi && state.estAi.busy)) state.estAi = null; state.view = 'estimate'; render();
       /* First time from a real conversation: build it straight away (cheap, text only). */
       if (!estUsed(ee).length && estChatReady() && state.settings.aiKey) estAiBuild();
       break;
