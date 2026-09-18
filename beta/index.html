@@ -3880,6 +3880,7 @@ function estAiPrompt(chat, transcript) {
   return 'You are the estimator for ' + (state.settings.company || 'AIO Pro Chimney') + ' (Greater St. Louis). Build a repair estimate from this field visit, using ONLY the owner\'s price catalog.\n'
     + 'RULES:\n'
     + '- Choose catalog services by their number ("n"). The owner\'s price is applied automatically — never invent or change a price.\n'
+    + '- "Inspection — Level 1" is the catalog "Inspection" service. A Level 2 inspection is not in the catalog: add it as {"custom":"Level 2 inspection"} so the owner prices it.\n'
     + '- If the visit needs work that is not in the catalog, add it as {"custom":"short service name"}; the owner will price it.\n'
     + '- Return ONE option by default: the work you recommend for this house. Add a second option (Option B), or at most a third (Option C), ONLY when the visit shows a real choice between different ways to do the job — e.g. keep the existing stove vs. a new stove, stainless vs. galvanized, repair vs. replace. Never Good / Better / Best tiers, never options that only add extras.\n'
     + '- Each option is complete on its own with its full price: if Option B is "everything in Option A, and ...", repeat Option A\'s items in it.\n'
@@ -5316,6 +5317,8 @@ var FJ_CHECKS = [
 ];
 /* What the estimate visit came for. m = measurements the price depends on (internal only). */
 var FJ_AREAS = [
+  { id: 'insp1', name: 'Inspection — Level 1', help: 'The inspection visit itself, charged to the customer.', m: [] },
+  { id: 'insp2', name: 'Inspection — Level 2', help: 'Camera scan, sale of the house, or after a problem.', m: ['Flues scanned', 'Stories'] },
   { id: 'liner', name: 'Liner / flue', help: 'New liner, relining, broken clay tile.', m: ['Liner length (ft)', 'Flue size inside (in)', 'Stories', 'Roof pitch / access'] },
   { id: 'cap', name: 'Cap / chase cover', help: 'Cap, chase cover, animal screen.', m: ['Top size L x W (in)', 'Tile height above the crown (in)', 'Number of flues'] },
   { id: 'crown', name: 'Crown / top of the chimney', help: 'Crown cracked, top tiles, rebuild from the roofline.', m: ['Crown size (in)', 'Courses to rebuild'] },
