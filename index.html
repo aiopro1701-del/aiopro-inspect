@@ -4281,11 +4281,11 @@ function saveEstimates(l) {
 }
 /* Photos live in IndexedDB instead, keyed to the estimate, so re-opening an
    estimate later can still send them to the customer. */
-function estPhotoSave(e) { if (!e || !e.id || !(e.fjPhotos && e.fjPhotos.length)) return; docSave({ id: 'estph-' + e.id, kind: 'estphotos', photos: e.fjPhotos.slice(0, 24) }); }
+function estPhotoSave(e) { if (!e || !e.id || !(e.fjPhotos && e.fjPhotos.length)) return; docSave({ id: 'estph-' + e.id, kind: 'estphotos', photos: e.fjPhotos.slice(0, 24), caps: (e.fjCaps || []).slice(0, 24) }); }
 function estPhotoLoad(e) {
   if (!e || !e.id) return Promise.resolve([]);
   if (e.fjPhotos && e.fjPhotos.length) return Promise.resolve(e.fjPhotos);
-  return docGet('estph-' + e.id).then(function (r) { e.fjPhotos = (r && r.photos) || []; return e.fjPhotos; }).catch(function () { return []; });
+  return docGet('estph-' + e.id).then(function (r) { e.fjPhotos = (r && r.photos) || []; e.fjCaps = (r && r.caps) || []; return e.fjPhotos; }).catch(function () { return []; });
 }
 function estUsed(e) { return e.options.filter(function (o) { return o.items.some(function (it) { return it.name || it.desc || estNum(it.price); }); }); }
 function estHeadline(e) { var u = estUsed(e); if (!u.length) return 0; return estTotals(u[0], e.tax).total; }
@@ -4555,13 +4555,14 @@ function photoAddRow(camAct, galAct) {
 function estPhotoCardHTML(e) {
   var list = estPhotos(e);
   return '<div class="card" style="border-color:var(--gold)"><div class="eyebrow">Photos for the customer (' + list.length + ')</div>' +
-    photoStripHTML(list, 'estph-del', null) + photoAddRow('estph-cam', 'estph-gal') +
+    photoStripHTML(list, 'estph-del', e.fjCaps || []) + photoAddRow('estph-cam', 'estph-gal') +
     '<div style="color:var(--muted);font-size:12px;margin-top:8px">Change them here any time. Then press <b>Preview &amp; send</b> or <b>Email</b> again — the customer opens the same link and sees the new photos.</div></div>';
 }
-function estPhotosSet(e, list) {
+function estPhotosSet(e, list, caps) {
   e.fjPhotos = list.slice(0, 24);
+  e.fjCaps = (caps || []).slice(0, 24);
   e.photoCount = 0;                       /* the customer copy has to be sent again */
-  try { docSave({ id: 'estph-' + e.id, kind: 'estphotos', photos: e.fjPhotos }); } catch (_) {}
+  try { docSave({ id: 'estph-' + e.id, kind: 'estphotos', photos: e.fjPhotos, caps: e.fjCaps }); } catch (_) {}
   try { upsertEstimate(e); } catch (_) {}
   estRender();
 }
@@ -4969,6 +4970,32 @@ function buildEstimatePdf(opts) {
   var notes = String(e.notes || '').split(/\n+/).map(function (l) { return l.replace(/^[\s·•\-–]+/, '').trim(); }).filter(Boolean);
   if (!notes.some(function (l) { return /valid/i.test(l); })) notes.push('Prices valid 30 days. Licensed and insured.');
   sec('Scope notes', 30); bulletList(notes, 10);
+
+  /* The photos from the visit — each one under its own subject, so the
+     customer sees what we are talking about and not a heap at the end. */
+  var epics = (estPhotos(e) || []).filter(function (x) { return /^data:image\/(jpeg|png);base64,/.test(x); }).slice(0, 12);
+  if (epics.length) {
+    var ecaps = e.fjCaps || [];
+    var cw = (W - 14) / 2, ch = Math.round(cw * 0.72);
+    sec('Photos from the visit', ch + 26);
+    for (var pi = 0; pi < epics.length; pi += 2) {
+      var pair = epics.slice(pi, pi + 2);
+      var capH = pair.some(function (_, k) { return String(ecaps[pi + k] || '').trim(); }) ? 13 : 0;
+      ens(ch + capH + 12);
+      pair.forEach(function (src, k) {
+        var x = M + k * (cw + 14);
+        var fmt = /^data:image\/png/.test(src) ? 'PNG' : 'JPEG';
+        try { doc.addImage(src, fmt, x, y, cw, ch); } catch (_) {}
+        draw(RULE, 0.5); doc.rect(x, y, cw, ch);
+        var cap = String(ecaps[pi + k] || '').trim();
+        if (cap) {
+          doc.setFont('helvetica', 'normal').setFontSize(8.5); ink(MUTED);
+          doc.text(doc.splitTextToSize(cap, cw)[0], x, y + ch + 10);
+        }
+      });
+      y += ch + capH + 12;
+    }
+  }
 
   /* Terms */
   var terms = (s.terms && s.terms.trim()) ? s.terms.trim() : 'A deposit may be required to schedule work, with the balance due on completion unless otherwise agreed. All work is performed to NFPA 211 and local codes. Workmanship warranted for one year unless stated otherwise. Prices reflect the conditions visible at the visit; if concealed damage is found once work begins, we stop and agree any change with you before continuing. ' + company + ' is not responsible for pre-existing conditions or for damage from continued use of a system reported as unsafe.';
@@ -5843,9 +5870,11 @@ root.addEventListener('click', function (e) {
     }
     case 'estph-del': {
       var ed0 = state.estimate; if (!ed0) break;
-      var l0 = estPhotos(ed0), gone = l0.splice(Number(arg), 1)[0];
+      var l0 = estPhotos(ed0), c0 = (ed0.fjCaps || []).slice(), n0 = Number(arg);
+      var gone = l0.splice(n0, 1)[0];
+      if (c0.length > n0) c0.splice(n0, 1);
       if (gone) { ed0.photosDropped = (ed0.photosDropped || []).concat([photoKey(gone)]).slice(-60); }
-      estPhotosSet(ed0, l0);
+      estPhotosSet(ed0, l0, c0);
       break;
     }
     case 'estph-cam':
@@ -5854,7 +5883,9 @@ root.addEventListener('click', function (e) {
       photoPick(act === 'estph-cam').then(function (add) {
         var good = (add || []).filter(Boolean);
         if (!good.length || state.estimate !== ea0) return;
-        estPhotosSet(ea0, estPhotos(ea0).concat(good));
+        var la0 = estPhotos(ea0).concat(good), ca0 = (ea0.fjCaps || []).slice();
+        while (ca0.length < la0.length) ca0.push('On site');
+        estPhotosSet(ea0, la0, ca0);
       }).catch(function () {});
       break;
     }
@@ -6647,6 +6678,7 @@ function fjBuildEstimate() {
     if (f.customer && f.customer.crmId) { e.crmId = f.customer.crmId; e.crmCloud = !!f.customer.crmCloud; }
     var unpriced = estApplyAi(e, d);
     e.fjPhotos = fjPhotos(f);
+    e.fjCaps = fjCaptions(f);
     /* Built from this form before? Keep the same estimate, number and link,
        so an edit updates what the customer already has instead of making a new one. */
     if (f.builtEst) {
@@ -6663,7 +6695,12 @@ function fjBuildEstimate() {
       var dropped = (f.builtEst.obj && f.builtEst.obj.photosDropped) || (prev && prev.photosDropped) || [];
       var keepP = e.fjPhotos.filter(function (p) { return dropped.indexOf(photoKey(p)) < 0; });
       var extraP = prevPhotos.filter(function (p) { return keepP.indexOf(p) < 0; });
+      var prevCaps = (f.builtEst.obj && f.builtEst.obj.fjCaps) || (prev && prev.fjCaps) || [];
+      var capBy = {};
+      prevPhotos.forEach(function (p, i) { capBy[photoKey(p)] = prevCaps[i] || ''; });
+      e.fjPhotos.forEach(function (p, i) { if (!capBy[photoKey(p)]) capBy[photoKey(p)] = e.fjCaps[i] || ''; });
       e.fjPhotos = keepP.concat(extraP).slice(0, 24);
+      e.fjCaps = e.fjPhotos.map(function (p) { return capBy[photoKey(p)] || 'On site'; });
       e.photosDropped = dropped;
       e.photoCount = 0;   /* photos changed - send them again */
     }
