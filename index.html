@@ -2040,6 +2040,7 @@ function viewRepEdit() {
       (st.msg ? '<div class="card" style="font-size:14px;border-color:' + (st.err ? 'var(--defect);color:var(--defect)' : 'var(--ok)') + '">' + esc(st.msg) + '</div>' : '') +
       (st.rep.lockedSigned ? '<div class="card" style="border-color:var(--defect);color:var(--defect);font-size:14px">The customer already signed this report online. Changes here will not change the signed copy.</div>' : '') +
       fjResumeCard('') +
+      repPhotoCardHTML(st.rep) +
       (state.fjLast && state.fjLast.kind === 'inspection' && !/invoice/i.test(st.rep.modeName || '') ? (function () {
         var bad = 0, mon = 0;
         fjChecks(state.fjLast).forEach(function (c) { var r = state.fjLast.data[c.id]; if (!r) return; if (r.v === 'bad') bad++; else if (r.v === 'monitor') mon++; });
@@ -4530,6 +4531,59 @@ function fjResumeCard(kind) {
     '<div style="font-size:15px;line-height:1.45">Go back to the form — add or remove photos, fix a note, change a measurement — then build the ' + what + ' again. It keeps the same number and the same link, so the customer sees the updated one.</div></button>';
 }
 
+/* ── Photos on a document that is already made ───────────────
+   The form is the long way back. This is the short one, and it works on every
+   estimate and every report — including the ones built before the app kept a
+   copy of the form, and the ones typed in by hand. Add a picture, take one
+   off, send it again. */
+function photoKey(s) { return String(s).length + ':' + String(s).slice(-40); }
+function photoStripHTML(list, act, caps) {
+  if (!list.length) return '<div style="color:var(--muted);font-size:13px;margin-bottom:10px">No photos on this one yet.</div>';
+  return '<div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:10px">' + list.map(function (src, i) {
+    return '<div style="position:relative;width:88px">' +
+      '<img src="' + src + '" alt="" style="width:88px;height:88px;object-fit:cover;border-radius:8px;display:block;background:var(--mortar-2)">' +
+      '<button class="btn" data-act="' + act + '" data-arg="' + i + '" aria-label="Remove this photo" style="position:absolute;top:-7px;right:-7px;width:28px;height:28px;min-height:28px;padding:0;border-radius:50%;background:var(--defect);color:#fff;border-color:var(--defect);font-size:14px;line-height:1">✕</button>' +
+      (caps && caps[i] ? '<div style="font-size:10px;color:var(--muted);margin-top:4px;text-align:center;line-height:1.25">' + esc(caps[i]) + '</div>' : '') +
+    '</div>';
+  }).join('') + '</div>';
+}
+function photoAddRow(camAct, galAct) {
+  return '<div class="row" style="gap:8px"><button class="btn btn-ghost" data-act="' + camAct + '" style="flex:1">Take a photo</button>' +
+    '<button class="btn btn-ghost" data-act="' + galAct + '" style="flex:1">Add from the gallery</button></div>';
+}
+/* Estimate: the photos the customer sees on the link and in the PDF. */
+function estPhotoCardHTML(e) {
+  var list = estPhotos(e);
+  return '<div class="card" style="border-color:var(--gold)"><div class="eyebrow">Photos for the customer (' + list.length + ')</div>' +
+    photoStripHTML(list, 'estph-del', null) + photoAddRow('estph-cam', 'estph-gal') +
+    '<div style="color:var(--muted);font-size:12px;margin-top:8px">Change them here any time. Then press <b>Preview &amp; send</b> or <b>Email</b> again — the customer opens the same link and sees the new photos.</div></div>';
+}
+function estPhotosSet(e, list) {
+  e.fjPhotos = list.slice(0, 24);
+  e.photoCount = 0;                       /* the customer copy has to be sent again */
+  try { docSave({ id: 'estph-' + e.id, kind: 'estphotos', photos: e.fjPhotos }); } catch (_) {}
+  try { upsertEstimate(e); } catch (_) {}
+  estRender();
+}
+/* Report or invoice: the pictures inside the PDF, each under its own subject. */
+function repPhotoCardHTML(rep) {
+  var list = rep.imgs || [];
+  return '<div class="card" style="border-color:var(--gold)"><div class="eyebrow">Photos in this ' + (/invoice/i.test(rep.modeName || '') ? 'invoice' : 'report') + ' (' + list.length + ')</div>' +
+    photoStripHTML(list, 'repph-del', rep.captions || []) + photoAddRow('repph-cam', 'repph-gal') +
+    '<div style="color:var(--muted);font-size:12px;margin-top:8px">A photo you add here goes in at the end, under “On site”. Press <b>Save</b> and the PDF is rebuilt with it.</div></div>';
+}
+function repPhotosSet(rep, list, caps) {
+  rep.imgs = list.slice(0, 40);
+  rep.captions = (caps || []).slice(0, 40);
+  rep.photosSent = false;                 /* the customer copy has to be sent again */
+  if (state.repEdit) { state.repEdit.dirty = true; state.repEdit.msg = 'Photos changed — press Save to rebuild the PDF.'; state.repEdit.err = false; }
+  var y = window.scrollY || 0; render(); try { window.scrollTo(0, y); } catch (_) {}
+}
+/* One picker for both, so a HEIC that cannot be read is reported the same way. */
+function photoPick(useCamera) {
+  return useCamera ? pickFile(true).then(function (x) { return x ? [x] : []; }) : pickFiles(false);
+}
+
 function viewEstimate() {
   var e = estNorm(state.estimate || (state.estimate = newEstimate()));
   var ai = (state.estAi && (!state.estAi.forId || state.estAi.forId === e)) ? state.estAi : {};
@@ -4545,7 +4599,7 @@ function viewEstimate() {
     '<div id="est_pkgs" class="row" style="gap:6px;flex-wrap:wrap">' + EST_PACKAGES.map(function (p) { return '<button class="btn btn-ghost est-pkg" data-pkg="' + p.id + '" style="padding:6px 10px;font-size:13px;min-height:36px">' + esc(p.name) + '</button>'; }).join('') + '</div></div>';
   return '<div class="app">' +
     '<div class="topbar"><button class="iconbtn" data-act="est-back">‹</button><div style="flex:1"><h1>Estimate' + (e.no ? ' #' + e.no : '') + '</h1><div class="sub">' + esc(e.title || 'Your catalog · your prices') + '</div></div></div>' +
-    '<div class="screen">' + fjResumeCard('estimate') + quick + (e.crmId ? '' : crmPickerHTML('est_pick')) +
+    '<div class="screen">' + fjResumeCard('estimate') + estPhotoCardHTML(e) + quick + (e.crmId ? '' : crmPickerHTML('est_pick')) +
       '<div class="card"><div class="eyebrow">Customer & job' + (e.crmId ? ' · linked ✓' : '') + '</div>' + cf('Name', 'name') + cf('Phone', 'phone', 'tel') + cf('Email', 'email', 'email') + addrHTML('Property address', e.customer.addr, 'id="est_addr"') +
         '<div class="field"><label>Job title (e.g. Furnace vent, Chimney liner)</label><input id="est_title" value="' + esc(e.title) + '"></div>' +
         '<div class="row" style="gap:8px"><div class="field" style="flex:1;margin-bottom:0"><label>Date of visit</label><input id="est_vdate" value="' + esc(e.visitDate) + '"></div><div class="field" style="flex:1;margin-bottom:0"><label>Prepared by</label><input id="est_prep" value="' + esc(e.preparedBy) + '"></div></div></div>' +
@@ -5646,7 +5700,7 @@ root.addEventListener('click', function (e) {
       if (!estUsed(ee).length && estChatReady() && state.settings.aiKey) estAiBuild();
       break;
     }
-    case 'est-open': { var eo = loadEstimates().filter(function (x) { return x.id === arg; })[0]; if (eo) { state.estimate = estNorm(eo); if (!(state.estAi && state.estAi.busy)) state.estAi = null; state.view = 'estimate'; render(); } break; }
+    case 'est-open': { var eo = loadEstimates().filter(function (x) { return x.id === arg; })[0]; if (eo) { state.estimate = estNorm(eo); state.fjLast = null; if (!(state.estAi && state.estAi.busy)) state.estAi = null; state.view = 'estimate'; render(); estPhotoLoad(eo).then(function () { if (state.view === 'estimate' && state.estimate === eo) estRender(); }); } break; }
     case 'est-del': removeEstimate(arg); render(); break;
     case 'est-back': { var eb = state.estimate; if (eb && eb.options.some(function (o) { return o.items.length; })) upsertEstimate(eb); state.view = 'estimates'; render(); break; }
     case 'chat-mode': state.editClient = state.presetClient || newClient(); state.presetClient = null; state.pendingMode = arg; state.pendingDepth = 'full'; state.view = 'custform'; render(); break;
@@ -5775,7 +5829,7 @@ root.addEventListener('click', function (e) {
         var e2 = loadEstimates().filter(function (x) { return x.id === dp[1]; })[0];
         if (e2) {
           state.estimate = estNorm(e2); state.fjLast = null; state.view = 'estimate'; render();
-          estPhotoLoad(e2);
+          estPhotoLoad(e2).then(function () { if (state.view === 'estimate' && state.estimate === e2) estRender(); });
           fjFormLoad(e2.id).then(function (form) {
             if (!form) return;
             form.builtEst = { id: e2.id, no: e2.no, obj: e2 };
@@ -5785,6 +5839,43 @@ root.addEventListener('click', function (e) {
         }
       }
       else docOpen(dp[1]);
+      break;
+    }
+    case 'estph-del': {
+      var ed0 = state.estimate; if (!ed0) break;
+      var l0 = estPhotos(ed0), gone = l0.splice(Number(arg), 1)[0];
+      if (gone) { ed0.photosDropped = (ed0.photosDropped || []).concat([photoKey(gone)]).slice(-60); }
+      estPhotosSet(ed0, l0);
+      break;
+    }
+    case 'estph-cam':
+    case 'estph-gal': {
+      var ea0 = state.estimate; if (!ea0) break;
+      photoPick(act === 'estph-cam').then(function (add) {
+        var good = (add || []).filter(Boolean);
+        if (!good.length || state.estimate !== ea0) return;
+        estPhotosSet(ea0, estPhotos(ea0).concat(good));
+      }).catch(function () {});
+      break;
+    }
+    case 'repph-del': {
+      var rd0 = state.repEdit && state.repEdit.rep; if (!rd0) break;
+      var ri0 = (rd0.imgs || []).slice(), rc0 = (rd0.captions || []).slice(), n0 = Number(arg);
+      ri0.splice(n0, 1); if (rc0.length > n0) rc0.splice(n0, 1);
+      repPhotosSet(rd0, ri0, rc0);
+      break;
+    }
+    case 'repph-cam':
+    case 'repph-gal': {
+      var ra0 = state.repEdit && state.repEdit.rep; if (!ra0) break;
+      photoPick(act === 'repph-cam').then(function (add) {
+        var good2 = (add || []).filter(Boolean);
+        if (!good2.length || !state.repEdit || state.repEdit.rep !== ra0) return;
+        var ri1 = (ra0.imgs || []).concat(good2);
+        var rc1 = (ra0.captions || []).slice();
+        while (rc1.length < ri1.length) rc1.push('On site');
+        repPhotosSet(ra0, ri1, rc1);
+      }).catch(function () {});
       break;
     }
     case 'fj-to-estimate': fjFromInspection(); break;
@@ -6566,6 +6657,14 @@ function fjBuildEstimate() {
       if (prev && prev.shareId) { e.shareId = prev.shareId; e.shareLink = prev.shareLink || (CLOUD_BASE + '?id=' + prev.shareId); }
       if (prev && prev.emailedAt) e.emailedAt = prev.emailedAt;
       if (prev && prev.crmId) { e.crmId = prev.crmId; e.crmCloud = prev.crmCloud; }
+      /* Photos he changed on the estimate itself are not undone by coming back
+         through the form: what he took off stays off, what he added stays on. */
+      var prevPhotos = (f.builtEst.obj && f.builtEst.obj.fjPhotos) || (prev && prev.fjPhotos) || [];
+      var dropped = (f.builtEst.obj && f.builtEst.obj.photosDropped) || (prev && prev.photosDropped) || [];
+      var keepP = e.fjPhotos.filter(function (p) { return dropped.indexOf(photoKey(p)) < 0; });
+      var extraP = prevPhotos.filter(function (p) { return keepP.indexOf(p) < 0; });
+      e.fjPhotos = keepP.concat(extraP).slice(0, 24);
+      e.photosDropped = dropped;
       e.photoCount = 0;   /* photos changed - send them again */
     }
     estEnsureNo(e);
