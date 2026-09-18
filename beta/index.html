@@ -913,32 +913,44 @@ function allItems(template) {
 }
 
 /* ── Storage: jobs in IndexedDB, settings in localStorage ──── */
-var DB_NAME = 'chimney-inspect', STORE = 'jobs', LS_JOB = 'aiopro-job-';
+var DB_NAME = 'chimney-inspect', STORE = 'jobs', DOCS = 'docs', LS_JOB = 'aiopro-job-';
 var storageMode = null;      // 'idb' | 'ls' — decided once at boot
 var storageReady = null;
 var storageFull = false;     // set true if a localStorage save is rejected for quota
 
 function idb() {
   return new Promise(function (resolve, reject) {
-    var req = indexedDB.open(DB_NAME, 1);
+    var req = indexedDB.open(DB_NAME, 2);
     req.onupgradeneeded = function () {
       var db = req.result;
       if (!db.objectStoreNames.contains(STORE)) db.createObjectStore(STORE, { keyPath: 'id' });
+      if (!db.objectStoreNames.contains(DOCS)) db.createObjectStore(DOCS, { keyPath: 'id' });
     };
     req.onsuccess = function () { resolve(req.result); };
     req.onerror = function () { reject(req.error); };
   });
 }
-function idbRun(mode, fn) {
+function idbRun(mode, fn, store) {
   return idb().then(function (db) {
     return new Promise(function (resolve, reject) {
-      var tx = db.transaction(STORE, mode);
-      var req = fn(tx.objectStore(STORE));
+      var tx = db.transaction(store || STORE, mode);
+      var req = fn(tx.objectStore(store || STORE));
       req.onsuccess = function () { resolve(req.result); };
       req.onerror = function () { reject(req.error); };
     });
   });
 }
+/* Finished reports and invoices, kept on the phone so the list survives. */
+function docSave(rec) {
+  return idbRun('readwrite', function (st) { return st.put(rec); }, DOCS).catch(function () {});
+}
+function docList() {
+  return idbRun('readonly', function (st) { return st.getAll(); }, DOCS)
+    .then(function (rows) { return (rows || []).sort(function (a, b) { return (b.at || 0) - (a.at || 0); }); })
+    .catch(function () { return []; });
+}
+function docGet(id) { return idbRun('readonly', function (st) { return st.get(id); }, DOCS).catch(function () { return null; }); }
+function docDelete(id) { return idbRun('readwrite', function (st) { return st['delete'](id); }, DOCS).catch(function () {}); }
 
 /* Some browsers allow indexedDB.open() on a file:// page but then throw
    on the first real transaction, which would silently lose every job.
@@ -1384,7 +1396,7 @@ function viewHome() {
       bigTile('estimate', 'Estimate', ICO.estimate) +
       bigTile('invoice', 'Invoice', ICO.checklist) +
       tile('coach-start', 'Ask Refael', ICO.ask) +
-      tile('estimates', 'Saved estimates', ICO.estimate) +
+      tile('docs', 'My work', ICO.checklist) +
       tile('clients', 'Customers', ICO.clients) +
       tile('schedule', 'Schedule', ICO.schedule) +
       tile('message-start', 'Messages', ICO.message) +
@@ -1453,6 +1465,7 @@ function viewSettings() {
         '<div class="row" style="gap:6px;margin-top:4px"><button class="btn btn-ghost" data-act="set-model" data-arg="claude-haiku-4-5-20251001">Cheapest (Haiku)</button><button class="btn btn-ghost" data-act="set-model" data-arg="claude-sonnet-5">Stronger (Sonnet)</button></div>' +
         '<div style="color:var(--muted);font-size:12px;margin-top:6px">Haiku is the cheapest and fine for most inspections. After picking, press Save.</div>' +
       '</div>' +
+      aiCostCard() +
       viewTechCard() +
       '<div class="card"><div class="eyebrow">Backup</div>' +
         '<div style="color:var(--muted);font-size:14px;margin-bottom:12px">Everything is stored on this device only. Export a backup file now and then — and use Import to move all your jobs onto a new phone.</div>' +
@@ -1951,6 +1964,31 @@ function viewRepEdit() {
     '<div class="bottombar" style="gap:6px"><button class="btn btn-gold btn-primary" data-act="rep-save" style="flex:1.1">Save</button><button class="btn btn-ghost" data-act="rep-preview" style="flex:1">Preview</button><button class="btn btn-ghost" data-act="rep-pdf" style="flex:0.7">PDF</button><button class="btn btn-ghost" data-act="rep-mail" style="flex:0.7">Email</button></div>' +
   '</div>';
 }
+/* One record per finished document, so the lists keep working after the app is closed. */
+function docKeep(rep) {
+  if (!rep || !rep.id) return;
+  var cu = (rep.data && rep.data.customer) || {};
+  docSave({
+    id: rep.id, kind: rep.kind || (/invoice/i.test(rep.modeName || '') ? 'invoice' : 'inspection'),
+    at: rep.at || Date.now(), modeName: rep.modeName || '', fn: rep.fn || '',
+    name: cu.name || '', addr: [cu.address, cu.cityStateZip].filter(Boolean).join(', '), email: cu.email || '',
+    total: Number((rep.data || {}).total) || 0, payStatus: (rep.data || {}).payStatus || '',
+    shareId: rep.shareId || '', emailedTo: rep.emailedTo || '', emailedAt: rep.emailedAt || 0, signedAt: rep.signedAt || 0,
+    data: rep.data, imgs: rep.imgs || [], before: rep.before || [], after: rep.after || []
+  });
+}
+function docOpen(id) {
+  docGet(id).then(function (rec) {
+    if (!rec) { alert('That document is no longer on this phone.'); return; }
+    var modeName = rec.modeName || (rec.kind === 'invoice' ? 'Invoice' : 'Inspection');
+    var blob;
+    try { blob = buildChatReport(rec.data, rec.imgs || [], state.settings, modeName, { before: rec.before || [], after: rec.after || [] }); } catch (e) { alert('Could not rebuild the PDF: ' + ((e && e.message) || e)); return; }
+    state.chat = { mode: rec.kind === 'invoice' ? 'invoice' : 'level1', customer: { name: rec.name, address: rec.addr, email: rec.email }, depth: 'full', messages: [], pending: { photos: [] }, fromForm: true };
+    state.chat.lastReport = Object.assign({}, rec, { blob: blob, modeName: modeName });
+    state.fjLast = null;
+    repEditOpen(false);
+  });
+}
 function repSetPath(obj, path, val) {
   var ks = path.split('.'), o = obj;
   for (var i = 0; i < ks.length - 1; i++) { if (o[ks[i]] == null) return; o = o[ks[i]]; }
@@ -1987,6 +2025,7 @@ function repSave(then) {
   rep.data = d; rep.at = Date.now();
   st.d = JSON.parse(JSON.stringify(d)); st.d._addr = [d.customer.address, d.customer.cityStateZip].filter(Boolean).join(', ');
   st.dirty = false; st.err = false; st.msg = 'Saved. The PDF is updated.';
+  docKeep(rep);
   if (state.chat && state.chat.customer && d.customer) { state.chat.customer.email = d.customer.email || state.chat.customer.email; }
   if (then) then(); else render();
   return true;
@@ -3452,6 +3491,58 @@ function viewSchedule() {
     '<div class="bottombar"><button class="btn btn-gold btn-primary" data-act="cal-new">+ New job</button></div>' +
   '</div>';
 }
+/* ── What the AI costs ───────────────────────────────────────
+   Every answer from the API says how many tokens it used. We keep
+   the running total per month on this phone and price it here. */
+var AI_COST_LS = 'aio-ai-cost';
+var AI_RATES = { haiku: [1, 5, 1.25, 0.1], sonnet: [3, 15, 3.75, 0.3], opus: [15, 75, 18.75, 1.5] };
+function aiRate(model) {
+  var m = String(model || '').toLowerCase();
+  return /opus/.test(m) ? AI_RATES.opus : /sonnet/.test(m) ? AI_RATES.sonnet : AI_RATES.haiku;
+}
+function aiCostRead() { try { return JSON.parse(localStorage.getItem(AI_COST_LS) || '{}') || {}; } catch (e) { return {}; } }
+function aiMonthKey(d) { d = d || new Date(); return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0'); }
+function aiUsage(u, model) {
+  if (!u) return;
+  var r = aiRate(model), all = aiCostRead(), k = aiMonthKey(), m = all[k] || { calls: 0, cost: 0, inTok: 0, outTok: 0 };
+  var inT = Number(u.input_tokens || 0), outT = Number(u.output_tokens || 0),
+      cw = Number(u.cache_creation_input_tokens || 0), cr = Number(u.cache_read_input_tokens || 0);
+  m.calls++; m.inTok += inT + cw + cr; m.outTok += outT;
+  m.cost += (inT * r[0] + outT * r[1] + cw * r[2] + cr * r[3]) / 1e6;
+  all[k] = m;
+  try { localStorage.setItem(AI_COST_LS, JSON.stringify(all)); } catch (e) {}
+}
+function aiCostCard() {
+  var all = aiCostRead(), k = aiMonthKey(), m = all[k] || { calls: 0, cost: 0 };
+  var prevD = new Date(); prevD.setMonth(prevD.getMonth() - 1);
+  var pv = all[aiMonthKey(prevD)] || { calls: 0, cost: 0 };
+  var total = Object.keys(all).reduce(function (a, x) { return a + (all[x].cost || 0); }, 0);
+  var tCalls = Object.keys(all).reduce(function (a, x) { return a + (all[x].calls || 0); }, 0);
+  function usd(n) { return '$' + (n < 1 ? n.toFixed(3) : n.toFixed(2)); }
+  return '<div class="card"><div class="eyebrow">What the AI costs</div>' +
+    '<div style="font-size:15px;line-height:1.8">This month: <b>' + usd(m.cost) + '</b> · ' + m.calls + ' AI answers<br>' +
+    'Last month: ' + usd(pv.cost) + ' · ' + pv.calls + ' answers<br>' +
+    'Since this phone started: ' + usd(total) + ' · ' + tCalls + ' answers</div>' +
+    '<div style="color:var(--muted);font-size:12px;margin-top:8px">Counted from what the AI reports on every answer, at the price of the model in use. Photos are the expensive part, so a job with many photos costs more than one with two.</div></div>';
+}
+/* Every call to the AI passes through here, so nothing is missed. */
+(function () {
+  var orig = window.fetch;
+  window.fetch = function (url, opt) {
+    var out = orig.apply(this, arguments);
+    try {
+      if (typeof url === 'string' && url.indexOf('api.anthropic.com') >= 0) {
+        var model = ''; try { model = (JSON.parse((opt && opt.body) || '{}') || {}).model || ''; } catch (e) {}
+        out = out.then(function (r) {
+          try { r.clone().json().then(function (d) { aiUsage(d && d.usage, model); }).catch(function () {}); } catch (e) {}
+          return r;
+        });
+      }
+    } catch (e) {}
+    return out;
+  };
+})();
+
 /* ── Who may open this app ──────────────────────────────────
    No key on the phone = nothing but the lock screen. The key is
    checked with the server on every start, so the moment Refael
@@ -3758,7 +3849,7 @@ var EST_PACKAGES = [
 
 function estPrepDefault() { try { return localStorage.getItem('aio-est-prep') || EST_BRAND.preparedBy; } catch (e) { return EST_BRAND.preparedBy; } }
 function newEstimate() {
-  return { customer: { name: '', phone: '', email: '', addr: '' }, title: '', found: '', notes: '', preparedBy: estPrepDefault(), visitDate: isoToday(), no: null, tax: 0, active: 0,
+  return { createdAt: Date.now(), customer: { name: '', phone: '', email: '', addr: '' }, title: '', found: '', notes: '', preparedBy: estPrepDefault(), visitDate: isoToday(), no: null, tax: 0, active: 0,
     options: [ estBlankOpt() ] };
 }
 function estBlankOpt() { return { name: '', summary: '', items: [], disc: 0 }; }
@@ -3817,6 +3908,96 @@ function estUsed(e) { return e.options.filter(function (o) { return o.items.some
 function estHeadline(e) { var u = estUsed(e); if (!u.length) return 0; return estTotals(u[0], e.tax).total; }
 function upsertEstimate(e) { if (!e.id) e.id = 'es-' + Date.now() + '-' + Math.random().toString(36).slice(2, 6); e.updatedAt = Date.now(); var l = loadEstimates(); var i = l.findIndex(function (x) { return x.id === e.id; }); if (i >= 0) l[i] = e; else l.unshift(e); saveEstimates(l); return e; }
 function removeEstimate(id) { saveEstimates(loadEstimates().filter(function (e) { return e.id !== id; })); }
+function docStatusPill(o) {
+  if (o.signedAt) return '<span class="pill" style="background:var(--ok);color:#fff">SIGNED</span>';
+  if (o.openedAt) return '<span class="pill" style="background:var(--monitor);color:#fff">OPENED</span>';
+  if (o.emailedAt) return '<span class="pill">SENT</span>';
+  return '<span class="pill" style="opacity:.6">DRAFT</span>';
+}
+function docsRows(kind) {
+  var list = (state.docs && state.docs.list) || [];
+  if (kind === 'estimate') {
+    return loadEstimates().slice().map(function (e) {
+      var t = estTotals(estUsed(e)[0] || { items: [] }, e.tax);
+      return { id: e.id, est: e, name: (e.customer || {}).name || 'No name', addr: (e.customer || {}).addr || '', at: e.createdAt || (e.visitDate ? Date.parse(e.visitDate + 'T12:00:00') : 0) || 0,
+        sub: 'Estimate #' + (e.no || '—') + (e.title ? ' · ' + e.title : ''), total: t.total,
+        emailedAt: e.emailedAt || 0, signedAt: e.signedAt || 0, openedAt: e.openedAt || 0 };
+    }).sort(function (a, b) { return (b.at || 0) - (a.at || 0); });
+  }
+  return list.filter(function (d) { return d.kind === kind; }).map(function (d) {
+    return { id: d.id, doc: d, name: d.name || 'No name', addr: d.addr || '', at: d.at || 0,
+      sub: d.modeName || (kind === 'invoice' ? 'Invoice' : 'Inspection'), total: d.total || 0,
+      emailedAt: d.emailedAt || 0, signedAt: d.signedAt || 0, openedAt: 0, payStatus: d.payStatus || '' };
+  });
+}
+function viewDocs() {
+  var tab = (state.docs && state.docs.tab) || 'inspection';
+  var TABS = [['inspection', 'Inspections'], ['estimate', 'Estimates'], ['invoice', 'Invoices']];
+  var rows = docsRows(tab);
+  var byMonth = {};
+  rows.forEach(function (r) {
+    var d = r.at ? new Date(r.at) : null;
+    var k = d ? d.toLocaleDateString(undefined, { month: 'long', year: 'numeric' }) : 'No date';
+    (byMonth[k] = byMonth[k] || []).push(r);
+  });
+  var body = Object.keys(byMonth).map(function (k) {
+    return '<div class="eyebrow" style="margin:14px 2px 8px">' + esc(k) + '</div>' +
+      byMonth[k].map(function (r) {
+        return '<button class="card card-tap" style="display:block;width:100%;text-align:left" data-act="doc-open" data-arg="' + esc(tab + '|' + r.id) + '">' +
+          '<div class="row" style="align-items:baseline;gap:8px"><div style="flex:1;font-weight:700;font-size:16px">' + esc(r.name) + '</div>' +
+          (r.total ? '<div style="font-weight:700;color:var(--ember)">' + esc(money(r.total).replace(/\.00$/, '')) + '</div>' : '') + '</div>' +
+          '<div style="color:var(--muted);font-size:13px;margin-top:2px">' + esc(r.sub) + (r.addr ? ' · ' + esc(String(r.addr).split(',')[0]) : '') + '</div>' +
+          '<div class="row" style="align-items:center;gap:8px;margin-top:6px"><div style="flex:1;color:var(--muted);font-size:12px">' + (r.at ? esc(new Date(r.at).toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' }) + ' · ' + new Date(r.at).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })) : '') + '</div>' +
+          (r.payStatus ? '<span class="pill" style="background:' + (r.payStatus === 'paid' ? 'var(--ok)' : r.payStatus === 'partial' ? 'var(--monitor)' : 'var(--defect)') + ';color:#fff">' + (r.payStatus === 'paid' ? 'PAID' : r.payStatus === 'partial' ? 'PART PAID' : 'NOT PAID') + '</span>' : '') +
+          docStatusPill(r) + '</div></button>';
+      }).join('');
+  }).join('');
+  if (!rows.length) body = '<div class="empty">Nothing here yet. Everything you finish on this phone shows up in this list.</div>';
+  return '<div class="app">' +
+    '<div class="topbar"><button class="iconbtn" data-act="home">‹</button><div style="flex:1"><h1>My work</h1><div class="sub">' + rows.length + ' ' + (rows.length === 1 ? 'document' : 'documents') + '</div></div><button class="iconbtn" data-act="docs-refresh" aria-label="Check status">⟳</button></div>' +
+    '<div style="position:sticky;top:0;z-index:4;display:flex;gap:6px;padding:8px 12px;background:var(--paper,#f3eee4);border-bottom:0.5px solid var(--rule)">' +
+      TABS.map(function (t) { return '<button class="btn ' + (tab === t[0] ? 'btn-gold btn-primary' : 'btn-ghost') + '" data-act="docs-tab" data-arg="' + t[0] + '" style="flex:1;min-height:40px;padding:0 6px;font-size:13px">' + t[1] + '</button>'; }).join('') +
+    '</div>' +
+    '<div class="screen">' + (state.docs && state.docs.msg ? '<div class="card" style="font-size:14px">' + esc(state.docs.msg) + '</div>' : '') + body + '</div>' +
+    '<div class="bottombar" style="gap:6px"><button class="btn btn-gold btn-primary" data-act="fj-new" data-arg="' + (tab === 'invoice' ? 'invoice' : tab === 'estimate' ? 'estimate' : 'inspection') + '">New ' + (tab === 'invoice' ? 'invoice' : tab === 'estimate' ? 'estimate' : 'inspection') + '</button></div>' +
+  '</div>';
+}
+function docsLoad(tab) {
+  state.docs = state.docs || { tab: 'inspection' };
+  if (tab) state.docs.tab = tab;
+  state.view = 'docs';
+  docList().then(function (l) { state.docs.list = l; if (state.view === 'docs') render(); });
+  render();
+}
+/* One round trip that refreshes "opened / signed" for everything shared. */
+function docsRefresh() {
+  var key = sendKey(); if (!key) { state.docs.msg = 'Set this phone up first.'; render(); return; }
+  var docs = (state.docs && state.docs.list) || [], ests = loadEstimates();
+  var ids = docs.map(function (d) { return d.shareId; }).concat(ests.map(function (e) { return e.shareId; })).filter(Boolean);
+  if (!ids.length) { state.docs.msg = 'Nothing has been emailed yet.'; render(); return; }
+  state.docs.msg = 'Checking…'; render();
+  cloudRpc('share_status', { p_key: key, p_ids: ids }).then(function (rows) {
+    var by = {}; (rows || []).forEach(function (r) { by[r.id] = r; });
+    var n = 0;
+    docs.forEach(function (d) {
+      var r = by[d.shareId]; if (!r) return;
+      d.openedAt = r.opened_at ? new Date(r.opened_at).getTime() : 0;
+      d.signedAt = r.signed_at ? new Date(r.signed_at).getTime() : 0;
+      if (d.signedAt || d.openedAt) n++;
+      docSave(d);
+    });
+    var list = ests.map(function (e) {
+      var r = by[e.shareId]; if (!r) return e;
+      e.openedAt = r.opened_at ? new Date(r.opened_at).getTime() : 0;
+      e.signedAt = r.signed_at ? new Date(r.signed_at).getTime() : 0;
+      if (e.signedAt) e.signedAs = r.signer_name || '';
+      return e;
+    });
+    try { saveEstimates(list); } catch (_) {}
+    state.docs.msg = 'Up to date.';
+    render();
+  }).catch(function (err) { state.docs.msg = 'Could not check: ' + ((err && err.message) || err); render(); });
+}
 function viewEstimatesList() {
   var list = loadEstimates();
   var rows = list.length ? list.map(function (e) {
@@ -4617,6 +4798,7 @@ function estMailSend() {
     if (!d || !d.ok) { var er = new Error((d && d.error) || 'The mailer did not answer.'); er.server = true; throw er; }
     if (isRep) {
       m.rep.emailedTo = to; m.rep.emailedAt = Date.now();
+      docKeep(m.rep);
       var cc = m.chat && m.chat.customer;
       if (cc && cc.crmId) crmLog({ id: cc.crmId, cloud: !!cc.crmCloud, localId: cc.crmCloud ? '' : cc.crmId }, 'Inspection report emailed to ' + to, '');
     } else {
@@ -4746,6 +4928,7 @@ function render() {
   else if (state.view === 'fjsetup') html = viewFjSetup();
   else if (state.view === 'fjform') html = viewFjForm();
   else if (state.view === 'preview') html = viewPreview();
+  else if (state.view === 'docs') html = viewDocs();
   else html = viewHome();
   root.innerHTML = html;
   wireInputs();
@@ -5089,6 +5272,15 @@ root.addEventListener('click', function (e) {
     case 'fj-cam': fjAddPhoto(arg, true); break;
     case 'fj-gal': fjAddPhoto(arg, false); break;
     case 'fj-photo-del': { var pp = String(arg).split('|'), f2 = state.fj; if (f2) { var arr0 = pp[0] === '_extra' ? f2.extraPhotos : pp[0] === '_before' ? f2.beforePhotos : pp[0] === '_after' ? f2.afterPhotos : fjRow(f2, pp[0]).photos; if (arr0) arr0.splice(Number(pp[1]), 1); render(); } break; }
+    case 'docs': docsLoad(); break;
+    case 'docs-tab': docsLoad(arg); break;
+    case 'docs-refresh': docsRefresh(); break;
+    case 'doc-open': {
+      var dp = String(arg).split('|');
+      if (dp[0] === 'estimate') { var e2 = loadEstimates().filter(function (x) { return x.id === dp[1]; })[0]; if (e2) { state.estimate = estNorm(e2); state.view = 'estimate'; render(); } }
+      else docOpen(dp[1]);
+      break;
+    }
     case 'fj-to-estimate': fjFromInspection(); break;
     case 'fj-review': fjReview(); break;
     case 'fj-build': fjBuildEstimate(); break;
@@ -5879,7 +6071,8 @@ function fjBuildReport() {
     var who = String(d.customer.name || 'Customer').trim().split(/\s+/)[0].replace(/[^\w-]+/g, '') || 'Customer';
     var fn = 'AIO-Pro-Chimney-' + (isInv ? 'Invoice-' : 'Inspection-') + who + '-' + isoToday() + '.pdf';
     state.chat = { mode: isInv ? 'invoice' : (f.level === '2' ? 'level2' : 'level1'), customer: cu, depth: 'full', messages: [], pending: { photos: [] }, fromForm: true };
-    state.chat.lastReport = { data: d, imgs: imgs, blob: blob, fn: fn, mode: state.chat.mode, modeName: modeName, shareId: '', at: Date.now(), before: ba.before, after: ba.after };
+    state.chat.lastReport = { id: 'doc-' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6), data: d, imgs: imgs, blob: blob, fn: fn, mode: state.chat.mode, modeName: modeName, shareId: '', at: Date.now(), before: ba.before, after: ba.after, kind: isInv ? 'invoice' : 'inspection' };
+    docKeep(state.chat.lastReport);
     f.busy = false; state.fjLast = f;
     repEditOpen(true);
   }).catch(function (err) { f.busy = false; f.err = (err && err.message) || 'AI error'; if (state.view === 'fjform') render(); });
