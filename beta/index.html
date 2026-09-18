@@ -8,9 +8,10 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black" />
 <meta name="mobile-web-app-capable" content="yes" />
 <title>AIO Pro Inspect</title>
-<link rel="manifest" href="../manifest.webmanifest" />
+<link rel="manifest" href="./manifest.webmanifest" />
+<link rel="icon" href="../icons/icon-192.png" sizes="192x192" type="image/png" />
 <link rel="icon" href="../icons/icon.svg" type="image/svg+xml" />
-<link rel="apple-touch-icon" href="../icons/icon.svg" />
+<link rel="apple-touch-icon" href="../icons/apple-touch-icon.png" />
 <style>
 /* ────────────────────────────────────────────────────────────
    Designed for a phone held in one gloved hand, in a basement
@@ -1025,11 +1026,20 @@ function deleteJob(id) {
   });
 }
 
+var BRAND_LOGO = 'data:image/jpeg;base64,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';
 var SETTINGS_KEY = 'aiopro-settings';
 function defaultSettings() {
-  return { company: 'AIO Pro Chimney', phone: '', email: '', address: 'Greater St. Louis, MO', license: '', logo: null, aiKey: '', aiModel: 'claude-haiku-4-5-20251001' };
+  return { company: 'AIO Pro Chimney', phone: '(314) 379-2871', email: 'Aiopro1701@gmail.com', address: 'Greater St. Louis, MO', license: '', logo: BRAND_LOGO, aiKey: '', aiModel: 'claude-haiku-4-5-20251001' };
 }
-function loadSettings() { try { return JSON.parse(localStorage.getItem(SETTINGS_KEY)) || defaultSettings(); } catch (e) { return defaultSettings(); } }
+/* logo === null/undefined means "never chosen" -> the company logo.
+   logo === '' means the owner removed it on purpose. */
+function loadSettings() {
+  try {
+    var s = JSON.parse(localStorage.getItem(SETTINGS_KEY)) || defaultSettings();
+    if (s.logo == null) s.logo = BRAND_LOGO;
+    return s;
+  } catch (e) { return defaultSettings(); }
+}
 function saveSettings(s) { localStorage.setItem(SETTINGS_KEY, JSON.stringify(s)); return s; }
 
 function newJob(templateId) {
@@ -1397,7 +1407,7 @@ function viewHome() {
       bigTile('invoice', 'Invoice', ICO.checklist) +
       tile('coach-start', 'Ask Refael', ICO.ask) +
       tile('docs', 'My work', ICO.checklist) +
-      tile('clients', 'Customers', ICO.clients) +
+      (isTech() ? '' : tile('clients', 'Customers', ICO.clients)) +
       tile('schedule', 'Schedule', ICO.schedule) +
       tile('message-start', 'Messages', ICO.message) +
       tile('settings', 'Settings', ICO.settings) +
@@ -1424,7 +1434,7 @@ function viewHome() {
   return '<div class="app">' +
     (state.picking
       ? '<div class="topbar"><h1>Checklist</h1></div>'
-      : '<div class="topbar"><div style="width:34px;height:34px;border-radius:50%;border:1.5px solid var(--gold);display:grid;place-items:center;color:var(--gold);font-family:var(--serif);font-size:16px;flex:none">A</div>' +
+      : '<div class="topbar">' + brandMarkHTML(34) +
         '<div style="flex:1"><h1 style="font-family:var(--serif);letter-spacing:1px">A.I.O PRO</h1><div class="sub" style="color:var(--gold);letter-spacing:0.18em;font-size:9px">CHIMNEY · ROOFING</div></div>' +
         '<button class="iconbtn" data-act="settings" aria-label="Settings">SET</button></div>') +
     '<div class="screen">' + body + '</div>' +
@@ -1432,40 +1442,126 @@ function viewHome() {
     '</div>';
 }
 
+/* The company mark: the logo the owner chose (or the built-in one), falling
+   back to the gold "A" circle only if branding was removed on purpose. */
+function brandMarkHTML(px) {
+  var l = (state.settings && state.settings.logo) || '';
+  if (l) return '<img src="' + l + '" alt="" style="width:' + px + 'px;height:' + px + 'px;border-radius:8px;object-fit:cover;flex:none;background:#141414">';
+  return '<div style="width:' + px + 'px;height:' + px + 'px;border-radius:50%;border:1.5px solid var(--gold);display:grid;place-items:center;color:var(--gold);font-family:var(--serif);font-size:' + Math.round(px * 0.47) + 'px;flex:none">A</div>';
+}
+
+/* ── Branding for the whole crew ─────────────────────────────
+   The owner publishes his logo, company details and AI settings once;
+   every technician phone picks them up when it starts, so his app looks
+   exactly like Refael's instead of an empty shell. */
+var BRAND_PULL_LS = 'aio-brand-at';
+function brandFields(s) {
+  return { company: s.company || '', phone: s.phone || '', email: s.email || '', address: s.address || '',
+    license: s.license || '', terms: s.terms || '', logo: s.logo || '', aiModel: s.aiModel || '', aiKey: s.aiKey || '' };
+}
+function brandPush(quiet) {
+  var k = ownerKey();
+  if (!k) { if (!quiet) alert('Set this phone up as Refael first.'); return Promise.resolve(false); }
+  return cloudRpc('brand_put', { p_key: k, p_data: brandFields(state.settings) }).then(function () {
+    if (!quiet) alert('Sent. Your technician\'s phone picks it up the next time he opens the app.');
+    return true;
+  }).catch(function (err) {
+    if (!quiet) alert('Could not send the branding: ' + ((err && err.message) || err));
+    return false;
+  });
+}
+function brandPull() {
+  var k = techKey(); if (!k || ownerKey()) return Promise.resolve(false);
+  return cloudRpc('brand_get', { p_key: k }).then(function (b) {
+    if (!b || typeof b !== 'object') return false;
+    var s = state.settings, ch = false;
+    ['company', 'phone', 'email', 'address', 'license', 'terms', 'logo', 'aiModel', 'aiKey'].forEach(function (f) {
+      if (b[f] && b[f] !== s[f]) { s[f] = b[f]; ch = true; }
+    });
+    if (ch) { saveSettings(s); try { localStorage.setItem(BRAND_PULL_LS, String(Date.now())); } catch (e) {} render(); }
+    return ch;
+  }).catch(function () { return false; });
+}
+
+function brandShareCard() {
+  if (!ownerKey()) {
+    var at = 0; try { at = Number(localStorage.getItem(BRAND_PULL_LS) || 0); } catch (e) {}
+    return techKey()
+      ? '<div class="card"><div class="eyebrow">Branding</div><div style="font-size:14px;color:var(--muted)">The logo, company details and AI settings come from the office' + (at ? ', last updated ' + new Date(at).toLocaleDateString() : '') + '. Nothing to set up here.</div></div>'
+      : '';
+  }
+  return '<div class="card" style="border-color:var(--gold)"><div class="eyebrow">Send this to the crew</div>' +
+    '<div style="color:var(--muted);font-size:13px;margin-bottom:10px">Pushes your logo, company details, terms and AI settings to every phone in the crew, so their app and their PDFs look exactly like yours. Do this once now, and again any time you change something here.</div>' +
+    '<button class="btn btn-gold" data-act="brand-push" style="width:100%">Send my branding to the crew</button></div>';
+}
+
+/* ── Put the app on the home screen ───────────────────────── */
+var installPrompt = null;
+try {
+  window.addEventListener('beforeinstallprompt', function (e) { e.preventDefault(); installPrompt = e; if (state.view === 'settings') render(); });
+} catch (e) {}
+function isInstalled() {
+  try { return window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true; } catch (e) { return false; }
+}
+function installCard() {
+  if (isInstalled()) return '<div class="card"><div class="eyebrow">This phone</div><div style="font-size:14px">Installed on the home screen ✓</div></div>';
+  var ios = /iPad|iPhone|iPod/.test(navigator.userAgent || '');
+  return '<div class="card" style="border-color:var(--gold)"><div class="eyebrow">Put it on your home screen</div>' +
+    '<div style="font-size:14px;line-height:1.5;margin-bottom:10px">' +
+      (ios
+        ? 'In <b>Safari</b>: tap the <b>Share</b> button at the bottom, scroll down, tap <b>Add to Home Screen</b>, then <b>Add</b>.'
+        : 'In <b>Chrome</b>: tap the <b>⋮</b> menu at the top right, then <b>Add to Home screen</b> (or <b>Install app</b>), then <b>Install</b>.') +
+      '</div>' +
+    (installPrompt ? '<button class="btn btn-gold" data-act="install-app" style="width:100%">Install it now</button>' : '') +
+    '<div style="color:var(--muted);font-size:12px;margin-top:8px">It then opens like a normal app, full screen, and stays signed in.</div></div>';
+}
+
 function viewSettings() {
   var s = state.settings;
   var logo = s.logo
-    ? '<img src="' + s.logo + '" alt="Logo" style="max-width:200px;max-height:90px;object-fit:contain;display:block;margin-bottom:12px">'
-    : '<div style="color:var(--muted);font-size:14px;margin-bottom:12px">No logo yet. It prints at the top of every report.</div>';
+    ? '<img src="' + s.logo + '" alt="Logo" style="max-width:200px;max-height:90px;object-fit:contain;display:block;margin-bottom:12px;border-radius:8px">'
+    : '<div style="color:var(--muted);font-size:14px;margin-bottom:12px">No logo. Choose an image and it prints at the top of every document.</div>';
   function fld(label, key, mode) {
     return '<div class="field"><label>' + label + '</label>' +
       '<input data-model="settings.' + key + '"' + (mode ? ' inputmode="' + mode + '"' : '') + ' value="' + esc(s[key] || '') + '"></div>';
   }
   return '<div class="app">' +
-    '<div class="topbar"><button class="iconbtn" data-act="home">‹</button><h1>Company details</h1></div>' +
+    '<div class="topbar"><button class="iconbtn" data-act="home">‹</button><h1>' + (isTech() ? 'Settings' : 'Company details') + '</h1></div>' +
     '<div class="screen">' +
-      '<div class="card"><div class="eyebrow">Logo on the report</div>' + logo +
-        '<div class="row">' +
-          '<button class="btn btn-ghost" data-act="choose-logo">' + (s.logo ? 'Replace' : 'Choose image') + '</button>' +
-          (s.logo ? '<button class="btn btn-ghost" data-act="remove-logo">Remove</button>' : '') +
-        '</div></div>' +
-      '<div class="card">' +
-        fld('Company name', 'company') + fld('Phone', 'phone', 'tel') + fld('Email', 'email', 'email') +
-        fld('Service area or address', 'address') + fld('Licence number', 'license') +
-      '</div>' +
-      '<div class="card"><div class="eyebrow">Terms &amp; conditions (prints on every report)</div>' +
+      '<div class="card"><div class="eyebrow">Company logo</div>' + logo +
+        '<div style="color:var(--muted);font-size:13px;margin-bottom:10px">Shows at the top of the app and prints on every report, estimate and invoice.</div>' +
+        (isTech() ? '' :
+          '<div class="row">' +
+            '<button class="btn btn-ghost" data-act="choose-logo">' + (s.logo ? 'Replace' : 'Choose image') + '</button>' +
+            (s.logo ? '<button class="btn btn-ghost" data-act="remove-logo">Remove</button>' : '') +
+          '</div>') + '</div>' +
+      brandShareCard() +
+      installCard() +
+      (isTech()
+        ? '<div class="card"><div class="eyebrow">Company</div><div style="font-size:15px;line-height:1.6">' +
+            esc(s.company || 'AIO Pro Chimney') + '<br>' + esc(s.phone || '') + '<br>' + esc(s.email || '') + '</div></div>'
+        : '<div class="card">' +
+            fld('Company name', 'company') + fld('Phone', 'phone', 'tel') + fld('Email', 'email', 'email') +
+            fld('Service area or address', 'address') + fld('Licence number', 'license') +
+          '</div>') +
+      (isTech() ? '' :
+        '<div class="card"><div class="eyebrow">Terms &amp; conditions (prints on every report)</div>' +
         '<div style="color:var(--muted);font-size:13px;margin-bottom:8px">Leave blank to use the standard text. What you type here replaces it.</div>' +
         '<div class="field" style="margin-bottom:0"><textarea data-model="settings.terms" style="min-height:130px" placeholder="Your terms and conditions...">' + esc(s.terms || '') + '</textarea></div>' +
-      '</div>' +
-      '<div class="card"><div class="eyebrow">AI (Claude) — powers the app</div>' +
+      '</div>') +
+      (isTech()
+        ? '<div class="card"><div class="eyebrow">AI (Claude) — powers the app</div>' +
+            '<div style="font-size:15px;font-weight:650;color:' + (s.aiKey ? 'var(--ok)' : 'var(--defect)') + '">' + (s.aiKey ? 'Ready ✓' : 'Not set up yet — call Refael') + '</div>' +
+            '<div style="color:var(--muted);font-size:13px;margin-top:6px">Set up by the office. Nothing to do here.</div></div>'
+        : '<div class="card"><div class="eyebrow">AI (Claude) — powers the app</div>' +
         '<div style="font-size:15px;font-weight:650;margin-bottom:10px;color:' + (s.aiKey ? 'var(--ok)' : 'var(--defect)') + '">' + (s.aiKey ? 'AI key saved ✓' : 'No AI key yet — paste it below and press Save') + '</div>' +
         '<div style="color:var(--muted);font-size:14px;margin-bottom:12px">Create a key at console.anthropic.com (separate from your Claude subscription). Paste it here and press <b>Save</b>. Stored only on this device.</div>' +
         '<div class="field"><label>Anthropic API key</label><input data-model="settings.aiKey" autocapitalize="off" autocorrect="off" spellcheck="false" value="' + esc(s.aiKey || '') + '" placeholder="sk-ant-..."></div>' +
         fld('Model', 'aiModel') +
         '<div class="row" style="gap:6px;margin-top:4px"><button class="btn btn-ghost" data-act="set-model" data-arg="claude-haiku-4-5-20251001">Cheapest (Haiku)</button><button class="btn btn-ghost" data-act="set-model" data-arg="claude-sonnet-5">Stronger (Sonnet)</button></div>' +
         '<div style="color:var(--muted);font-size:12px;margin-top:6px">Haiku is the cheapest and fine for most inspections. After picking, press Save.</div>' +
-      '</div>' +
-      aiCostCard() +
+      '</div>') +
+      (isTech() ? '' : aiCostCard()) +
       viewTechCard() +
       '<div class="card"><div class="eyebrow">Backup</div>' +
         '<div style="color:var(--muted);font-size:14px;margin-bottom:12px">Everything is stored on this device only. Export a backup file now and then — and use Import to move all your jobs onto a new phone.</div>' +
@@ -2731,11 +2827,29 @@ function crmToRow(c) {
   if (c.history && !crmIsCloudId(c.id)) row.history = c.history;
   return row;
 }
+/* The technician may look ONE customer up while writing a job: 3+ characters,
+   8 results, name / phone / email / address only. No list, no history. */
+function crmLookupTech(q) {
+  var k = techKey();
+  if (!k || String(q || '').trim().length < 3) return Promise.resolve([]);
+  return cloudRpc('crm_lookup', { p_key: k, p_q: String(q).trim() })
+    .then(function (rows) { return (rows || []).map(crmFromRow); })
+    .catch(function () { return []; });
+}
 function crmSearch(q, filter, offset) {
+  if (isTech()) {
+    return crmLookupTech(q).then(function (rows) {
+      if (rows.length) return rows;
+      return crmSearchLocal(q, filter);
+    });
+  }
   if (crmOn()) {
     return cloudRpc('crm_search', { p_owner: ownerKey(), p_q: q || '', p_filter: filter || 'all', p_limit: 50, p_offset: offset || 0 })
       .then(function (rows) { return (rows || []).map(crmFromRow); });
   }
+  return crmSearchLocal(q, filter, offset);
+}
+function crmSearchLocal(q, filter, offset) {
   var ql = String(q || '').toLowerCase(), qd = crmDigits(q);
   var list = loadClients().map(crmFromLocal).filter(function (c) {
     var hit = !ql || (c.name + ' ' + c.email + ' ' + c.address + ' ' + c.notes + ' ' + c.tags).toLowerCase().indexOf(ql) >= 0 || (qd.length >= 3 && crmDigits(c.phone).indexOf(qd) >= 0);
@@ -3001,14 +3115,16 @@ function wireClients() {
 function crmAction(act, arg) {
   var c = state.client;
   switch (act) {
-    case 'clients': state.view = 'clients'; state.client = null; state.clientEditing = false; if (state.crm) { state.crm.loadedFor = 0; state.crm.list = []; state.crm.busy = false; state.crm.seq = (state.crm.seq || 0) + 1; } render(); return true;
+    case 'clients':
+      if (isTech()) { alert('The customer list is the office\'s. Look a customer up by name or phone while you write the job.'); return true; }
+      state.view = 'clients'; state.client = null; state.clientEditing = false; if (state.crm) { state.crm.loadedFor = 0; state.crm.list = []; state.crm.busy = false; state.crm.seq = (state.crm.seq || 0) + 1; } render(); return true;
     case 'client-new': state.client = { id: '', cloud: crmOn(), name: '', phone: '', email: '', address: '', notes: '', status: 'lead', tags: '', next: '', history: [] }; state.clientDraft = null; state.clientEditing = true; state.crmMsg = null; state.view = 'client'; render(); return true;
     case 'client-open': {
       var lc = loadClients().filter(function (x) { return x.id === arg; })[0];
       if (lc) { state.client = crmFromLocal(lc); state.clientEditing = false; state.crmMsg = null; state.view = 'client'; render(); }
       return true;
     }
-    case 'crm-due': state.crm = { q: '', filter: 'due', list: [], more: false, busy: false, err: null }; state.client = null; state.view = 'clients'; render(); return true;
+    case 'crm-due': if (isTech()) return true; state.crm = { q: '', filter: 'due', list: [], more: false, busy: false, err: null }; state.client = null; state.view = 'clients'; render(); return true;
     case 'crm-import': crmImportFile(); return true;
     case 'crm-edit': state.clientDraft = Object.assign({}, c); state.clientEditing = true; state.crmMsg = null; render(); return true;
     case 'crm-cancel': state.clientDraft = null; state.clientEditing = false; if (!c || !c.id) { state.view = 'clients'; state.client = null; } render(); return true;
@@ -3551,6 +3667,9 @@ var ACCESS_LS = 'aio-access', ACCESS_GRACE_DAYS = 7;
 function accessRead() { try { return JSON.parse(localStorage.getItem(ACCESS_LS) || '{}') || {}; } catch (e) { return {}; } }
 function accessWrite(o) { try { localStorage.setItem(ACCESS_LS, JSON.stringify(o)); } catch (e) {} }
 function accessRole() { return (state.access && state.access.role) || accessRead().role || ''; }
+/* A technician phone: it may do jobs, but the company's customer list,
+   the branding, the AI key and the settings are not his to see or change. */
+function isTech() { return accessRole() === 'tech' || (!ownerKey() && !!techKey()); }
 function wipeThisPhone() {
   try {
     ['aio-owner-key', 'aio-tech-key', ACCESS_LS, SETTINGS_KEY, CLIENTS_KEY, SCHED_KEY, EST_KEY, 'aio-est-no', 'aio-est-prep', 'aio-crm-moved', 'aio-gcal-A', 'aio-gcal-B'].forEach(function (k) { localStorage.removeItem(k); });
@@ -3584,8 +3703,7 @@ function viewLocked() {
   var body;
   if (a.why === 'checking') {
     return '<div class="app"><div class="screen" style="display:flex;align-items:center;justify-content:center;text-align:center">' +
-      '<div><div style="font-family:var(--serif);font-size:26px;letter-spacing:2px;color:var(--ember)">A.I.O PRO</div>' +
-      '<div style="color:var(--muted);font-size:13px;letter-spacing:3px;margin-bottom:14px">CHIMNEY · ROOFING</div>' +
+      '<div><img src="' + BRAND_LOGO + '" alt="" style="width:110px;height:110px;border-radius:16px;object-fit:cover;margin-bottom:14px">' +
       '<div style="color:var(--muted);font-size:14px">Checking your access…</div></div></div></div>';
   }
   if (a.why === 'revoked') {
@@ -3605,7 +3723,7 @@ function viewLocked() {
   return '<div class="app">' +
     '<div class="topbar"><div style="flex:1"><h1>AIO Pro Inspect</h1><div class="sub">' + (a.why === 'revoked' ? 'access cancelled' : 'locked') + '</div></div></div>' +
     '<div class="screen">' +
-      '<div style="text-align:center;margin:18px 0 20px"><div style="font-family:var(--serif);font-size:26px;letter-spacing:2px;color:var(--ember)">A.I.O PRO</div><div style="color:var(--muted);font-size:13px;letter-spacing:3px">CHIMNEY · ROOFING</div></div>' +
+      '<div style="text-align:center;margin:18px 0 20px"><img src="' + BRAND_LOGO + '" alt="" style="width:96px;height:96px;border-radius:14px;object-fit:cover"></div>' +
       body +
     '</div></div>';
 }
@@ -4326,6 +4444,7 @@ function buildEstimatePdf(opts) {
   }
 
   /* Letterhead */
+  if (s.logo) { y += 14; pdfImgFit(doc, s.logo, (PW - 46) / 2, y, 46, 46, 'FAST', { top: true }); y += 52; }
   y += 18; centered(company.toUpperCase(), y, 22, RUST, true, 3.2); y += 15;
   doc.setFont('helvetica', 'italic').setFontSize(9); ink(MUTED); var lw = doc.getTextWidth(EST_BRAND.legal); doc.text(EST_BRAND.legal, (PW - lw) / 2, y); y += 13;
   centered([addr, phone, email, EST_BRAND.web].join('  ·  '), y, 8.2, MUTED, false); y += 11;
@@ -5073,9 +5192,13 @@ root.addEventListener('click', function (e) {
     case 'choose-logo':
       pickImage().then(function (data) { state.settings = Object.assign({}, state.settings, { logo: data }); render(); }).catch(function () {});
       break;
-    case 'remove-logo': state.settings = Object.assign({}, state.settings, { logo: null }); render(); break;
+    case 'remove-logo': state.settings = Object.assign({}, state.settings, { logo: '' }); render(); break;
     case 'set-model': state.settings = Object.assign({}, state.settings, { aiModel: arg }); render(); break;
-    case 'save-settings': saveSettings(state.settings); render(); break;
+    case 'save-settings': saveSettings(state.settings); if (ownerKey()) brandPush(true); render(); break;
+    case 'brand-push': saveSettings(state.settings); brandPush(false); break;
+    case 'install-app':
+      if (installPrompt) { installPrompt.prompt(); installPrompt.userChoice.then(function () { installPrompt = null; render(); }); }
+      break;
     case 'export-data': exportData(); break;
     case 'import-data': importData(); break;
 
@@ -6169,6 +6292,7 @@ render();
 accessCheck().then(function (a) {
   render();
   if (!a.ok) return;
+  brandPull();
   return refresh().then(function () { return crmLoadStats(); }).then(function () { if (state.view === 'home') render(); });
 }).catch(function () { render(); });
 
@@ -6176,7 +6300,7 @@ accessCheck().then(function (a) {
    installed. Only over http(s); on a file:// page it is skipped. */
 if ('serviceWorker' in navigator && location.protocol.indexOf('http') === 0) {
   window.addEventListener('load', function () {
-    if (!IS_BETA) navigator.serviceWorker.register('sw.js').catch(function () { /* offline mode just won't be available */ });
+    navigator.serviceWorker.register('sw.js').catch(function () { /* offline mode just won't be available */ });
   });
 }
 </script>
