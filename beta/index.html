@@ -3443,6 +3443,73 @@ function viewSchedule() {
     '<div class="bottombar"><button class="btn btn-gold btn-primary" data-act="cal-new">+ New job</button></div>' +
   '</div>';
 }
+/* ── Who may open this app ──────────────────────────────────
+   No key on the phone = nothing but the lock screen. The key is
+   checked with the server on every start, so the moment Refael
+   makes a new technician link, that phone is out. */
+var ACCESS_LS = 'aio-access', ACCESS_GRACE_DAYS = 7;
+function accessRead() { try { return JSON.parse(localStorage.getItem(ACCESS_LS) || '{}') || {}; } catch (e) { return {}; } }
+function accessWrite(o) { try { localStorage.setItem(ACCESS_LS, JSON.stringify(o)); } catch (e) {} }
+function accessRole() { return (state.access && state.access.role) || accessRead().role || ''; }
+function wipeThisPhone() {
+  try {
+    ['aio-owner-key', 'aio-tech-key', ACCESS_LS, SETTINGS_KEY, CLIENTS_KEY, SCHED_KEY, EST_KEY, 'aio-est-no', 'aio-est-prep', 'aio-crm-moved', 'aio-gcal-A', 'aio-gcal-B'].forEach(function (k) { localStorage.removeItem(k); });
+    Object.keys(localStorage).forEach(function (k) { if (/^aiopro-job-|^aio-prep-done-|^aio-gcal-/.test(k)) localStorage.removeItem(k); });
+  } catch (e) {}
+  try { indexedDB.deleteDatabase(DB_NAME); } catch (e) {}
+}
+function accessCheck() {
+  var key = ownerKey() || techKey();
+  if (!key) { state.access = { ok: false, why: 'nokey' }; return Promise.resolve(state.access); }
+  var was = accessRead();
+  return cloudRpc('app_role', { p_key: key }).then(function (role) {
+    if (role === 'owner' || role === 'tech') {
+      state.access = { ok: true, role: role };
+      accessWrite({ role: role, at: Date.now() });
+      return state.access;
+    }
+    /* The server says this key is no longer good: cut the phone off. */
+    wipeThisPhone();
+    state.access = { ok: false, why: 'revoked' };
+    return state.access;
+  }).catch(function () {
+    var days = was.at ? (Date.now() - was.at) / 864e5 : 999;
+    if (was.role && days <= ACCESS_GRACE_DAYS) { state.access = { ok: true, role: was.role, offline: true }; return state.access; }
+    state.access = { ok: false, why: was.role ? 'stale' : 'offline' };
+    return state.access;
+  });
+}
+function viewLocked() {
+  var a = state.access || { why: 'nokey' };
+  var body;
+  if (a.why === 'checking') {
+    return '<div class="app"><div class="screen" style="display:flex;align-items:center;justify-content:center;text-align:center">' +
+      '<div><div style="font-family:var(--serif);font-size:26px;letter-spacing:2px;color:var(--ember)">A.I.O PRO</div>' +
+      '<div style="color:var(--muted);font-size:13px;letter-spacing:3px;margin-bottom:14px">CHIMNEY · ROOFING</div>' +
+      '<div style="color:var(--muted);font-size:14px">Checking your access…</div></div></div></div>';
+  }
+  if (a.why === 'revoked') {
+    body = '<div class="card" style="border-color:var(--defect)"><div style="font-size:18px;font-weight:700;color:var(--defect);margin-bottom:6px">This phone is no longer allowed in</div>' +
+      '<div style="font-size:15px;line-height:1.55">The access link for this phone was cancelled, and everything it had saved has been cleared. If this is a mistake, call Refael at ' + esc(EST_BRAND.phone) + ' and he will send a new link.</div></div>';
+  } else if (a.why === 'stale' || a.why === 'offline') {
+    body = '<div class="card" style="border-color:var(--gold)"><div style="font-size:18px;font-weight:700;margin-bottom:6px">Connect to the internet once</div>' +
+      '<div style="font-size:15px;line-height:1.55">The app checks who you are with the office. Get a signal or Wi-Fi and tap Try again.</div>' +
+      '<button class="btn btn-gold" data-act="lock-retry" style="width:100%;margin-top:12px">Try again</button></div>';
+  } else {
+    body = '<div class="card"><div style="font-size:18px;font-weight:700;margin-bottom:6px">AIO Pro Chimney — staff only</div>' +
+      '<div style="font-size:15px;line-height:1.55">This app is for the AIO Pro Chimney crew.<br><br><b>Technician:</b> open the link Refael sent you, once, on this phone.<br><b>Refael:</b> set this phone up with a code to your email.</div>' +
+      pairSetupBtn('home', 'Set up this phone (Refael)') +
+      '</div>' +
+      '<div class="card" style="font-size:14px;color:var(--muted)">Questions: ' + esc(EST_BRAND.phone) + '</div>';
+  }
+  return '<div class="app">' +
+    '<div class="topbar"><div style="flex:1"><h1>AIO Pro Inspect</h1><div class="sub">' + (a.why === 'revoked' ? 'access cancelled' : 'locked') + '</div></div></div>' +
+    '<div class="screen">' +
+      '<div style="text-align:center;margin:18px 0 20px"><div style="font-family:var(--serif);font-size:26px;letter-spacing:2px;color:var(--ember)">A.I.O PRO</div><div style="color:var(--muted);font-size:13px;letter-spacing:3px">CHIMNEY · ROOFING</div></div>' +
+      body +
+    '</div></div>';
+}
+
 /* ── Set up this phone (owner): a 6-digit code goes to the AIO Pro Gmail, the phone types it in ── */
 function pairOpen(back) { state.pair = { back: back || state.view, step: 1 }; state.view = 'pair'; render(); try { window.scrollTo(0, 0); } catch (_) {} }
 function pairSetupBtn(back, label) { return '<button class="btn btn-gold" data-act="pair-open" data-arg="' + esc(back || '') + '" style="margin-top:10px;width:100%">' + esc(label || 'Set up this phone') + '</button>'; }
@@ -3511,6 +3578,7 @@ function pairOk() {
     if (!k) { p.err = true; p.msg = 'That code is not right. Check the newest email and try again.'; p.code = ''; p.autoTried = false; render(); return; }
     try { localStorage.setItem('aio-owner-key', k); } catch (_) {}
     p.justDone = true; p.id = ''; p.code = ''; p.msg = ''; p.err = false;
+    state.access = { ok: true, role: 'owner' }; accessWrite({ role: 'owner', at: Date.now() });
     if (state.estMail) { state.estMail.err = ''; }
     render();
     try { crmLoadStats(); } catch (_) {}
@@ -3518,6 +3586,7 @@ function pairOk() {
 }
 function pairBack() {
   var p = state.pair || {};
+  if (state.access && !state.access.ok) { state.pair = null; accessCheck().then(function (a) { if (a.ok) { state.view = 'home'; refresh().then(function () { return crmLoadStats(); }).catch(function () {}); } render(); }); return; }
   var back = p.back && p.back !== 'pair' ? p.back : 'settings';
   state.pair = null;
   if (back === 'estmail' && !state.estMail) back = 'home';
@@ -3528,13 +3597,13 @@ function pairBack() {
   if (back === 'schedule' && gcalConnectedSlots().length) gcalFetch();
 }
 var APP_BASE = APP_DIR;
-function techLink(reset) {
+function techLink(reset, blocked) {
   var key = ownerKey();
   if (!key) { pairOpen(state.view); return; }
-  if (reset && !confirm('Make a NEW technician link? The old one stops sending emails right away.')) return;
+  if (reset && !blocked && !confirm('Make a NEW technician link? The old one stops sending emails right away.')) return;
   cloudRpc(reset ? 'tech_key_reset' : 'tech_key_get', { p_owner: key }).then(function (k) {
     if (!k) throw new Error('not allowed');
-    window.prompt((reset ? 'New link made. ' : '') + 'Send this to your technician. He opens it once on his phone (in Chrome) and can then email estimates from ' + EST_BRAND.email + ':', APP_BASE + '?techkey=' + encodeURIComponent(k));
+    window.prompt(blocked ? 'Done — the old phone is cut off. This is the new technician link; send it only to the person who should have it:' : (reset ? 'New link made. ' : '') + 'Send this to your technician. He opens it once on his phone (in Chrome) and can then email estimates from ' + EST_BRAND.email + ':', APP_BASE + '?techkey=' + encodeURIComponent(k));
   }).catch(function (err) { alert('Could not get the technician link: ' + ((err && err.message) || err)); });
 }
 function viewTechCard() {
@@ -3544,7 +3613,9 @@ function viewTechCard() {
   }
   return '<div class="card"><div class="eyebrow">Technician phone</div>' +
     '<div style="color:var(--muted);font-size:13px;margin-bottom:10px">Lets your technician email estimates from ' + esc(EST_BRAND.email) + '. He opens the link once on his phone.</div>' +
-    '<div class="row" style="gap:8px"><button class="btn btn-gold" data-act="tech-link" style="flex:1">Technician link</button><button class="btn btn-ghost" data-act="tech-reset" style="flex:1">New link</button></div></div>';
+    '<div class="row" style="gap:8px"><button class="btn btn-gold" data-act="tech-link" style="flex:1">Technician link</button><button class="btn btn-ghost" data-act="tech-reset" style="flex:1">New link</button></div>' +
+    '<button class="btn btn-ghost" data-act="tech-block" style="width:100%;margin-top:8px;color:var(--defect);border-color:var(--defect)">Cut this technician off</button>' +
+    '<div style="color:var(--muted);font-size:12px;margin-top:6px">Cutting him off locks his phone out the next time it has internet, and clears the jobs and customers saved on it. You then send a new link to whoever replaces him.</div></div>';
 }
 function viewWorkerCard() {
   var on = !!ownerKey();
@@ -4640,6 +4711,11 @@ function docStatusText(d) {
 /* ── Render + wiring ───────────────────────────────────────── */
 function render() {
   var html;
+  if (state.access && !state.access.ok) {
+    root.innerHTML = state.view === 'pair' ? viewPair() : viewLocked();
+    wirePair();
+    return;
+  }
   if (state.view === 'jobtype' && state.job) html = viewJobType();
   else if (state.view === 'inspect' && state.job) html = viewInspect();
   else if (state.view === 'report' && state.job) html = viewReport();
@@ -4984,6 +5060,10 @@ root.addEventListener('click', function (e) {
       if (state.estMail && state.estMail.kind === 'report') { state.view = state.repEdit ? 'repedit' : (state.chat && !state.chat.fromForm ? 'chat' : 'home'); render(); break; }
       state.view = 'estimate'; render(); break;
     case 'tech-link': techLink(false); break;
+    case 'tech-block':
+      if (confirm('Cut the technician off?\n\nHis phone stops working the next time it has internet, and what is saved on it is cleared. His old link will never work again.')) techLink(true, true);
+      break;
+    case 'lock-retry': accessCheck().then(function (a) { if (a.ok) { state.view = 'home'; refresh().then(function () { return crmLoadStats(); }).catch(function () {}); } render(); }); break;
     case 'pair-open': pairOpen(arg || state.view); break;
     case 'pair-send': pairSend(); break;
     case 'pair-ok': { var pc = root.querySelector('#pair_code'); if (pc && state.pair) state.pair.code = pc.value; pairOk(); break; }
@@ -5836,7 +5916,13 @@ function previewOpen(kind) { state.preview = { kind: kind }; state.view = 'previ
     if (ok || tk) history.replaceState(null, '', location.pathname);
   } catch (e) {}
 })();
-refresh().then(function () { return crmLoadStats(); }).then(function () { if (state.view === 'home') render(); }).catch(function () {});
+state.access = { ok: false, why: 'checking' };
+render();
+accessCheck().then(function (a) {
+  render();
+  if (!a.ok) return;
+  return refresh().then(function () { return crmLoadStats(); }).then(function () { if (state.view === 'home') render(); });
+}).catch(function () { render(); });
 
 /* Register the service worker so the app keeps working offline once
    installed. Only over http(s); on a file:// page it is skipped. */
