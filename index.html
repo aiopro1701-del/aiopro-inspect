@@ -2168,7 +2168,10 @@ function crewOpen(id) {
     if (state.view === 'crewdoc') render();
   });
 }
-function crewWhoName(r) { return r === 'tech' ? 'Technician' : r === 'owner' ? 'You' : 'Crew'; }
+function crewWhoName(r, n) {
+  if (n) return n === 'Office' ? 'You' : n;
+  return r === 'tech' ? 'Technician' : r === 'owner' ? 'You' : 'Crew';
+}
 function crewKindName(k) { return k === 'estimate' ? 'Estimate' : k === 'invoice' ? 'Invoice' : 'Inspection'; }
 function crewStatusPill(d) {
   var st = d.status || 'draft';
@@ -2196,7 +2199,7 @@ function viewCrewDoc() {
       return '<div style="padding:6px 0"><div style="font-weight:650;font-size:14px">' + esc(o.name || ('Option ' + String.fromCharCode(65 + i))) + '</div>' +
         (o.items || []).map(function (it) { return '<div style="display:flex;gap:8px;font-size:14px;padding:3px 0"><span style="flex:1">' + esc(it.name || it.desc || '') + '</span><span>' + esc(it.price ? money(Number(it.price)) : '') + '</span></div>'; }).join('') + '</div>';
     }).join('');
-    body = '<div class="card"><div class="eyebrow">' + esc(crewKindName(r.kind)) + ' · ' + esc(crewWhoName(r.by_role)) + '</div>' +
+    body = '<div class="card"><div class="eyebrow">' + esc(crewKindName(r.kind)) + ' · ' + esc(crewWhoName(r.by_role, r.by_name)) + '</div>' +
         '<div style="font-size:19px;font-weight:700;margin-bottom:2px">' + esc(r.customer || 'No name') + '</div>' +
         '<div style="color:var(--muted);font-size:14px;margin-bottom:10px">' + esc(r.address || '') + '</div>' +
         line('Title', r.title) + line('Phone', pl.phone) + line('Email', pl.email) +
@@ -3969,15 +3972,57 @@ function techLink(reset, blocked) {
 }
 function viewTechCard() {
   if (!ownerKey()) {
-    if (techKey()) return '<div class="card"><div class="eyebrow">This phone</div><div style="font-size:14px">Set up as the <b>technician</b> phone ✓ — you can email estimates and reports.</div></div>';
+    if (techKey()) return '<div class="card"><div class="eyebrow">This phone</div><div style="font-size:14px">Set up as a <b>technician</b> phone ✓ — you can email estimates and reports.</div></div>';
     return '<div class="card" style="border-color:var(--gold,#C9A24B)"><div class="eyebrow">This phone</div><div style="font-size:14px">Not set up yet. Refael: set it up once to send emails, see customers and share jobs. Technician: open the link Refael sent you.</div>' + pairSetupBtn('settings', 'Set up this phone (Refael)') + '</div>';
   }
-  return '<div class="card"><div class="eyebrow">Technician phone</div>' +
-    '<div style="color:var(--muted);font-size:13px;margin-bottom:10px">Lets your technician email estimates from ' + esc(EST_BRAND.email) + '. He opens the link once on his phone.</div>' +
-    '<div class="row" style="gap:8px"><button class="btn btn-gold" data-act="tech-link" style="flex:1">Technician link</button><button class="btn btn-ghost" data-act="tech-reset" style="flex:1">New link</button></div>' +
-    '<button class="btn btn-ghost" data-act="tech-block" style="width:100%;margin-top:8px;color:var(--defect);border-color:var(--defect)">Cut this technician off</button>' +
-    '<div style="color:var(--muted);font-size:12px;margin-top:6px">Cutting him off locks his phone out the next time it has internet, and clears the jobs and customers saved on it. You then send a new link to whoever replaces him.</div></div>';
+  var cw = state.crewKeys || {};
+  var rows = (cw.list || []).map(function (t) {
+    return '<div style="padding:10px 0;border-bottom:0.5px solid var(--rule)">' +
+      '<div class="row" style="align-items:baseline;gap:8px"><div style="flex:1;font-weight:650;font-size:15px' + (t.active ? '' : ';color:var(--muted);text-decoration:line-through') + '">' + esc(t.name) + '</div>' +
+      (t.active ? '' : '<span class="pill" style="opacity:.6">CUT OFF</span>') + '</div>' +
+      (t.active
+        ? '<div class="row" style="gap:6px;margin-top:8px;flex-wrap:wrap">' +
+            '<button class="btn btn-ghost" data-act="crew-key-link" data-arg="' + esc(t.id) + '" style="flex:1;min-height:38px;font-size:13px">His link</button>' +
+            '<button class="btn btn-ghost" data-act="crew-key-rename" data-arg="' + esc(t.id) + '" style="flex:0.8;min-height:38px;font-size:13px">Rename</button>' +
+            '<button class="btn btn-ghost" data-act="crew-key-revoke" data-arg="' + esc(t.id) + '" style="flex:0.9;min-height:38px;font-size:13px;color:var(--defect);border-color:var(--defect)">Cut off</button>' +
+          '</div>'
+        : '') +
+    '</div>';
+  }).join('');
+  return '<div class="card"><div class="eyebrow">Your crew</div>' +
+    '<div style="color:var(--muted);font-size:13px;margin-bottom:4px">Each technician gets his own link. Everything he makes shows up under his name in <b>My work → The crew</b>, and cutting one off does not touch the others.</div>' +
+    (cw.busy ? '<div style="font-size:14px;color:var(--muted);padding:8px 0">Loading…</div>' : '') +
+    (cw.err ? '<div style="color:var(--defect);font-size:13px;padding:6px 0">' + esc(cw.err) + '</div>' : '') +
+    (rows || (cw.loaded && !cw.busy ? '<div style="font-size:14px;color:var(--muted);padding:8px 0">Nobody yet.</div>' : '')) +
+    '<button class="btn btn-gold" data-act="crew-key-add" style="width:100%;margin-top:12px">+ Add a technician</button></div>';
 }
+function crewKeysLoad(force) {
+  var k = ownerKey(); if (!k) return Promise.resolve([]);
+  var cw = state.crewKeys || (state.crewKeys = {});
+  if (cw.loaded && !force) return Promise.resolve(cw.list || []);
+  cw.busy = true;
+  return cloudRpc('crew_list', { p_owner: k }).then(function (rows) {
+    cw.list = rows || []; cw.busy = false; cw.loaded = true; cw.err = '';
+    if (state.view === 'settings') render();
+    return cw.list;
+  }).catch(function (err) {
+    cw.busy = false; cw.loaded = true; cw.err = (err && err.message) || 'Could not load the crew';
+    if (state.view === 'settings') render();
+    return [];
+  });
+}
+function crewKeyById(id) { return ((state.crewKeys && state.crewKeys.list) || []).filter(function (t) { return t.id === id; })[0]; }
+function crewKeyLink(t) { return APP_BASE + '?techkey=' + encodeURIComponent(t.key); }
+function crewKeyAdd() {
+  var k = ownerKey(); if (!k) { pairOpen(state.view); return; }
+  var name = window.prompt('What is his name? (this is how his work will show up in your list)', '');
+  if (!name || !name.trim()) return;
+  cloudRpc('crew_add', { p_owner: k, p_name: name.trim() }).then(function (t) {
+    crewKeysLoad(true);
+    window.prompt('Done — ' + t.name + ' is set up. Send him this link. He opens it once on his phone, in Chrome:', APP_BASE + '?techkey=' + encodeURIComponent(t.key));
+  }).catch(function (err) { alert('Could not add him: ' + ((err && err.message) || err)); });
+}
+
 function viewWorkerCard() {
   var on = !!ownerKey();
   return '<div class="card" style="margin-top:12px"><div class="eyebrow">Installer app (view only)</div>' +
@@ -4247,7 +4292,7 @@ function viewDocs() {
               (r.total ? '<div style="font-weight:700;color:var(--ember)">' + esc(money(Number(r.total)).replace(/\.00$/, '')) + '</div>' : '') + '</div>' +
               '<div style="color:var(--muted);font-size:13px;margin-top:2px">' + esc(crewKindName(r.kind)) + (r.title ? ' · ' + esc(r.title) : '') + (r.address ? ' · ' + esc(String(r.address).split(',')[0]) : '') + '</div>' +
               '<div class="row" style="align-items:center;gap:8px;margin-top:6px">' +
-                '<div style="flex:1;color:var(--muted);font-size:12px">' + esc(crewWhoName(r.by_role)) + (dt ? ' · ' + dt.toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' }) + ' · ' + dt.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' }) : '') + '</div>' +
+                '<div style="flex:1;color:var(--muted);font-size:12px">' + esc(crewWhoName(r.by_role, r.by_name)) + (dt ? ' · ' + dt.toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' }) + ' · ' + dt.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' }) : '') + '</div>' +
                 (r.pay_status ? '<span class="pill" style="background:' + (r.pay_status === 'paid' ? 'var(--ok)' : r.pay_status === 'partial' ? 'var(--monitor)' : 'var(--defect)') + ';color:#fff">' + (r.pay_status === 'paid' ? 'PAID' : r.pay_status === 'partial' ? 'PART PAID' : 'NOT PAID') + '</span>' : '') +
                 crewStatusPill(r) + '</div></button>';
           }).join('');
@@ -5358,7 +5403,7 @@ root.addEventListener('click', function (e) {
   if (crmAction(act, arg)) return;
 
   switch (act) {
-    case 'settings': state.view = 'settings'; render(); break;
+    case 'settings': state.view = 'settings'; render(); if (ownerKey()) crewKeysLoad(false); break;
     case 'home':
       state.job = null; state.view = 'home'; state.i = 0; state.showCustomer = false; state.error = null;
       refresh();
@@ -5609,6 +5654,29 @@ root.addEventListener('click', function (e) {
     case 'docs-tab': docsLoad(arg); break;
     case 'docs-refresh': if (state.docs && state.docs.tab === 'crew') crewLoad(); else docsRefresh(); break;
     case 'crew-open': crewOpen(arg); break;
+    case 'crew-key-add': crewKeyAdd(); break;
+    case 'crew-key-link': {
+      var tk = crewKeyById(arg);
+      if (tk) window.prompt('Send this to ' + tk.name + '. He opens it once on his phone, in Chrome:', crewKeyLink(tk));
+      break;
+    }
+    case 'crew-key-rename': {
+      var tr = crewKeyById(arg); if (!tr) break;
+      var nn = window.prompt('New name for this technician:', tr.name);
+      if (!nn || !nn.trim()) break;
+      cloudRpc('crew_rename', { p_owner: ownerKey(), p_id: arg, p_name: nn.trim() })
+        .then(function () { crewKeysLoad(true); })
+        .catch(function (err) { alert('Could not rename: ' + ((err && err.message) || err)); });
+      break;
+    }
+    case 'crew-key-revoke': {
+      var tv = crewKeyById(arg); if (!tv) break;
+      if (!confirm('Cut ' + tv.name + ' off?\n\nHis phone is locked out the next time it has internet, and the jobs and customers saved on it are cleared. Nobody else is affected.')) break;
+      cloudRpc('crew_revoke', { p_owner: ownerKey(), p_id: arg })
+        .then(function () { crewKeysLoad(true); alert(tv.name + ' is cut off.'); })
+        .catch(function (err) { alert('Could not cut him off: ' + ((err && err.message) || err)); });
+      break;
+    }
     case 'crew-reload': crewLoad(); break;
     case 'crew-back': state.crewDoc = null; docsLoad('crew'); break;
     case 'crew-link': try { window.open(CLOUD_BASE + '?id=' + encodeURIComponent(arg), '_blank'); } catch (_) {} break;
