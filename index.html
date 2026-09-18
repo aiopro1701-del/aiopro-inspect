@@ -1435,7 +1435,7 @@ function viewHome() {
     (state.picking
       ? '<div class="topbar"><h1>Checklist</h1></div>'
       : '<div class="topbar">' + brandMarkHTML(34) +
-        '<div style="flex:1"><h1 style="font-family:var(--serif);letter-spacing:1px">A.I.O PRO</h1><div class="sub" style="color:var(--gold);letter-spacing:0.18em;font-size:9px">CHIMNEY · ROOFING</div></div>' +
+        '<div style="flex:1"><h1 style="font-family:var(--serif);letter-spacing:1px">A.I.O PRO</h1><div class="sub" style="color:var(--gold);letter-spacing:0.18em;font-size:9px">' + (isTech() ? 'TECHNICIAN' : 'MANAGER') + ' · CHIMNEY</div></div>' +
         '<button class="iconbtn" data-act="settings" aria-label="Settings">SET</button></div>') +
     '<div class="screen">' + body + '</div>' +
     (state.picking ? '' : '<div class="bottombar" style="gap:6px"><button class="btn btn-gold btn-primary" data-act="fj-new" data-arg="inspection" style="flex:1">Inspection</button><button class="btn btn-ghost" data-act="fj-new" data-arg="estimate" style="flex:1">Estimate</button><button class="btn btn-ghost" data-act="fj-new" data-arg="invoice" style="flex:0.8">Invoice</button></div>') +
@@ -2073,7 +2073,149 @@ function docKeep(rep) {
     shareId: rep.shareId || '', emailedTo: rep.emailedTo || '', emailedAt: rep.emailedAt || 0, signedAt: rep.signedAt || 0,
     data: rep.data, imgs: rep.imgs || [], before: rep.before || [], after: rep.after || []
   });
+  crewQueue(crewFromReport(rep));
 }
+/* ── Everything the crew makes shows up at the office ────────
+   Every document a phone creates — inspection, estimate or invoice, draft or
+   sent — is filed with the office the moment it is made. The technician only
+   writes; the owner is the only one who can read the list back. */
+var CREW_SYNC_LS = 'aio-crew-sync-1';
+var crewTimers = {};
+function crewText(v) { return String(v == null ? '' : v).slice(0, 300); }
+function crewPut(doc) {
+  var key = sendKey();
+  if (!key || !doc || !doc.id) return Promise.resolve(false);
+  return cloudRpc('crew_doc_put', { p_key: key, p_doc: doc }).then(function () { return true; }).catch(function () { return false; });
+}
+/* Small enough to send on every save: the document itself, without photos. */
+function crewFromReport(rep) {
+  if (!rep || !rep.id) return null;
+  var d = rep.data || {}, cu = d.customer || {};
+  return { id: rep.id, kind: rep.kind || (/invoice/i.test(rep.modeName || '') ? 'invoice' : 'inspection'),
+    customer: crewText(cu.name), address: crewText([cu.address, cu.cityStateZip].filter(Boolean).join(', ')),
+    title: crewText(d.title || rep.modeName || ''), total: Number(d.total) || 0,
+    status: rep.signedAt ? 'signed' : (rep.emailedAt ? 'sent' : 'draft'), payStatus: d.payStatus || '',
+    shareId: rep.shareId || '', at: rep.at || Date.now(),
+    payload: { modeName: rep.modeName || '', email: cu.email || '', phone: cu.phone || '',
+      photos: (rep.imgs || []).length + (rep.before || []).length + (rep.after || []).length, data: d } };
+}
+function crewFromEstimate(e) {
+  if (!e || !e.id) return null;
+  var cu = e.customer || {}, used = estUsed(e), t = estTotals(used[0] || { items: [] }, e.tax);
+  return { id: e.id, kind: 'estimate', customer: crewText(cu.name), address: crewText(cu.addr),
+    title: crewText(e.title || ('Estimate #' + (e.no || ''))), total: t.total || 0,
+    status: e.signedAt ? 'signed' : (e.openedAt ? 'opened' : (e.emailedAt ? 'sent' : 'draft')), payStatus: '',
+    shareId: e.shareId || '', at: e.createdAt || Date.now(),
+    payload: { no: e.no || '', email: cu.email || '', phone: cu.phone || '', found: e.found || '', notes: e.notes || '',
+      photos: (e.fjPhotos || []).length || e.photoCount || 0,
+      options: used.map(function (o) { return { name: o.name || '', items: (o.items || []).map(function (it) { return { name: it.name || '', desc: it.desc || '', qty: it.qty, price: it.price }; }) }; }) } };
+}
+/* Saves happen on every keystroke, so hold each document for a few seconds. */
+function crewQueue(doc) {
+  if (!doc || !doc.id) return;
+  if (crewTimers[doc.id]) clearTimeout(crewTimers[doc.id]);
+  crewTimers[doc.id] = setTimeout(function () { delete crewTimers[doc.id]; crewPut(doc); }, 2500);
+}
+/* First run after the update: send everything already on this phone, so a day's
+   work done before this existed is not lost to the office. */
+function crewBackfill() {
+  var key = sendKey(); if (!key) return;
+  try { if (localStorage.getItem(CREW_SYNC_LS)) return; } catch (e) {}
+  var jobs = [];
+  try { loadEstimates().forEach(function (e) { var d = crewFromEstimate(e); if (d) jobs.push(d); }); } catch (e) {}
+  docList().then(function (list) {
+    (list || []).forEach(function (rec) {
+      jobs.push({ id: rec.id, kind: rec.kind || 'inspection', customer: crewText(rec.name), address: crewText(rec.addr),
+        title: crewText((rec.data && rec.data.title) || rec.modeName || ''), total: Number(rec.total) || 0,
+        status: rec.signedAt ? 'signed' : (rec.emailedAt ? 'sent' : 'draft'), payStatus: rec.payStatus || '',
+        shareId: rec.shareId || '', at: rec.at || Date.now(),
+        payload: { modeName: rec.modeName || '', email: rec.email || '', photos: (rec.imgs || []).length, data: rec.data || {} } });
+    });
+    var i = 0, good = 0;
+    (function next() {
+      if (i >= jobs.length) {
+        /* Only call it done when it really went through, so a phone that was
+           offline (or an office not ready yet) tries again next time. */
+        if (good === jobs.length) { try { localStorage.setItem(CREW_SYNC_LS, String(Date.now())); } catch (e) {} }
+        return;
+      }
+      crewPut(jobs[i++]).then(function (okd) { if (okd) good++; setTimeout(next, 250); });
+    })();
+  }).catch(function () {});
+}
+function crewLoad() {
+  var key = ownerKey(); if (!key) return Promise.resolve([]);
+  state.crew = state.crew || {};
+  state.crew.busy = true;
+  return cloudRpc('crew_docs_list', { p_key: key, p_limit: 200 }).then(function (rows) {
+    state.crew.list = rows || []; state.crew.busy = false; state.crew.err = '';
+    if (state.view === 'docs') render();
+    return state.crew.list;
+  }).catch(function (err) {
+    state.crew.busy = false; state.crew.err = (err && err.message) || 'Could not load';
+    if (state.view === 'docs') render();
+    return [];
+  });
+}
+function crewOpen(id) {
+  var key = ownerKey(); if (!key) return;
+  state.crewDoc = { id: id, busy: true }; state.view = 'crewdoc'; render();
+  cloudRpc('crew_doc_get', { p_key: key, p_id: id }).then(function (r) {
+    state.crewDoc = { id: id, rec: r, busy: false };
+    if (state.view === 'crewdoc') render();
+  }).catch(function (err) {
+    state.crewDoc = { id: id, busy: false, err: (err && err.message) || 'Could not open' };
+    if (state.view === 'crewdoc') render();
+  });
+}
+function crewWhoName(r) { return r === 'tech' ? 'Technician' : r === 'owner' ? 'You' : 'Crew'; }
+function crewKindName(k) { return k === 'estimate' ? 'Estimate' : k === 'invoice' ? 'Invoice' : 'Inspection'; }
+function crewStatusPill(d) {
+  var st = d.status || 'draft';
+  var col = st === 'signed' ? 'var(--ok)' : st === 'opened' ? 'var(--monitor)' : st === 'sent' ? 'var(--ember)' : '';
+  return '<span class="pill"' + (col ? ' style="background:' + col + ';color:#fff"' : ' style="opacity:.6"') + '>' + esc(st.toUpperCase()) + '</span>';
+}
+function viewCrewDoc() {
+  var c = state.crewDoc || {};
+  var body;
+  if (c.busy) body = '<div class="empty">Opening…</div>';
+  else if (c.err) body = '<div class="card" style="color:var(--defect)">' + esc(c.err) + '</div>';
+  else if (!c.rec) body = '<div class="empty">Not found.</div>';
+  else {
+    var r = c.rec, pl = r.payload || {}, d = pl.data || {};
+    function line(k, v) { return v ? '<div style="display:flex;gap:10px;padding:5px 0;border-bottom:0.5px solid var(--rule);font-size:14px"><span style="color:var(--muted);width:110px;flex:none">' + esc(k) + '</span><span style="flex:1">' + esc(v) + '</span></div>' : ''; }
+    var comps = (d.components || []).map(function (cp) {
+      return '<div style="padding:8px 0;border-bottom:0.5px solid var(--rule)"><div style="font-weight:650;font-size:14px">' + esc(cp.name || '') + ' — ' + esc((cp.status || 'ok').toUpperCase()) + '</div>' +
+        (cp.condition ? '<div style="color:var(--muted);font-size:13px">' + esc(cp.condition) + '</div>' : '') +
+        (cp.recommended ? '<div style="font-size:13px">→ ' + esc(cp.recommended) + '</div>' : '') + '</div>';
+    }).join('');
+    var lis = (d.lineItems || []).map(function (it) {
+      return '<div style="display:flex;gap:8px;padding:5px 0;border-bottom:0.5px solid var(--rule);font-size:14px"><span style="flex:1">' + esc(it.description || '') + '</span><span>' + esc(money(Number(it.amount) || (Number(it.qty) || 1) * (Number(it.unitPrice) || 0))) + '</span></div>';
+    }).join('');
+    var opts = (pl.options || []).map(function (o, i) {
+      return '<div style="padding:6px 0"><div style="font-weight:650;font-size:14px">' + esc(o.name || ('Option ' + String.fromCharCode(65 + i))) + '</div>' +
+        (o.items || []).map(function (it) { return '<div style="display:flex;gap:8px;font-size:14px;padding:3px 0"><span style="flex:1">' + esc(it.name || it.desc || '') + '</span><span>' + esc(it.price ? money(Number(it.price)) : '') + '</span></div>'; }).join('') + '</div>';
+    }).join('');
+    body = '<div class="card"><div class="eyebrow">' + esc(crewKindName(r.kind)) + ' · ' + esc(crewWhoName(r.by_role)) + '</div>' +
+        '<div style="font-size:19px;font-weight:700;margin-bottom:2px">' + esc(r.customer || 'No name') + '</div>' +
+        '<div style="color:var(--muted);font-size:14px;margin-bottom:10px">' + esc(r.address || '') + '</div>' +
+        line('Title', r.title) + line('Phone', pl.phone) + line('Email', pl.email) +
+        line('Made', r.created_at ? new Date(r.created_at).toLocaleString() : '') +
+        line('Total', r.total ? money(Number(r.total)) : '') +
+        line('Photos', pl.photos ? String(pl.photos) : '') +
+        '<div style="margin-top:10px">' + crewStatusPill(r) + '</div></div>' +
+      (d.summary ? '<div class="card"><div class="eyebrow">Diagnosis</div><div style="font-size:15px;line-height:1.5">' + esc(d.summary) + '</div></div>' : '') +
+      (comps ? '<div class="card"><div class="eyebrow">What was checked</div>' + comps + '</div>' : '') +
+      (opts ? '<div class="card"><div class="eyebrow">Scope and prices</div>' + opts + '</div>' : '') +
+      (lis ? '<div class="card"><div class="eyebrow">Lines</div>' + lis + '</div>' : '') +
+      (d.conclusion ? '<div class="card"><div class="eyebrow">Conclusion</div><div style="font-size:15px;line-height:1.5">' + esc(d.conclusion) + '</div></div>' : '') +
+      (pl.found ? '<div class="card"><div class="eyebrow">What he found</div><div style="font-size:15px;line-height:1.5">' + esc(pl.found) + '</div></div>' : '') +
+      (r.share_id ? '<button class="btn btn-gold" data-act="crew-link" data-arg="' + esc(r.share_id) + '" style="width:100%;margin-top:6px">Open what the customer sees</button>' : '<div class="card" style="color:var(--muted);font-size:14px">Not sent to the customer yet.</div>');
+  }
+  return '<div class="app"><div class="topbar"><button class="iconbtn" data-act="crew-back">‹</button><div style="flex:1"><h1>The crew</h1><div class="sub">office copy</div></div></div>' +
+    '<div class="screen">' + body + '</div></div>';
+}
+
 function docOpen(id) {
   docGet(id).then(function (rec) {
     if (!rec) { alert('That document is no longer on this phone.'); return; }
@@ -4035,7 +4177,7 @@ function estPhotoLoad(e) {
 }
 function estUsed(e) { return e.options.filter(function (o) { return o.items.some(function (it) { return it.name || it.desc || estNum(it.price); }); }); }
 function estHeadline(e) { var u = estUsed(e); if (!u.length) return 0; return estTotals(u[0], e.tax).total; }
-function upsertEstimate(e) { if (!e.id) e.id = 'es-' + Date.now() + '-' + Math.random().toString(36).slice(2, 6); e.updatedAt = Date.now(); var l = loadEstimates(); var i = l.findIndex(function (x) { return x.id === e.id; }); if (i >= 0) l[i] = e; else l.unshift(e); saveEstimates(l); return e; }
+function upsertEstimate(e) { if (!e.id) e.id = 'es-' + Date.now() + '-' + Math.random().toString(36).slice(2, 6); e.updatedAt = Date.now(); var l = loadEstimates(); var i = l.findIndex(function (x) { return x.id === e.id; }); if (i >= 0) l[i] = e; else l.unshift(e); saveEstimates(l); try { crewQueue(crewFromEstimate(e)); } catch (_) {} return e; }
 function removeEstimate(id) { saveEstimates(loadEstimates().filter(function (e) { return e.id !== id; })); }
 function docStatusPill(o) {
   if (o.signedAt) return '<span class="pill" style="background:var(--ok);color:#fff">SIGNED</span>';
@@ -4062,7 +4204,9 @@ function docsRows(kind) {
 function viewDocs() {
   var tab = (state.docs && state.docs.tab) || 'inspection';
   var TABS = [['inspection', 'Inspections'], ['estimate', 'Estimates'], ['invoice', 'Invoices']];
-  var rows = docsRows(tab);
+  if (!isTech()) TABS.push(['crew', 'The crew']);
+  if (tab === 'crew' && isTech()) tab = 'inspection';
+  var rows = tab === 'crew' ? [] : docsRows(tab);
   var byMonth = {};
   rows.forEach(function (r) {
     var d = r.at ? new Date(r.at) : null;
@@ -4081,14 +4225,45 @@ function viewDocs() {
           docStatusPill(r) + '</div></button>';
       }).join('');
   }).join('');
-  if (!rows.length) body = '<div class="empty">Nothing here yet. Everything you finish on this phone shows up in this list.</div>';
+  if (tab === 'crew') {
+    var cs = state.crew || {};
+    var cl = cs.list || [];
+    if (cs.busy && !cl.length) body = '<div class="empty">Loading what the crew has made…</div>';
+    else if (cs.err) body = '<div class="card" style="color:var(--defect);font-size:14px">' + esc(cs.err) + '</div>';
+    else if (!cl.length) body = '<div class="empty">Nothing from the crew yet. Every inspection, estimate and invoice they make lands here — draft or sent.</div>';
+    else {
+      var cByMonth = {};
+      cl.forEach(function (r) {
+        var dt = r.created_at ? new Date(r.created_at) : null;
+        var kk = dt ? dt.toLocaleDateString(undefined, { month: 'long', year: 'numeric' }) : 'No date';
+        (cByMonth[kk] = cByMonth[kk] || []).push(r);
+      });
+      body = Object.keys(cByMonth).map(function (kk) {
+        return '<div class="eyebrow" style="margin:14px 2px 8px">' + esc(kk) + '</div>' +
+          cByMonth[kk].map(function (r) {
+            var dt = r.created_at ? new Date(r.created_at) : null;
+            return '<button class="card card-tap" style="display:block;width:100%;text-align:left" data-act="crew-open" data-arg="' + esc(r.id) + '">' +
+              '<div class="row" style="align-items:baseline;gap:8px"><div style="flex:1;font-weight:700;font-size:16px">' + esc(r.customer || 'No name') + '</div>' +
+              (r.total ? '<div style="font-weight:700;color:var(--ember)">' + esc(money(Number(r.total)).replace(/\.00$/, '')) + '</div>' : '') + '</div>' +
+              '<div style="color:var(--muted);font-size:13px;margin-top:2px">' + esc(crewKindName(r.kind)) + (r.title ? ' · ' + esc(r.title) : '') + (r.address ? ' · ' + esc(String(r.address).split(',')[0]) : '') + '</div>' +
+              '<div class="row" style="align-items:center;gap:8px;margin-top:6px">' +
+                '<div style="flex:1;color:var(--muted);font-size:12px">' + esc(crewWhoName(r.by_role)) + (dt ? ' · ' + dt.toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' }) + ' · ' + dt.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' }) : '') + '</div>' +
+                (r.pay_status ? '<span class="pill" style="background:' + (r.pay_status === 'paid' ? 'var(--ok)' : r.pay_status === 'partial' ? 'var(--monitor)' : 'var(--defect)') + ';color:#fff">' + (r.pay_status === 'paid' ? 'PAID' : r.pay_status === 'partial' ? 'PART PAID' : 'NOT PAID') + '</span>' : '') +
+                crewStatusPill(r) + '</div></button>';
+          }).join('');
+      }).join('');
+    }
+  }
+  if (tab !== 'crew' && !rows.length) body = '<div class="empty">Nothing here yet. Everything you finish on this phone shows up in this list.</div>';
   return '<div class="app">' +
-    '<div class="topbar"><button class="iconbtn" data-act="home">‹</button><div style="flex:1"><h1>My work</h1><div class="sub">' + rows.length + ' ' + (rows.length === 1 ? 'document' : 'documents') + '</div></div><button class="iconbtn" data-act="docs-refresh" aria-label="Check status">⟳</button></div>' +
+    '<div class="topbar"><button class="iconbtn" data-act="home">‹</button><div style="flex:1"><h1>' + (tab === 'crew' ? 'The crew' : 'My work') + '</h1><div class="sub">' + (tab === 'crew' ? (((state.crew && state.crew.list) || []).length + ' from the crew') : (rows.length + ' ' + (rows.length === 1 ? 'document' : 'documents'))) + '</div></div><button class="iconbtn" data-act="docs-refresh" aria-label="Check status">⟳</button></div>' +
     '<div style="position:sticky;top:0;z-index:4;display:flex;gap:6px;padding:8px 12px;background:var(--paper,#f3eee4);border-bottom:0.5px solid var(--rule)">' +
       TABS.map(function (t) { return '<button class="btn ' + (tab === t[0] ? 'btn-gold btn-primary' : 'btn-ghost') + '" data-act="docs-tab" data-arg="' + t[0] + '" style="flex:1;min-height:40px;padding:0 6px;font-size:13px">' + t[1] + '</button>'; }).join('') +
     '</div>' +
     '<div class="screen">' + (state.docs && state.docs.msg ? '<div class="card" style="font-size:14px">' + esc(state.docs.msg) + '</div>' : '') + body + '</div>' +
-    '<div class="bottombar" style="gap:6px"><button class="btn btn-gold btn-primary" data-act="fj-new" data-arg="' + (tab === 'invoice' ? 'invoice' : tab === 'estimate' ? 'estimate' : 'inspection') + '">New ' + (tab === 'invoice' ? 'invoice' : tab === 'estimate' ? 'estimate' : 'inspection') + '</button></div>' +
+    (tab === 'crew'
+      ? '<div class="bottombar" style="gap:6px"><button class="btn btn-ghost" data-act="crew-reload" style="flex:1">Refresh the list</button></div>'
+      : '<div class="bottombar" style="gap:6px"><button class="btn btn-gold btn-primary" data-act="fj-new" data-arg="' + (tab === 'invoice' ? 'invoice' : tab === 'estimate' ? 'estimate' : 'inspection') + '">New ' + (tab === 'invoice' ? 'invoice' : tab === 'estimate' ? 'estimate' : 'inspection') + '</button></div>') +
   '</div>';
 }
 function docsLoad(tab) {
@@ -4096,6 +4271,7 @@ function docsLoad(tab) {
   if (tab) state.docs.tab = tab;
   state.view = 'docs';
   docList().then(function (l) { state.docs.list = l; if (state.view === 'docs') render(); });
+  if (state.docs.tab === 'crew' && ownerKey() && !(state.crew && state.crew.list)) crewLoad();
   render();
 }
 /* One round trip that refreshes "opened / signed" for everything shared. */
@@ -5074,6 +5250,7 @@ function render() {
   else if (state.view === 'fjform') html = viewFjForm();
   else if (state.view === 'preview') html = viewPreview();
   else if (state.view === 'docs') html = viewDocs();
+  else if (state.view === 'crewdoc') html = viewCrewDoc();
   else html = viewHome();
   root.innerHTML = html;
   wireInputs();
@@ -5430,7 +5607,11 @@ root.addEventListener('click', function (e) {
     case 'fj-photo-del': { var pp = String(arg).split('|'), f2 = state.fj; if (f2) { var arr0 = pp[0] === '_extra' ? f2.extraPhotos : pp[0] === '_before' ? f2.beforePhotos : pp[0] === '_after' ? f2.afterPhotos : fjRow(f2, pp[0]).photos; if (arr0) arr0.splice(Number(pp[1]), 1); render(); } break; }
     case 'docs': docsLoad(); break;
     case 'docs-tab': docsLoad(arg); break;
-    case 'docs-refresh': docsRefresh(); break;
+    case 'docs-refresh': if (state.docs && state.docs.tab === 'crew') crewLoad(); else docsRefresh(); break;
+    case 'crew-open': crewOpen(arg); break;
+    case 'crew-reload': crewLoad(); break;
+    case 'crew-back': state.crewDoc = null; docsLoad('crew'); break;
+    case 'crew-link': try { window.open(CLOUD_BASE + '?id=' + encodeURIComponent(arg), '_blank'); } catch (_) {} break;
     case 'doc-open': {
       var dp = String(arg).split('|');
       if (dp[0] === 'estimate') { var e2 = loadEstimates().filter(function (x) { return x.id === dp[1]; })[0]; if (e2) { state.estimate = estNorm(e2); state.view = 'estimate'; render(); } }
@@ -6344,6 +6525,7 @@ accessCheck().then(function (a) {
   render();
   if (!a.ok) return;
   brandPull();
+  crewBackfill();
   return refresh().then(function () { return crmLoadStats(); }).then(function () { if (state.view === 'home') render(); });
 }).catch(function () { render(); });
 
