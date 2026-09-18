@@ -947,7 +947,7 @@ function docSave(rec) {
 }
 function docList() {
   return idbRun('readonly', function (st) { return st.getAll(); }, DOCS)
-    .then(function (rows) { return (rows || []).filter(function (r) { return r && r.kind !== 'estphotos'; }).sort(function (a, b) { return (b.at || 0) - (a.at || 0); }); })
+    .then(function (rows) { return (rows || []).filter(function (r) { return r && r.kind !== 'estphotos' && r.kind !== 'fjform'; }).sort(function (a, b) { return (b.at || 0) - (a.at || 0); }); })
     .catch(function () { return []; });
 }
 function docGet(id) { return idbRun('readonly', function (st) { return st.get(id); }, DOCS).catch(function () { return null; }); }
@@ -2242,6 +2242,12 @@ function docOpen(id) {
     state.chat.lastReport = Object.assign({}, rec, { blob: blob, modeName: modeName });
     state.fjLast = null;
     repEditOpen(false);
+    fjFormLoad(id).then(function (form) {
+      if (!form) return;
+      form.builtRep = { id: rec.id, obj: state.chat.lastReport };
+      state.fjLast = form;
+      if (state.view === 'repedit') render();
+    });
   });
 }
 function repSetPath(obj, path, val) {
@@ -5695,7 +5701,19 @@ root.addEventListener('click', function (e) {
     case 'crew-link': try { window.open(CLOUD_BASE + '?id=' + encodeURIComponent(arg), '_blank'); } catch (_) {} break;
     case 'doc-open': {
       var dp = String(arg).split('|');
-      if (dp[0] === 'estimate') { var e2 = loadEstimates().filter(function (x) { return x.id === dp[1]; })[0]; if (e2) { state.estimate = estNorm(e2); state.view = 'estimate'; render(); } }
+      if (dp[0] === 'estimate') {
+        var e2 = loadEstimates().filter(function (x) { return x.id === dp[1]; })[0];
+        if (e2) {
+          state.estimate = estNorm(e2); state.fjLast = null; state.view = 'estimate'; render();
+          estPhotoLoad(e2);
+          fjFormLoad(e2.id).then(function (form) {
+            if (!form) return;
+            form.builtEst = { id: e2.id, no: e2.no, obj: e2 };
+            state.fjLast = form;
+            if (state.view === 'estimate') render();
+          });
+        }
+      }
       else docOpen(dp[1]);
       break;
     }
@@ -6142,6 +6160,18 @@ function fjPhotos(f) {
   return out;
 }
 function fjBeforeAfter(f) { return { before: (f.beforePhotos || []).slice(), after: (f.afterPhotos || []).slice() }; }
+/* The filled-in form is kept beside the document it produced, so it can be
+   opened again days later — from My work — to add a photo or fix a word. */
+function fjFormSave(docId, f) {
+  if (!docId || !f) return;
+  var copy = {};
+  Object.keys(f).forEach(function (k) { if (k !== 'busy' && k !== 'err' && k !== 'review' && k !== 'builtEst' && k !== 'builtRep') copy[k] = f[k]; });
+  docSave({ id: 'form-' + docId, kind: 'fjform', at: Date.now(), form: copy });
+}
+function fjFormLoad(docId) {
+  if (!docId) return Promise.resolve(null);
+  return docGet('form-' + docId).then(function (r) { return (r && r.form) || null; }).catch(function () { return null; });
+}
 /* "Do you want an estimate?" — carries the findings, notes and photos across. */
 function fjFromInspection() {
   var f = state.fjLast, rep2 = state.chat && state.chat.lastReport;
@@ -6456,6 +6486,7 @@ function fjBuildEstimate() {
     estEnsureNo(e);
     try { upsertEstimate(e); } catch (_) {}
     estPhotoSave(e);
+    fjFormSave(e.id, f);
     f.builtEst = { id: e.id, no: e.no, obj: e };
     state.estimate = e; state.estAi = { forId: e, done: 'Built from your visit. Check the prices and the scope lines' + (unpriced ? ' — ' + unpriced + ' item(s) need a price (red).' : '.') };
     f.busy = false; state.fjLast = f;
@@ -6509,6 +6540,7 @@ function fjBuildReport() {
       at: Date.now(), before: ba.before, after: ba.after, kind: isInv ? 'invoice' : 'inspection' };
     f.builtRep = { id: state.chat.lastReport.id, obj: state.chat.lastReport };
     docKeep(state.chat.lastReport);
+    fjFormSave(state.chat.lastReport.id, f);
     f.busy = false; state.fjLast = f;
     repEditOpen(true);
   }).catch(function (err) { f.busy = false; f.err = (err && err.message) || 'AI error'; if (state.view === 'fjform') render(); });
