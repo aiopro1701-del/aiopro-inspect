@@ -4498,9 +4498,32 @@ function estRender() { var y = window.scrollY || 0; render(); try { window.scrol
 function estChatReady() { var c = state.chat; return !!(c && c.messages && c.messages.length >= 3); }
 /* Back to the form that built this document: add or remove photos, change a
    note, then build again. The estimate/report keeps its number and its link. */
+/* Which document is on screen right now. */
+function fjOpenDocId() {
+  if (state.view === 'estimate' && state.estimate) return state.estimate.id || null;
+  if (state.repEdit && state.repEdit.rep) return state.repEdit.rep.id || null;
+  return null;
+}
+/* However this document was opened — straight after building it, from My work,
+   from the estimates list, days later — look for the form that made it. */
+function fjResumeProbe(docId) {
+  if (!docId || state.fjProbe === docId) return;
+  state.fjProbe = docId;
+  fjFormLoad(docId).then(function (form) {
+    if (!form || fjOpenDocId() !== docId) return;
+    if (state.view === 'estimate' && state.estimate) form.builtEst = { id: docId, no: state.estimate.no, obj: state.estimate };
+    else if (state.repEdit && state.repEdit.rep) form.builtRep = { id: docId, obj: state.repEdit.rep };
+    else return;
+    state.fjLast = form;
+    render();
+  });
+}
 function fjResumeCard(kind) {
+  var docId = fjOpenDocId();
   var f = state.fjLast;
-  if (!f || (kind && f.kind !== kind)) return '';
+  var mine = !!(f && docId && ((f.builtEst && f.builtEst.id === docId) || (f.builtRep && f.builtRep.id === docId)));
+  if (!mine) { fjResumeProbe(docId); return ''; }
+  if (kind && f.kind !== kind) return '';
   var what = f.kind === 'estimate' ? 'estimate' : f.kind === 'invoice' ? 'invoice' : 'report';
   return '<button class="card card-tap" data-act="fj-resume" style="display:block;width:100%;text-align:left;border-color:var(--gold)">' +
     '<div class="eyebrow">Need to change something?</div>' +
@@ -6260,6 +6283,7 @@ function fjFromInspection() {
   render(); try { window.scrollTo(0, 0); } catch (_) {}
 }
 function fjStart(kind, customer) {
+  state.fjProbe = null;
   state.fj = { kind: kind, level: '1', system: '', areas: [], data: {}, extraPhotos: [], extraNote: '', customer: customer || null, review: null, busy: false, err: '' };
   state.view = 'fjsetup'; render(); try { window.scrollTo(0, 0); } catch (_) {}
 }
