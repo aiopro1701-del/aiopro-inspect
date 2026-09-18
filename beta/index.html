@@ -1072,6 +1072,28 @@ function pickFile(useCamera) {
     input.click();
   });
 }
+/* Several photos at once (the gallery lets him tick as many as he wants). */
+function pickFiles(useCamera) {
+  return new Promise(function (resolve, reject) {
+    var input = document.createElement('input');
+    input.type = 'file';
+    input.accept = 'image/*';
+    if (useCamera) input.capture = 'environment'; else input.multiple = true;
+    input.onchange = function () {
+      var files = Array.prototype.slice.call(input.files || []);
+      if (!files.length) return reject(new Error('cancelled'));
+      Promise.all(files.map(function (f) {
+        return new Promise(function (res, rej) {
+          var r = new FileReader();
+          r.onload = function () { downscale(r.result).then(res); };
+          r.onerror = function () { rej(new Error('read failed')); };
+          r.readAsDataURL(f);
+        });
+      })).then(resolve, reject);
+    };
+    input.click();
+  });
+}
 function takePhoto() { return pickFile(true); }
 function pickImage() { return pickFile(false); }
 
@@ -4864,8 +4886,8 @@ root.addEventListener('click', function (e) {
       (function () {
         if (!state.chat) return;
         var inp = root.querySelector('#chatInput'); if (inp) state.chat.pendingText = inp.value;
-        (act === 'chat-cam' ? takePhoto() : pickImage()).then(function (dataUrl) {
-          state.chat.pending.photos.push(dataUrl); render();
+        pickFiles(act === 'chat-cam').then(function (list) {
+          (list || []).filter(Boolean).forEach(function (dataUrl) { state.chat.pending.photos.push(dataUrl); }); render();
         }).catch(function () {});
       })();
       break;
@@ -5386,7 +5408,7 @@ function fjPhotoStrip(id, photos) {
         '<button class="btn btn-ghost" data-act="fj-photo-del" data-arg="' + esc(id + '|' + i) + '" aria-label="Remove photo" style="position:absolute;top:-6px;right:-6px;min-height:26px;height:26px;width:26px;padding:0;border-radius:13px;background:#fff;font-size:13px">✕</button></span>';
     }).join('') +
     '<button class="btn btn-ghost" data-act="fj-cam" data-arg="' + esc(id) + '" style="min-height:44px;padding:0 14px;font-size:14px">📷 Photo</button>' +
-    '<button class="btn btn-ghost" data-act="fj-gal" data-arg="' + esc(id) + '" style="min-height:44px;padding:0 14px;margin-left:6px;font-size:14px">Gallery</button>' +
+    '<button class="btn btn-ghost" data-act="fj-gal" data-arg="' + esc(id) + '" style="min-height:44px;padding:0 14px;margin-left:6px;font-size:14px">Gallery ▦</button>' +
   '</div>';
 }
 function viewFjForm() {
@@ -5493,10 +5515,10 @@ function wireFj() {
 }
 function fjAddPhoto(id, cam) {
   var f = state.fj; if (!f) return;
-  (cam ? takePhoto() : pickImage()).then(function (src) {
-    if (!src) return;
-    if (id === '_extra') (f.extraPhotos = f.extraPhotos || []).push(src);
-    else fjRow(f, id).photos.push(src);
+  pickFiles(!!cam).then(function (list) {
+    var arr = (list || []).filter(Boolean); if (!arr.length) return;
+    var into = id === '_extra' ? (f.extraPhotos = f.extraPhotos || []) : fjRow(f, id).photos;
+    arr.forEach(function (src) { into.push(src); });
     render();
   }).catch(function () {});
 }
