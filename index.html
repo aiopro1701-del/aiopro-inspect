@@ -5051,7 +5051,7 @@ var CLOUD_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsIn
 var CLOUD_BASE = APP_DIR + 'estimate-sign.html';
 function estPayload(e) {
   var s = state.settings;
-  return { base: APP_DIR, customer: e.customer, tax: e.tax, options: estUsed(e), title: e.title, found: e.found, notes: e.notes, no: e.no, visitDate: e.visitDate, preparedBy: e.preparedBy,
+  return { base: APP_DIR, customer: e.customer, tax: e.tax, options: estUsed(e), title: e.title, found: e.found, notes: e.notes, no: e.no, visitDate: e.visitDate, preparedBy: e.preparedBy, caps: (e.fjCaps || []).slice(0, 12),
     company: { name: s.company, phone: (s.phone && s.phone.trim()) || EST_BRAND.phone, email: (s.email && s.email.trim()) || EST_BRAND.email, address: (s.address && s.address.trim() && s.address.trim() !== 'Greater St. Louis, MO') ? s.address : EST_BRAND.address, terms: s.terms, legal: EST_BRAND.legal, creds: EST_BRAND.creds, web: EST_BRAND.web, owner: EST_BRAND.owner } };
 }
 /* Put (or refresh) a document online through the key-checked functions. A signed one is left as it is. */

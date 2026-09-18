@@ -43,6 +43,8 @@ h1{font-size:20px;letter-spacing:.08em;text-transform:uppercase;text-align:cente
 .comp .c{font-size:14.5px;margin-top:4px}.comp .rec{font-size:14px;color:#555;margin-top:4px}
 .photos{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:8px}
 .photos img{width:100%;height:140px;object-fit:cover;border-radius:8px;border:1px solid var(--rule);cursor:zoom-in;background:var(--sand)}
+.photos figure{margin:0}
+.photos figcaption{font-size:12px;color:var(--muted,#7a746e);margin-top:4px;line-height:1.3}
 .lb{position:fixed;inset:0;background:rgba(0,0,0,.92);display:flex;align-items:center;justify-content:center;z-index:50;padding:12px}
 .lb img{max-width:100%;max-height:100%;object-fit:contain}
 .terms{color:#555;font-size:13px}
@@ -220,7 +222,10 @@ canvas{width:100%;height:200px;background:#fbfaf7;border:1.5px dashed #c9c2b5;bo
     }
     if (doc.photo_count) {
       var bN = num(pay.beforeN), aN = num(pay.afterN);
-      function grid(list, from) { return '<div class="photos">' + list.map(function (p, i) { return '<img src="' + p + '" alt="Photo ' + (from + i + 1) + '" data-i="' + (from + i) + '">'; }).join('') + '</div>'; }
+      var caps = Array.isArray(pay.caps) ? pay.caps : [];
+      function shot(p, i) { var c = String(caps[i] || '').trim();
+        return '<figure><img src="' + p + '" alt="Photo ' + (i + 1) + '" data-i="' + i + '">' + (c ? '<figcaption>' + esc(c) + '</figcaption>' : '') + '</figure>'; }
+      function grid(list, from) { return '<div class="photos">' + list.map(function (p, i) { return shot(p, from + i); }).join('') + '</div>'; }
       if (!photos.length) h += '<div class="sec">Photographs</div><div class="photos" id="photos"><div style="color:#999;font-size:14px">Loading photos…</div></div>';
       else {
         h += '<div id="photos">';
@@ -381,7 +386,10 @@ canvas{width:100%;height:200px;background:#fbfaf7;border:1.5px dashed #c9c2b5;bo
       if (d.photo_count && !photos.length) rpc('share_public_photos', { p_id: id }).then(function (list) {
         photos = Array.isArray(list) ? list.filter(function (p) { return /^data:image\/jpeg;base64,[A-Za-z0-9+\/=]+$/.test(p); }) : [];
         var ph = document.getElementById('photos');
-        if (ph) ph.innerHTML = photos.map(function (p, i) { return '<img src="' + p + '" alt="Photo ' + (i + 1) + '" data-i="' + i + '">'; }).join('') || '<div style="color:#999;font-size:14px">No photos.</div>';
+        if (ph) { var cps = Array.isArray(pay.caps) ? pay.caps : [];
+          ph.className = 'photos';
+          ph.innerHTML = photos.map(function (p, i) { var c = String(cps[i] || '').trim();
+            return '<figure><img src="' + p + '" alt="Photo ' + (i + 1) + '" data-i="' + i + '">' + (c ? '<figcaption>' + esc(c) + '</figcaption>' : '') + '</figure>'; }).join('') || '<div style="color:#999;font-size:14px">No photos.</div>'; }
       }).catch(function () {});
     }).catch(function () { app.innerHTML = '<div class="center">Could not load — please check your internet and refresh.</div>'; });
   }
