@@ -2084,7 +2084,7 @@ function docKeep(rep) {
     name: cu.name || '', addr: [cu.address, cu.cityStateZip].filter(Boolean).join(', '), email: cu.email || '',
     total: Number((rep.data || {}).total) || 0, payStatus: (rep.data || {}).payStatus || '',
     shareId: rep.shareId || '', emailedTo: rep.emailedTo || '', emailedAt: rep.emailedAt || 0, signedAt: rep.signedAt || 0,
-    data: rep.data, imgs: rep.imgs || [], before: rep.before || [], after: rep.after || []
+    data: rep.data, imgs: rep.imgs || [], before: rep.before || [], after: rep.after || [], captions: rep.captions || []
   });
   crewQueue(crewFromReport(rep));
 }
@@ -2237,7 +2237,7 @@ function docOpen(id) {
     if (!rec) { alert('That document is no longer on this phone.'); return; }
     var modeName = rec.modeName || (rec.kind === 'invoice' ? 'Invoice' : 'Inspection');
     var blob;
-    try { blob = buildChatReport(rec.data, rec.imgs || [], state.settings, modeName, { before: rec.before || [], after: rec.after || [] }); } catch (e) { alert('Could not rebuild the PDF: ' + ((e && e.message) || e)); return; }
+    try { blob = buildChatReport(rec.data, rec.imgs || [], state.settings, modeName, { before: rec.before || [], after: rec.after || [], captions: rec.captions || [] }); } catch (e) { alert('Could not rebuild the PDF: ' + ((e && e.message) || e)); return; }
     state.chat = { mode: rec.kind === 'invoice' ? 'invoice' : 'level1', customer: { name: rec.name, address: rec.addr, email: rec.email }, depth: 'full', messages: [], pending: { photos: [] }, fromForm: true };
     state.chat.lastReport = Object.assign({}, rec, { blob: blob, modeName: modeName });
     state.fjLast = null;
@@ -2281,7 +2281,7 @@ function repSave(then) {
   var t = repTotals(d);
   d.subtotal = t.sub; d.discount = t.disc; d.tax = t.tax; d.total = t.total; d.deposit = t.deposit;
   if (/invoice/i.test(rep.modeName || '')) { d.title = String(d.title || '').trim() || 'Invoice'; d.payStatus = d.payStatus || 'unpaid'; d.paid = Math.max(0, Number(d.paid) || 0); }
-  try { rep.blob = buildChatReport(d, rep.imgs, state.settings, rep.modeName, { before: rep.before || [], after: rep.after || [] }); }
+  try { rep.blob = buildChatReport(d, rep.imgs, state.settings, rep.modeName, { before: rep.before || [], after: rep.after || [], captions: rep.captions || [] }); }
   catch (err) { st.err = true; st.msg = 'Could not build the PDF: ' + ((err && err.message) || err); render(); return false; }
   rep.data = d; rep.at = Date.now();
   st.d = JSON.parse(JSON.stringify(d)); st.d._addr = [d.customer.address, d.customer.cityStateZip].filter(Boolean).join(', ');
@@ -2400,6 +2400,14 @@ function drawDiagram(doc, type, x, y, w) {
   return 0;
 }
 function buildChatReport(data, images, settings, modeName, extra) {
+  var captions = (extra && extra.captions) || [];
+  /* Only a picture of the house belongs on the cover. A photo the technician
+     took of a part of the system stays with that part, where it means something. */
+  function isCoverShot(i) {
+    if (!images[i]) return false;
+    if (!captions.length) return true;                       /* older documents: keep the old behaviour */
+    return /house|front|exterior|property|on site/i.test(String(captions[i] || ''));
+  }
   var jsPDF = window.jspdf.jsPDF;
   var doc = new jsPDF({ unit: 'pt', format: 'letter' });
   var BLUE = [23, 105, 170];
@@ -2442,18 +2450,50 @@ function buildChatReport(data, images, settings, modeName, extra) {
     y += 8;
   }
   function kv(rows) { table(rows); }
-  function photos2(list, ratio) {
+  /* Two to a row, each with its own one-line caption underneath. */
+  function photos2(list, ratio, caps) {
     var gap = 8, pw = (CONTENT - gap) / 2;
     for (var i = 0; i < list.length; i += 2) {
       var ph = pdfRowH(doc, list.slice(i, i + 2), pw, 0.56, 1.34);
-      ensure(ph + 8);
-      for (var j = 0; j < 2 && i + j < list.length; j++) {
-        pdfImgFit(doc, list[i + j], M + j * (pw + gap), y, pw, ph, 'SLOW', { bg: PHOTO_BG });
-        doc.setDrawColor(RULE[0], RULE[1], RULE[2]).setLineWidth(0.5); doc.rect(M + j * (pw + gap), y, pw, ph);
+      var capLines = 0;
+      if (caps) for (var k = 0; k < 2 && i + k < list.length; k++) {
+        var ct = String((caps[i + k] || '')).trim();
+        if (ct) capLines = Math.max(capLines, doc.setFont('helvetica', 'normal').setFontSize(8.5).splitTextToSize(ct, pw - 4).length);
       }
-      y += ph + 8;
+      var capH = capLines ? capLines * 10 + 3 : 0;
+      ensure(ph + capH + 8);
+      for (var j = 0; j < 2 && i + j < list.length; j++) {
+        var x = M + j * (pw + gap);
+        pdfImgFit(doc, list[i + j], x, y, pw, ph, 'SLOW', { bg: PHOTO_BG });
+        doc.setDrawColor(RULE[0], RULE[1], RULE[2]).setLineWidth(0.5); doc.rect(x, y, pw, ph);
+        var cap = caps ? String(caps[i + j] || '').trim() : '';
+        if (cap) {
+          doc.setFont('helvetica', 'normal').setFontSize(8.5).setTextColor(MUTED[0], MUTED[1], MUTED[2]);
+          doc.text(doc.splitTextToSize(cap, pw - 4), x + 2, y + ph + 10);
+        }
+      }
+      y += ph + capH + 8;
     }
     y += 10;
+  }
+  /* Which photos belong to this part of the report: what the AI numbered, plus
+     anything the technician took in a box with the same subject. */
+  function capWords(t) {
+    return String(t || '').toLowerCase().replace(/[^a-z0-9 ]+/g, ' ').split(/\s+/)
+      .filter(function (w) { return w.length > 3 && ['from','with','this','that','into','over','under','above','below','side','the','and','for'].indexOf(w) < 0; });
+  }
+  function capsFor(name) {
+    var want = capWords(name); if (!want.length) return [];
+    var hits = [];
+    (captions || []).forEach(function (cap, i) {
+      if (!images[i] || used[i] || !cap) return;
+      var have = capWords(cap);
+      var common = want.filter(function (w) {
+        return have.some(function (h) { return h === w || (w.length > 4 && h.indexOf(w) === 0) || (h.length > 4 && w.indexOf(h) === 0); });
+      });
+      if (common.length) hits.push(i);
+    });
+    return hits;
   }
   function pickDiagrams() {
     var t = ((data.appliance && (data.appliance.type + ' ' + data.appliance.fuel)) || '') + ' ' + (modeName || '') + ' ' + (data.title || '');
@@ -2474,7 +2514,7 @@ function buildChatReport(data, images, settings, modeName, extra) {
 
   var c = data.customer || {};
   head('Customer information');
-  if (images[0]) {
+  if (isCoverShot(0)) {
     var iw = CONTENT, ih = iw * Math.min(0.75, Math.max(0.5, pdfImgRatio(doc, images[0]))); ensure(ih + 8);
     pdfImgFit(doc, images[0], M, y, iw, ih, 'SLOW', { bg: PHOTO_BG });
     doc.setDrawColor(RULE[0], RULE[1], RULE[2]).setLineWidth(0.5); doc.rect(M, y, iw, ih);
@@ -2486,9 +2526,10 @@ function buildChatReport(data, images, settings, modeName, extra) {
   if (data.levelOfInspection) { head('Level of inspection'); y = wrapped(doc, String(data.levelOfInspection), M, y, CONTENT, 9.5, INK) + 10; }
 
   var p = data.property || {};
-  if (p.stories || p.roof || p.systemLocation || p.roomLocation || images[1]) {
+  var propShot = isCoverShot(1) && !used[1];
+  if (p.stories || p.roof || p.systemLocation || p.roomLocation || propShot) {
     head('Property information');
-    if (images[1]) { var iw2 = CONTENT * 0.62, ih2 = iw2 * Math.min(1.1, Math.max(0.5, pdfImgRatio(doc, images[1]))); ensure(ih2 + 6); pdfImgFit(doc, images[1], M, y, iw2, ih2, 'SLOW', { left: true }); y += ih2 + 8; used[1] = true; }
+    if (propShot) { var iw2 = CONTENT * 0.62, ih2 = iw2 * Math.min(1.1, Math.max(0.5, pdfImgRatio(doc, images[1]))); ensure(ih2 + 6); pdfImgFit(doc, images[1], M, y, iw2, ih2, 'SLOW', { left: true }); y += ih2 + 8; used[1] = true; }
     kv([['Stories', p.stories], ['Roof material & pitch', p.roof], ['System location', p.systemLocation], ['Room location', p.roomLocation]]);
     y += 6;
   }
@@ -2543,10 +2584,12 @@ function buildChatReport(data, images, settings, modeName, extra) {
       y += 17;
       if (comp.condition) y = wrapped(doc, String(comp.condition), M, y, CONTENT, 10.5, INK) + 3;
       if (isQuote0 && comp.recommended) y = wrapped(doc, 'Recommended: ' + comp.recommended, M, y, CONTENT, 10, SEV.defect) + 3;
-      if (comp.photos && comp.photos.length) {
-        var cp = comp.photos.map(function (n) { return images[n - 1]; }).filter(Boolean);
-        photos2(cp, 0.66);
-        comp.photos.forEach(function (n) { used[n - 1] = true; });
+      var idxs = [];
+      (comp.photos || []).forEach(function (n) { var i = n - 1; if (images[i] && !used[i] && idxs.indexOf(i) < 0) idxs.push(i); });
+      capsFor(comp.name).forEach(function (i) { if (idxs.indexOf(i) < 0) idxs.push(i); });
+      if (idxs.length) {
+        photos2(idxs.map(function (i) { return images[i]; }), 0.66, idxs.map(function (i) { return captions[i] || ''; }));
+        idxs.forEach(function (i) { used[i] = true; });
       }
       var dg = diagFor(comp.name);
       if (dg && !shownDiag[dg[0]]) {
@@ -2617,8 +2660,12 @@ function buildChatReport(data, images, settings, modeName, extra) {
     if (!/invoice/i.test(modeName || '')) y = wrapped(doc, 'Prices reflect the conditions visible at the time of inspection. Concealed damage found once work begins may change the final price and will be reviewed with you before proceeding.', M, y, CONTENT, 8.5, MUTED) + 8;
   }
 
-  var rest = images.filter(function (src, i) { return src && !used[i]; });
-  if (rest.length) { head('Additional photos'); photos2(rest, 0.7); }
+  var restIdx = [];
+  images.forEach(function (src, i) { if (src && !used[i]) restIdx.push(i); });
+  if (restIdx.length) {
+    head('Additional photos');
+    photos2(restIdx.map(function (i) { return images[i]; }), 0.7, restIdx.map(function (i) { return captions[i] || ''; }));
+  }
 
   if (/invoice/i.test(modeName || '') && (data.payStatus || (data.lineItems || []).length)) {
     head('Payment');
@@ -6159,6 +6206,15 @@ function fjPhotos(f) {
   (f.extraPhotos || []).forEach(function (p) { out.push(p); });
   return out;
 }
+/* One short caption per photo, in the same order as fjPhotos, so each picture
+   sits under its own subject in the document instead of in a heap at the end. */
+function fjCaptions(f) {
+  var out = [];
+  if (f.kind === 'inspection') fjChecks(f).forEach(function (c) { (fjRow(f, c.id).photos || []).forEach(function () { out.push(c.label || ''); }); });
+  else (f.areas || []).forEach(function (id) { var a = fjArea(id); (fjRow(f, id).photos || []).forEach(function () { out.push((a && a.name) || ''); }); });
+  (f.extraPhotos || []).forEach(function () { out.push('On site'); });
+  return out;
+}
 function fjBeforeAfter(f) { return { before: (f.beforePhotos || []).slice(), after: (f.afterPhotos || []).slice() }; }
 /* The filled-in form is kept beside the document it produced, so it can be
    opened again days later — from My work — to add a photo or fix a word. */
@@ -6389,7 +6445,7 @@ function fjTranscript(f) {
   var L = [];
   if (f.kind === 'inspection') {
     L.push('INSPECTION: Level ' + f.level + ' on a ' + fjSysName(f.system) + '.');
-    var n = 0;
+    var n = 0, photoNo = 0;
     fjChecks(f).forEach(function (c) {
       var r = f.data[c.id]; if (!r || (!r.v && !String(r.note || '').trim() && !(r.photos || []).length)) return;
       var ph = (r.photos || []).length;
@@ -6397,7 +6453,9 @@ function fjTranscript(f) {
       var qtxt = fjQs(f, c).map(function (q) { return (r.q || {})[q.id] ? q.label + ' ' + r.q[q.id] : ''; }).filter(Boolean).join('; ');
       var sz = c.size ? fjSizeText(r) : '';
       if (c.opening && ((r.m || {}).ow || (r.m || {}).oh)) sz += (sz ? ', ' : '') + 'fireplace opening ' + ((r.m || {}).ow || '?') + ' x ' + ((r.m || {}).oh || '?') + ' in';
-      L.push('- [' + fjSecName(c.sec) + '] ' + c.label + ': ' + (c.photoOnly ? 'photo' : vv) + (qtxt ? ' — ' + qtxt : '') + (sz ? ' — flue size ' + sz : '') + (String(r.note || '').trim() ? ' — tech wrote: "' + String(r.note).trim() + '"' : '') + (ph ? ' (' + ph + ' photo' + (ph > 1 ? 's' : '') + ')' : ''));
+      var nums = [];
+      for (var pi = 0; pi < ph; pi++) { photoNo++; nums.push(photoNo); }
+      L.push('- [' + fjSecName(c.sec) + '] ' + c.label + ': ' + (c.photoOnly ? 'photo' : vv) + (qtxt ? ' — ' + qtxt : '') + (sz ? ' — flue size ' + sz : '') + (String(r.note || '').trim() ? ' — tech wrote: "' + String(r.note).trim() + '"' : '') + (nums.length ? ' (photo ' + nums.join(', ') + ')' : ''));
       n++;
     });
     if (!n) L.push('- (nothing marked yet)');
@@ -6405,13 +6463,16 @@ function fjTranscript(f) {
     if (skipped.length) L.push('NOT CHECKED: ' + skipped.map(function (c) { return c.label; }).join(', ') + '.');
   } else {
     L.push((f.kind === 'invoice' ? 'WORK DONE' : 'ESTIMATE VISIT') + ':');
+    var photoNo2 = 0;
     (f.areas || []).forEach(function (id) {
       var a = fjArea(id), r = f.data[id] || {};
       if (!a) return;
       var ms = Object.keys(r.m || {}).filter(function (k) { return String(r.m[k] || '').trim(); }).map(function (k) { return k + ': ' + r.m[k]; });
       var aq = (a.q || []).map(function (q) { return (r.q || {})[q.id] ? q.label + ' ' + r.q[q.id] : ''; }).filter(Boolean).join('; ');
       if (aq) ms.unshift(aq);
-      L.push('- ' + a.name + (String(r.note || '').trim() ? ' — tech wrote: "' + String(r.note).trim() + '"' : ' — (no note)') + ((r.photos || []).length ? ' (' + r.photos.length + ' photo' + (r.photos.length > 1 ? 's' : '') + ')' : ' (no photo)') + (ms.length ? ' | measurements: ' + ms.join('; ') : ' | no measurements taken'));
+      var pn = [];
+      for (var qi = 0; qi < (r.photos || []).length; qi++) { photoNo2++; pn.push(photoNo2); }
+      L.push('- ' + a.name + (String(r.note || '').trim() ? ' — tech wrote: "' + String(r.note).trim() + '"' : ' — (no note)') + (pn.length ? ' (photo ' + pn.join(', ') + ')' : ' (no photo)') + (ms.length ? ' | measurements: ' + ms.join('; ') : ' | no measurements taken'));
     });
   }
   if (String(f.extraNote || '').trim()) L.push('ALSO: ' + String(f.extraNote).trim());
@@ -6528,6 +6589,7 @@ function fjBuildReport() {
     });
     var ba = fjBeforeAfter(f);
     var imgs = fjPhotos(f);
+    ba.captions = fjCaptions(f);
     var modeName = isInv ? 'Invoice' : 'Inspection — Level ' + f.level;
     if (isInv) { d.title = 'Invoice'; if (d.payStatus == null) d.payStatus = 'unpaid'; }
     var blob = buildChatReport(d, imgs, state.settings, modeName, ba);
@@ -6537,7 +6599,7 @@ function fjBuildReport() {
     var prevRep = (f.builtRep && f.builtRep.obj) || null;
     state.chat.lastReport = { id: (f.builtRep && f.builtRep.id) || ('doc-' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6)), data: d, imgs: imgs, blob: blob, fn: fn, mode: state.chat.mode, modeName: modeName,
       shareId: (prevRep && prevRep.shareId) || '', photosSent: false, emailedAt: (prevRep && prevRep.emailedAt) || 0,
-      at: Date.now(), before: ba.before, after: ba.after, kind: isInv ? 'invoice' : 'inspection' };
+      at: Date.now(), before: ba.before, after: ba.after, captions: ba.captions, kind: isInv ? 'invoice' : 'inspection' };
     f.builtRep = { id: state.chat.lastReport.id, obj: state.chat.lastReport };
     docKeep(state.chat.lastReport);
     fjFormSave(state.chat.lastReport.id, f);
