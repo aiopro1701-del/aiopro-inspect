@@ -1103,7 +1103,7 @@ var M = 43, PW = 612, PH = 792, CONTENT = PW - M * 2;
 var APP_DIR = (/^https?:$/.test(location.protocol) && location.hostname) ? location.origin + location.pathname.replace(/[^\/]*$/, '') : 'https://aiopro1701-del.github.io/aiopro-inspect/';
 var IS_BETA = /\/beta\/$/.test(APP_DIR);
 /* Refael's field knowledge — the bot answers from this. Kept word-for-word stable so it is cached (cheap). */
-var AIO_KB = "AIO PRO CHIMNEY \u2014 FIELD KNOWLEDGE (from the owner, Refael Maman). Use this to answer the technician the way Refael would.\n\nWHO WE ARE\n- AIOPRO LLC, trading as AIO Pro Chimney. 1505 North and South Rd, St. Louis, MO 63130. Phone (314) 379-2871. Email Aiopro1701@gmail.com. aioprochimney.com.\n- Licensed general contractor, insured, CSIA member, NCSG member, BBB accredited. Greater St. Louis; east as far as Belleville and O'Fallon, IL. A Kansas City employee can take Kansas City jobs.\n- Owner: Refael Maman. The office = Refael.\n\nWHO USES THE APP\n- Owner (Refael): everything.\n- Technician: visits the house, finds the problem, prices it, presents it, closes it. Most of the work is technician and customer face to face. The technician is still learning and calls Refael on most jobs; that is fine and expected.\n- Installer: does the booked job. Needs to know when and where, what to bring, and what the technician found (photos + scope).\n\nWHAT THE TECHNICIAN MAY AND MAY NOT SAY\n- Prices: he may give prices and approximate (+/-) ranges, and he may adjust a price or give a discount (see Selling).\n- Dates: never promise a date. Scheduling always goes through the office: \"Refael will call you to book it.\"\n- Warranty: never promise warranty terms. \"The warranty is written on the estimate; Refael confirms it.\"\n- If he does not know something: say \"Let me confirm that with Refael\" and call him. Never guess about safety, code, or warranty.\n- Never run down another company. Never argue with the customer.\n\nMONEY RULES\n- Minimum service charge is usually $49. Sometimes the estimate visit is free, but not often.\n- Deposit: 20% to 40% of the job, depending on the size of the job. Balance on completion unless agreed otherwise.\n- Estimate prices hold for 30 days.\n- Price goes up with: roof pitch (steep = harder/slower, may need extra safety gear), job difficulty, how hard the chimney is to reach (height, stories, trees, lift or scaffold needed), and how much material is needed (liner length, size of the chimney top, number of flues).\n- Access equipment (boom lift, scaffold) is priced as its own line so the customer sees it.\n- Anything that may change once opened up: say so in the scope notes \u2014 \"if we find more once it is opened, we stop and agree the difference with you before continuing.\"\n\nHOW REFAEL WRITES AN ESTIMATE\n- One scope by default: the work he recommends. Add Option B (or C) ONLY when the customer has a real choice (keep the stove vs. new stove, stainless vs. galvanized, vent-free vs. vented gas). Each option has its own full total. \"Choose one \u2014 you do not need both.\"\n- Add-ons the customer can take or leave (a vent cap, a second liner) are listed separately as optional.\n- Each line: a clear name, 3-7 short scope lines specific to this house (sizes, lengths, where), and a price.\n- Explain the cause in plain words (\"a square damper cannot seal a round liner\"), then the fix. Safety items first and clearly: \"This one should not wait.\"\n- Scope notes say what is NOT included and what the customer prepares.\n- Tone: plain, confident, respectful. No jargon, no code numbers, no sales filler.\n\nSELLING (coach the technician)\n- Before the price: show the customer the photos, explain what is wrong, why it happened, and what happens if it waits.\n- Present the recommended scope first, with the total. If there is a real choice, present Option A and Option B side by side.\n- \"It's too expensive\": 1) Acknowledge (\"I understand, it's a real number.\"). 2) Ask (\"What matters most to you \u2014 the lowest price today, or fixing it so it doesn't come back?\" / \"What budget did you have in mind?\"). 3) Advise:\n  a) Split it: the safety / water-stopping part now, the rest later (becomes Option A / B).\n  b) Show the value: materials, labor, cleanup, photos, written warranty, licensed and insured, CSIA/NCSG.\n  c) Deposit 20-40% now, balance when done.\n  d) A discount is a closing tool, tied to a decision today or booking now. Give it once, clearly (\"If we book it today I can take $X off\").\n- \"I need to think about it\": ask what is holding them back; offer to email the estimate now with the Sign button; tell them Refael will follow up.\n- \"I'm getting other quotes\": that's fine; point to the written scope and warranty so they compare the same work. Never bash competitors.\n- Close: ask for the decision. \"Shall I send it to your email so you can sign it on your phone?\"\n\nSAFETY \u2014 STOP AND TELL THE CUSTOMER\n- Gas leak found (bubbles on leak test, smell): the appliance must not be used until repaired; if they smell gas, shut the supply and call the gas utility. Call Refael.\n- Blocked flue (debris, animal nest, collapsed tile) on a furnace or water heater: do not operate that appliance until cleared/lined. CO risk.\n- Unlined or badly cracked flue on a wood fireplace: do not use until repaired.\n- Disconnected or rusted-through vent connector: do not operate.\n- Creosote glaze or heavy buildup: no fires until swept.\n- Say it in one calm sentence, write it on the estimate, and call Refael.\n\nWHAT TO CHECK AND PHOTOGRAPH (standard order, bottom up)\n- First find out what system it is (wood fireplace, gas logs in a fireplace, direct-vent gas, vent-free gas, insert/stove, furnace or water heater flue) and check only the parts that system has. Vent-free gas has no flue: no damper, liner or roof checks.\n- Level 1: inside the home and from the ground only \u2014 no roof or attic. Level 2 adds attic/basement, roof when safe, and a camera scan.\n1. Front of the house (cover photo), then the appliance / fireplace.\n2. Firebox: cracks, gaps in joints, missing panels; hearth extension and clearances.\n3. Damper and throat: opens/closes and seals; damper type vs. flue shape.\n4. Smoke chamber: voids, rough/unparged brick, creosote.\n5. Flue and liner: camera scan if possible; clay tile cracks, offsets, missing mortar; liner size and material; debris.\n6. Appliance vents (furnace/water heater): connector condition, slope, clearance (single-wall 6\", B-vent 1\"), draft.\n7. Attic / basement where accessible: water stains, clearances, framing.\n8. Roof and exterior: flashing, cricket (chimney wider than 30\"), crown cracks, cap/spark arrestor, chase cover rust, brick and mortar, height (3-2-10 rule).\n9. Measurements that set the price: flue size (inside dimensions), liner length (roofline to appliance + above the top), chimney top size (for cap/chase cover), number of flues, stories, roof pitch, access.\n\nHOW TO MEASURE (short)\n- Liner length: from the appliance connection (or smoke chamber) to the top of the flue tile + about 1 ft; count stories (about 10 ft each) if you cannot measure directly.\n- Flue size: inside width x depth of the clay tile (or diameter for round); the liner is sized to the appliance outlet.\n- Chase cover / cap: outside length x width of the top (crown or chase), plus the flue tile height above the crown.\n- Chimney height above the roof: at least 3 ft above where it passes the roof and 2 ft higher than anything within 10 ft.\n\nWHEN TO CALL REFAEL\n- Any safety hazard, any job over a few thousand dollars, anything not in the price list, anything structural, any date/warranty question, any customer who is unhappy, and whenever unsure.";
+var AIO_KB = "AIO PRO CHIMNEY \u2014 FIELD KNOWLEDGE (from the owner, Refael Maman). Use this to answer the technician the way Refael would.\n\nWHO WE ARE\n- AIOPRO LLC, trading as AIO Pro Chimney. 1505 North and South Rd, St. Louis, MO 63130. Phone (314) 379-2871. Email Aiopro1701@gmail.com. aioprochimney.com.\n- Licensed general contractor, insured, CSIA member, NCSG member, BBB accredited. Greater St. Louis; east as far as Belleville and O'Fallon, IL. A Kansas City employee can take Kansas City jobs.\n- Owner: Refael Maman. The office = Refael.\n\nWHO USES THE APP\n- Owner (Refael): everything.\n- Technician: visits the house, finds the problem, prices it, presents it, closes it. Most of the work is technician and customer face to face. The technician is still learning and calls Refael on most jobs; that is fine and expected.\n- Installer: does the booked job. Needs to know when and where, what to bring, and what the technician found (photos + scope).\n\nWHAT THE TECHNICIAN MAY AND MAY NOT SAY\n- Prices: he may give prices and approximate (+/-) ranges, and he may adjust a price or give a discount (see Selling).\n- Dates: never promise a date. Scheduling always goes through the office: \"Refael will call you to book it.\"\n- Warranty: never promise warranty terms. \"The warranty is written on the estimate; Refael confirms it.\"\n- If he does not know something: say \"Let me confirm that with Refael\" and call him. Never guess about safety, code, or warranty.\n- Never run down another company. Never argue with the customer.\n\nMONEY RULES\n- Minimum service charge is usually $49. Sometimes the estimate visit is free, but not often.\n- Deposit: 20% to 40% of the job, depending on the size of the job. Balance on completion unless agreed otherwise.\n- Estimate prices hold for 30 days.\n- Price goes up with: roof pitch (steep = harder/slower, may need extra safety gear), job difficulty, how hard the chimney is to reach (height, stories, trees, lift or scaffold needed), and how much material is needed (liner length, size of the chimney top, number of flues).\n- Access equipment (boom lift, scaffold) is priced as its own line so the customer sees it.\n- Anything that may change once opened up: say so in the scope notes \u2014 \"if we find more once it is opened, we stop and agree the difference with you before continuing.\"\n\nHOW REFAEL WRITES AN ESTIMATE\n- One scope by default: the work he recommends. Add Option B (or C) ONLY when the customer has a real choice (keep the stove vs. new stove, stainless vs. galvanized, vent-free vs. vented gas). Each option has its own full total. \"Choose one \u2014 you do not need both.\"\n- Add-ons the customer can take or leave (a vent cap, a second liner) are listed separately as optional.\n- Each line: a clear name, 3-7 short scope lines specific to this house (sizes, lengths, where), and a price.\n- Explain the cause in plain words (\"a square damper cannot seal a round liner\"), then the fix. Safety items first and clearly: \"This one should not wait.\"\n- Scope notes say what is NOT included and what the customer prepares.\n- Tone: plain, confident, respectful. No jargon, no code numbers, no sales filler.\n\nSELLING (coach the technician)\n- Before the price: show the customer the photos, explain what is wrong, why it happened, and what happens if it waits.\n- Present the recommended scope first, with the total. If there is a real choice, present Option A and Option B side by side.\n- \"It's too expensive\": 1) Acknowledge (\"I understand, it's a real number.\"). 2) Ask (\"What matters most to you \u2014 the lowest price today, or fixing it so it doesn't come back?\" / \"What budget did you have in mind?\"). 3) Advise:\n  a) Split it: the safety / water-stopping part now, the rest later (becomes Option A / B).\n  b) Show the value: materials, labor, cleanup, photos, written warranty, licensed and insured, CSIA/NCSG.\n  c) Deposit 20-40% now, balance when done.\n  d) A discount is a closing tool, tied to a decision today or booking now. Give it once, clearly (\"If we book it today I can take $X off\").\n- \"I need to think about it\": ask what is holding them back; offer to email the estimate now with the Sign button; tell them Refael will follow up.\n- \"I'm getting other quotes\": that's fine; point to the written scope and warranty so they compare the same work. Never bash competitors.\n- Close: ask for the decision. \"Shall I send it to your email so you can sign it on your phone?\"\n\nSAFETY \u2014 STOP AND TELL THE CUSTOMER\n- Gas leak found (bubbles on leak test, smell): the appliance must not be used until repaired; if they smell gas, shut the supply and call the gas utility. Call Refael.\n- Blocked flue (debris, animal nest, collapsed tile) on a furnace or water heater: do not operate that appliance until cleared/lined. CO risk.\n- Unlined or badly cracked flue on a wood fireplace: do not use until repaired.\n- Disconnected or rusted-through vent connector: do not operate.\n- Creosote glaze or heavy buildup: no fires until swept.\n- Say it in one calm sentence, write it on the estimate, and call Refael.\n\nWHAT TO CHECK AND PHOTOGRAPH (standard order, bottom up)\n- First find out what system it is (wood fireplace, gas logs in a fireplace, direct-vent gas, vent-free gas, insert/stove, furnace or water heater flue) and check only the parts that system has. Vent-free gas has no flue: no damper, liner or roof checks.\n- Level 1: inside the home and from the ground only \u2014 no roof or attic. Level 2 adds the roof and the top when it is safe, and a camera scan of the flue. We do not go into attics, basements or crawl spaces.\n1. Front of the house (cover photo), then the appliance / fireplace.\n2. Firebox: cracks, gaps in joints, missing panels.\n3. Damper and throat: opens/closes and seals; damper type vs. flue shape.\n4. Smoke chamber: voids, rough/unparged brick, creosote.\n5. Flue and liner: camera scan if possible; clay tile cracks, offsets, missing mortar; liner size and material; debris.\n6. Appliance vents (furnace/water heater): connector condition, slope, clearance (single-wall 6\", B-vent 1\"), draft.\n8. Roof and exterior: flashing, cricket (chimney wider than 30\"), crown cracks, cap/spark arrestor, chase cover rust, brick and mortar, height (3-2-10 rule).\n9. Measurements that set the price: flue size (inside dimensions), liner length (roofline to appliance + above the top), chimney top size (for cap/chase cover), number of flues, stories, roof pitch, access.\n\nHOW TO MEASURE (short)\n- Liner length: from the appliance connection (or smoke chamber) to the top of the flue tile + about 1 ft; count stories (about 10 ft each) if you cannot measure directly.\n- Flue size: inside width x depth of the clay tile (or diameter for round); the liner is sized to the appliance outlet.\n- Chase cover / cap: outside length x width of the top (crown or chase), plus the flue tile height above the crown.\n- Chimney height above the roof: at least 3 ft above where it passes the roof and 2 ft higher than anything within 10 ft.\n\nWHEN TO CALL REFAEL\n- Any safety hazard, any job over a few thousand dollars, anything not in the price list, anything structural, any date/warranty question, any customer who is unhappy, and whenever unsure.";
 /* Photos keep their real shape: height/width of an image (0.75 if unknown). */
 function pdfImgRatio(doc, src) {
   try { var p = doc.getImageProperties(src); if (p && p.width > 0 && p.height > 0) return p.height / p.width; } catch (e) {}
@@ -1669,7 +1669,7 @@ function chatSystem(mode) {
   if (mode === 'estimate') return estChatSystem(depth);
   var who = depth === 'pro' ? 'the owner (an experienced pro)' : 'a technician who is still learning';
   var level = mode === 'level2'
-    ? 'LEVEL 2: everything in Level 1, plus the accessible attic, basement and crawl space around the chimney, the roof and chimney top only if the technician says it is safe to go up, and a camera scan of the flue if the system has one. Ask once whether they can get on the roof before any roof check. '
+    ? 'LEVEL 2: everything in Level 1, plus the roof and the top of the chimney when the technician says it is safe to go up, and a camera scan of the flue. We do NOT go into attics, basements or crawl spaces — never ask for those. Ask once whether they can get on the roof before any roof check. '
     : mode === 'invoice'
       ? 'This visit is for an invoice: ask only what work was done and anything worth noting, then stop. '
       : 'LEVEL 1: only what can be seen from inside the home and from the ground — the appliance, firebox, damper, the flue as far as a flashlight shows from below, the connection and the clearances, and the chimney exterior as seen from the ground. Do NOT send the technician onto the roof or into the attic. What could not be seen goes in the report limitations. ';
@@ -1929,6 +1929,14 @@ function viewRepEdit() {
           '<div class="field" style="flex:1"><label>Tax %</label><input data-r="taxPct" data-num="1" inputmode="decimal" value="' + esc(d.taxPct || '') + '"></div>' +
           '<div class="field" style="flex:1"><label>Deposit ($)</label><input data-r="deposit" data-num="1" inputmode="decimal" value="' + esc(d.deposit || '') + '"></div></div>' : '') +
         '<div id="rep_totals">' + repTotalsHTML(d) + '</div></div>' +
+      (/invoice/i.test(st.rep.modeName || '') ? '<div class="card"><div class="eyebrow">Payment</div>' +
+        '<div class="row" style="gap:6px;margin-bottom:8px">' + [['paid', 'Paid'], ['partial', 'Part paid'], ['unpaid', 'Not paid']].map(function (o) {
+          var on = (d.payStatus || 'unpaid') === o[0];
+          return '<button class="btn ' + (on ? 'btn-gold btn-primary' : 'btn-ghost') + '" data-act="rep-pay" data-arg="' + o[0] + '" style="flex:1;min-height:42px;font-size:14px">' + o[1] + '</button>';
+        }).join('') + '</div>' +
+        (d.payStatus === 'partial' ? '<div class="row" style="gap:8px"><div class="field" style="flex:1;margin-bottom:0"><label>Paid so far ($)</label><input data-r="paid" data-num="1" inputmode="decimal" value="' + esc(d.paid || '') + '"></div>' +
+          '<div class="field" style="flex:1;margin-bottom:0"><label>Still due</label><input id="rep_due" value="' + esc(money(Math.max(0, (repTotals(d).total || 0) - (Number(d.paid) || 0)))) + '" disabled style="background:var(--mortar-2)"></div></div>' : '') +
+        '<div style="color:var(--muted);font-size:12px;margin-top:8px">This is printed at the end of the invoice and shown to the customer online.</div></div>' : '') +
       '<div class="card">' + ta('Limitations (what could not be checked)', 'limitations', d.limitations, 60) + '</div>' +
     '</div>' +
     '<div class="bottombar" style="gap:6px"><button class="btn btn-gold btn-primary" data-act="rep-save" style="flex:1.1">Save</button><button class="btn btn-ghost" data-act="rep-preview" style="flex:1">Preview</button><button class="btn btn-ghost" data-act="rep-pdf" style="flex:0.7">PDF</button><button class="btn btn-ghost" data-act="rep-mail" style="flex:0.7">Email</button></div>' +
@@ -1947,7 +1955,10 @@ function wireRepEdit() {
       if (el.getAttribute('data-num')) v = v.replace(/[^0-9.]/g, '');
       repSetPath(st.d, el.getAttribute('data-r'), el.getAttribute('data-num') ? (v === '' ? '' : Number(v)) : v);
       if (!st.dirty) { st.dirty = true; var sub = root.querySelector('.topbar .sub'); if (sub) sub.textContent = (st.rep.modeName || '') + ' · not saved'; }
-      if (el.getAttribute('data-num')) { var t = root.querySelector('#rep_totals'); if (t) t.innerHTML = repTotalsHTML(st.d); }
+      if (el.getAttribute('data-num')) {
+        var t = root.querySelector('#rep_totals'); if (t) t.innerHTML = repTotalsHTML(st.d);
+        var du = root.querySelector('#rep_due'); if (du) du.value = money(Math.max(0, (repTotals(st.d).total || 0) - (Number(st.d.paid) || 0)));
+      }
     });
   });
 }
@@ -1961,7 +1972,8 @@ function repSave(then) {
     .map(function (it) { var q = Number(it.qty) || 1, up = Number(it.unitPrice) || 0; return { description: String(it.description || '').trim(), qty: q, unitPrice: up, amount: Math.round(q * up * 100) / 100 }; });
   var t = repTotals(d);
   d.subtotal = t.sub; d.discount = t.disc; d.tax = t.tax; d.total = t.total; d.deposit = t.deposit;
-  try { rep.blob = buildChatReport(d, rep.imgs, state.settings, rep.modeName); }
+  if (/invoice/i.test(rep.modeName || '')) { d.title = String(d.title || '').trim() || 'Invoice'; d.payStatus = d.payStatus || 'unpaid'; d.paid = Math.max(0, Number(d.paid) || 0); }
+  try { rep.blob = buildChatReport(d, rep.imgs, state.settings, rep.modeName, { before: rep.before || [], after: rep.after || [] }); }
   catch (err) { st.err = true; st.msg = 'Could not build the PDF: ' + ((err && err.message) || err); render(); return false; }
   rep.data = d; rep.at = Date.now();
   st.d = JSON.parse(JSON.stringify(d)); st.d._addr = [d.customer.address, d.customer.cityStateZip].filter(Boolean).join(', ');
@@ -2078,7 +2090,7 @@ function drawDiagram(doc, type, x, y, w) {
   }
   return 0;
 }
-function buildChatReport(data, images, settings, modeName) {
+function buildChatReport(data, images, settings, modeName, extra) {
   var jsPDF = window.jspdf.jsPDF;
   var doc = new jsPDF({ unit: 'pt', format: 'letter' });
   var BLUE = [23, 105, 170];
@@ -2293,18 +2305,56 @@ function buildChatReport(data, images, settings, modeName) {
     if (Number(data.deposit || 0)) totalRow('Deposit to schedule', Number(data.deposit), false);
     y += 8;
     doc.setFont('helvetica', 'italic').setFontSize(8.5).setTextColor(MUTED[0], MUTED[1], MUTED[2]);
-    y = wrapped(doc, 'Prices reflect the conditions visible at the time of inspection. Concealed damage found once work begins may change the final price and will be reviewed with you before proceeding.', M, y, CONTENT, 8.5, MUTED) + 8;
+    if (!/invoice/i.test(modeName || '')) y = wrapped(doc, 'Prices reflect the conditions visible at the time of inspection. Concealed damage found once work begins may change the final price and will be reviewed with you before proceeding.', M, y, CONTENT, 8.5, MUTED) + 8;
   }
 
   var rest = images.filter(function (src, i) { return src && !used[i]; });
   if (rest.length) { head('Additional photos'); photos2(rest, 0.7); }
 
-  if (data.limitations) { head('Inspection limitations'); y = wrapped(doc, String(data.limitations), M, y, CONTENT, 9.5, MUTED) + 6; }
+  if (/invoice/i.test(modeName || '') && (data.payStatus || (data.lineItems || []).length)) {
+    head('Payment');
+    var stTxt = data.payStatus === 'paid' ? 'PAID IN FULL — thank you' : data.payStatus === 'partial' ? 'PART PAID' : 'NOT PAID YET';
+    var stCol = data.payStatus === 'paid' ? SEV.ok : data.payStatus === 'partial' ? SEV.monitor : SEV.defect;
+    ensure(30);
+    doc.setFillColor(stCol[0], stCol[1], stCol[2]);
+    var bw = doc.setFont('helvetica', 'bold').setFontSize(11).getTextWidth(stTxt) + 22;
+    doc.roundedRect(M, y - 12, bw, 20, 4, 4, 'F');
+    doc.setTextColor(255, 255, 255); doc.text(stTxt, M + 11, y + 2);
+    y += 24;
+    var tot = Number(data.total || 0), pd = data.payStatus === 'paid' ? tot : Math.max(0, Number(data.paid || 0));
+    var lines2 = [['Invoice total', tot], ['Paid', pd], ['Balance due', Math.max(0, tot - pd)]];
+    doc.setFont('helvetica', 'normal').setFontSize(10.5).setTextColor(INK[0], INK[1], INK[2]);
+    lines2.forEach(function (r2, i2) {
+      ensure(16);
+      doc.setFont('helvetica', i2 === 2 ? 'bold' : 'normal');
+      doc.text(r2[0], M, y); doc.text(money(r2[1]), M + 190, y, { align: 'right' });
+      y += 15;
+    });
+    y += 6;
+  }
+  var ex = extra || {};
+  if ((ex.before || []).length || (ex.after || []).length) {
+    head('Before & after');
+    if ((ex.before || []).length) { doc.setFont('helvetica', 'bold').setFontSize(10.5).setTextColor(INK[0], INK[1], INK[2]); ensure(16); doc.text('BEFORE', M, y); y += 12; photos2(ex.before, 0.7); }
+    if ((ex.after || []).length) { doc.setFont('helvetica', 'bold').setFontSize(10.5).setTextColor(INK[0], INK[1], INK[2]); ensure(16); doc.text('AFTER', M, y); y += 12; photos2(ex.after, 0.7); }
+  }
+  if (data.limitations) { head(/invoice/i.test(modeName || '') ? 'Notes' : 'Inspection limitations'); y = wrapped(doc, String(data.limitations), M, y, CONTENT, 9.5, MUTED) + 6; }
 
-  var isQuote = /estimate|invoice/i.test(modeName);
+  var isQuote = /estimate|invoice/i.test(modeName), isInvoice = /invoice/i.test(modeName);
   head('Terms & conditions');
   if (settings.terms && settings.terms.trim()) {
     y = wrapped(doc, settings.terms, M, y, CONTENT, 9, MUTED) + 12;
+  } else if (isInvoice) {
+    [['Payment', 'Payment is due on completion unless otherwise agreed in writing. Returned payments and past-due balances may incur fees.'],
+     ['Workmanship warranty', 'Workmanship is warranted for one year from completion unless a different term is stated. Manufacturer warranties apply to installed materials.'],
+     ['Work performed', 'This invoice covers the work listed above. Anything not listed was not part of this visit.']
+    ].forEach(function (cl) {
+      ensure(30);
+      doc.setFont('helvetica', 'bold').setFontSize(9).setTextColor(INK[0], INK[1], INK[2]);
+      doc.text(cl[0] + ':', M, y); y += 12;
+      y = wrapped(doc, cl[1], M, y, CONTENT, 9, MUTED) + 8;
+    });
+    y += 4;
   } else {
     var clauses = [
       ['Scope of inspection', 'This report reflects a visual inspection of the readily accessible portions of the chimney, venting, and connected appliance to the NFPA 211 standard for the level performed. Areas that cannot be viewed without dismantling part of the chimney or the structure are excluded.'],
@@ -2328,7 +2378,9 @@ function buildChatReport(data, images, settings, modeName) {
   }
 
   head('Acknowledgment & signature');
-  y = wrapped(doc, 'This inspection covered the readily accessible areas of the chimney and connected appliance visible at the time of service, to the NFPA 211 standard for the level performed. Areas that cannot be seen without removing parts of the chimney or the structure are not included. No warranty is given as to the future safe use of the system, as use and conditions can change after the inspection. By signing, the customer acknowledges receipt of this report.', M, y, CONTENT, 9.5, MUTED) + 16;
+  y = wrapped(doc, isInvoice
+    ? 'By signing, the customer acknowledges that the work listed on this invoice was carried out and the site was left as agreed, and accepts the balance shown as due.'
+    : 'This inspection covered the readily accessible areas of the chimney and connected appliance visible at the time of service, to the NFPA 211 standard for the level performed. Areas that cannot be seen without removing parts of the chimney or the structure are not included. No warranty is given as to the future safe use of the system, as use and conditions can change after the inspection. By signing, the customer acknowledges receipt of this report.', M, y, CONTENT, 9.5, MUTED) + 16;
   ensure(110);
   if (data._signature) pdfImgFit(doc, data._signature, M, y, 200, 68, 'FAST', { left: true });
   doc.setDrawColor(INK[0], INK[1], INK[2]).setLineWidth(0.6);
@@ -3551,7 +3603,7 @@ function viewAppt() {
 /* ── Estimate builder (catalog · one scope, optional Option B / C) ── */
 var CATALOG = [
 {name:"Inspection — Level 1",price:49,description:"NFPA 211 Level 1 inspection of the readily accessible portions — firebox, damper, smoke chamber, flue from below, the connection and clearances, and the chimney exterior from the ground. Written report with photos."},
-{name:"Inspection — Level 2",price:79,description:"NFPA 211 Level 2 inspection: everything in Level 1 plus the accessible attic, basement and crawl space, the roof and chimney top where safe, and a camera scan of the flue. Written report with photos."},
+{name:"Inspection — Level 2",price:79,description:"NFPA 211 Level 2 inspection: everything in Level 1 plus the roof and the top of the chimney where it is safe to go up, and a camera scan of the flue. Attics, basements and crawl spaces are not part of this inspection. Written report with photos."},
 {name:"Chimney sweep",price:279,description:"Top-to-bottom clean using a rotary brush to remove dust, dirt, and creosote; brush the flue, clean smoke chamber, cap, and firebox."},
 {name:"Chimney Deep Cleaning Service",price:0,description:"Full deep clean: flue swept, smoke chamber, cap, firebox; clean gas logs, clear pilot exhaust tube, replace ember material."},
 {name:"Animal removal",price:979,description:"Nesting debris and biological waste removed; full sanitize; deodorize/anti-fungus; dust repulsion; full system disinfection."},
@@ -4447,11 +4499,16 @@ function reportPayload(rep) {
     levelOfInspection: d.levelOfInspection || '', summary: d.summary || '', property: d.property || {}, appliance: d.appliance || {},
     components: (Array.isArray(d.components) ? d.components : []).map(function (c) { return { name: c.name || '', status: c.status || '', condition: c.condition || '', recommended: c.recommended || '' }; }),
     conclusion: d.conclusion || '', limitations: d.limitations || '', preparedBy: (d.customer || {}).preparedBy || EST_BRAND.preparedBy,
+    lineItems: (Array.isArray(d.lineItems) ? d.lineItems : []).map(function (it) { return { description: it.description || '', qty: Number(it.qty) || 1, unitPrice: Number(it.unitPrice) || 0, amount: Number(it.amount) || 0 }; }),
+    subtotal: Number(d.subtotal) || 0, discount: Number(d.discount) || 0, tax: Number(d.tax) || 0, total: Number(d.total) || 0, deposit: Number(d.deposit) || 0,
+    payStatus: d.payStatus || '', paid: Number(d.paid) || 0,
+    beforeN: (rep.before || []).length, afterN: (rep.after || []).length,
     company: { name: s.company, phone: (s.phone && s.phone.trim()) || EST_BRAND.phone, email: (s.email && s.email.trim()) || EST_BRAND.email, address: EST_BRAND.address, legal: EST_BRAND.legal, creds: EST_BRAND.creds, web: EST_BRAND.web, owner: EST_BRAND.owner } };
 }
 function reportEnsureShared(rep) {
   var id = rep.shareId || newShareId();
-  return cloudShare('report', id, reportPayload(rep), rep.photosSent ? null : rep.imgs).then(function (res) { if (res.signed) rep.lockedSigned = true; rep.shareId = id; rep.photosSent = true; return id; });
+  var pics = (rep.before || []).concat(rep.after || [], rep.imgs || []);
+  return cloudShare('report', id, reportPayload(rep), rep.photosSent ? null : pics).then(function (res) { if (res.signed) rep.lockedSigned = true; rep.shareId = id; rep.photosSent = true; return id; });
 }
 function estMailSend() {
   var m = state.estMail;
@@ -4942,7 +4999,7 @@ root.addEventListener('click', function (e) {
     case 'fj-shape': { var sp = String(arg).split('|'), sr = state.fj && fjRow(state.fj, sp[0]); if (sr) { sr.m = sr.m || {}; sr.m.shape = sr.m.shape === sp[1] ? '' : sp[1]; render(); } break; }
     case 'fj-cam': fjAddPhoto(arg, true); break;
     case 'fj-gal': fjAddPhoto(arg, false); break;
-    case 'fj-photo-del': { var pp = String(arg).split('|'), f2 = state.fj; if (f2) { if (pp[0] === '_extra') f2.extraPhotos.splice(Number(pp[1]), 1); else fjRow(f2, pp[0]).photos.splice(Number(pp[1]), 1); render(); } break; }
+    case 'fj-photo-del': { var pp = String(arg).split('|'), f2 = state.fj; if (f2) { var arr0 = pp[0] === '_extra' ? f2.extraPhotos : pp[0] === '_before' ? f2.beforePhotos : pp[0] === '_after' ? f2.afterPhotos : fjRow(f2, pp[0]).photos; if (arr0) arr0.splice(Number(pp[1]), 1); render(); } break; }
     case 'fj-review': fjReview(); break;
     case 'fj-build': fjBuildEstimate(); break;
     case 'fj-report': fjBuildReport(); break;
@@ -4957,6 +5014,7 @@ root.addEventListener('click', function (e) {
     case 'rep-preview': { var rv = state.repEdit; if (rv && rv.dirty) repSave(function () { previewOpen('report'); }); else previewOpen('report'); break; }
     case 'rep-pdf': { var rs = state.repEdit; if (!rs) break; if (rs.dirty) { if (repSave(function () { render(); savePdf(rs.rep.fn, rs.rep.blob); })) {} } else savePdf(rs.rep.fn, rs.rep.blob); break; }
     case 'rep-mail': { var rm = state.repEdit; if (!rm) break; var go = function () { state.repEdit = null; estMailOpen('report'); state.estMail.back = 'repedit-reopen'; }; if (rm.dirty) repSave(go); else go(); break; }
+    case 'rep-pay': if (state.repEdit) { state.repEdit.d.payStatus = arg; state.repEdit.dirty = true; render(); } break;
     case 'rep-status': { var sp = String(arg).split('|'), ce2 = state.repEdit && state.repEdit.d.components[Number(sp[0])]; if (ce2) { ce2.status = sp[1]; state.repEdit.dirty = true; render(); } break; }
     case 'rep-comp-add': if (state.repEdit) { state.repEdit.d.components.push({ name: '', status: 'ok', condition: '', recommended: '', photos: [] }); state.repEdit.dirty = true; render(); setTimeout(function () { var ins = root.querySelectorAll('[data-r$=".name"]'); if (ins.length) { ins[ins.length - 1].focus(); } }, 0); } break;
     case 'rep-comp-del': if (state.repEdit && confirm('Remove this item from the report?')) { state.repEdit.d.components.splice(Number(arg), 1); state.repEdit.dirty = true; render(); } break;
@@ -5265,7 +5323,7 @@ var FJ_SYS = [
 var FJ_SECS = [
   ['out', 'Outside'], ['appl', 'The appliance'], ['fb', 'Firebox'], ['gas', 'Gas side'],
   ['dmp', 'Damper & throat'], ['sc', 'Smoke chamber'], ['flue', 'Flue & liner'], ['vent', 'Venting'],
-  ['room', 'Room & safety'], ['att', 'Attic & basement'], ['roof', 'Roof & top']
+  ['room', 'Room & safety'], ['roof', 'Roof & top']
 ];
 /* sys: '*' = every system. lvl 2 = only on a Level 2 inspection. */
 var FJ_CHECKS = [
@@ -5293,7 +5351,7 @@ var FJ_CHECKS = [
   { id: 'sc-cond', sec: 'sc', label: 'Smoke chamber', help: 'Look up with a light: voids, rough brick, missing mortar, buildup.', sys: ['wood', 'gaslog'], lvl: 1 },
 
   { id: 'flue-view', sec: 'flue', label: 'Flue from below', help: 'Flashlight up: liner type, cracks, offsets, daylight, debris, blockage.', sys: ['wood', 'factory', 'insert', 'gaslog', 'flue'], lvl: 1,
-    noPhotoLvl: 2, size: true,
+    noPhotoLvl: 2, size: true, opening: ['wood', 'factory', 'gaslog'],
     q: [{ id: 'liner', label: 'Liner', opts: ['Clay tile', 'Stainless', 'None'] }] },
   { id: 'flue-build', sec: 'flue', label: 'Creosote or buildup', help: 'How thick, and is it flaky, tarry or glazed?', sys: ['wood', 'insert'], lvl: 1 },
   { id: 'flue-cam', sec: 'flue', label: 'Camera scan of the flue', help: 'Run the camera and add as many photos as you need — top, middle and every bad spot.', sys: ['wood', 'factory', 'insert', 'gaslog', 'flue'], lvl: 2 },
@@ -5304,11 +5362,7 @@ var FJ_CHECKS = [
   { id: 'dv-term', sec: 'vent', label: 'Vent termination outside', help: 'Photo it: clear of decks, windows and snow line; cap intact.', sys: ['dv'], lvl: 1 },
   { id: 'dv-seal', sec: 'vent', label: 'Glass gasket and seals', help: 'Sealed unit: gasket all round, glass clamped, no soot leak.', sys: ['dv'], lvl: 1 },
 
-  { id: 'room-hearth', sec: 'room', label: 'Hearth extension', help: 'How far it runs in front and to the sides; carpet or wood at the edge.', sys: ['wood', 'factory', 'insert', 'gaslog'], lvl: 1 },
   { id: 'room-air', sec: 'room', label: 'Combustion air / tight room', help: 'Closed room, big exhaust fan or new windows can starve it.', sys: ['ventfree', 'flue', 'gaslog'], lvl: 1 },
-
-  { id: 'att-chase', sec: 'att', label: 'Chimney in the attic', help: 'Gaps, water stains, framing touching the chimney.', sys: ['wood', 'factory', 'insert', 'gaslog', 'flue'], lvl: 2 },
-  { id: 'att-base', sec: 'att', label: 'Chimney base and cleanout', help: 'Cleanout door, debris, water, cracks in the base.', sys: ['wood', 'gaslog', 'flue'], lvl: 2 },
 
   { id: 'roof-crown', sec: 'roof', label: 'Crown or chase cover', help: 'Cracks, rust, standing water, the seal at the tiles.', sys: ['wood', 'factory', 'insert', 'gaslog', 'flue'], lvl: 2 },
   { id: 'roof-cap', sec: 'roof', label: 'Cap and spark arrestor', help: 'There, fastened, screen clear.', sys: ['wood', 'factory', 'insert', 'gaslog', 'flue'], lvl: 2 },
@@ -5320,12 +5374,18 @@ var FJ_CHECKS = [
 var FJ_AREAS = [
   { id: 'insp1', name: 'Inspection — Level 1', help: 'The inspection visit itself, charged to the customer.', m: [] },
   { id: 'insp2', name: 'Inspection — Level 2', help: 'Camera scan, sale of the house, or after a problem.', m: ['Flues scanned', 'Stories'] },
-  { id: 'liner', name: 'Liner / flue', help: 'New liner, relining, broken clay tile.', m: ['Liner length (ft)', 'Flue size inside (in)', 'Stories', 'Roof pitch / access'] },
-  { id: 'cap', name: 'Cap / chase cover', help: 'Cap, chase cover, animal screen.', m: ['Top size L x W (in)', 'Tile height above the crown (in)', 'Number of flues'] },
+  { id: 'liner', name: 'Liner / flue', help: 'New liner, relining, broken clay tile.', m: ['Liner length (ft)', 'Flue size inside (in)', 'Fireplace opening — width (in)', 'Fireplace opening — height (in)', 'Stories', 'Roof pitch / access'] },
+  { id: 'cap', name: 'Cap', help: 'Chimney cap, animal screen, damper cap.', m: ['Flue tile outside size L x W (in)', 'Tile height above the crown (in)', 'Number of flues'],
+    q: [{ id: 'material', label: 'Material', opts: ['Stainless', 'Galvanized', 'Copper'] }] },
+  { id: 'chase', name: 'Chase cover', help: 'Rusted or leaking chase cover on a metal chase.', m: ['Length — right side (in)', 'Length — left side (in)', 'Width — right side (in)', 'Width — left side (in)', 'Centre to front (in)', 'Centre to back (in)', 'Centre to right (in)', 'Centre to left (in)', 'Overhang (in)'],
+    q: [{ id: 'storm', label: 'Storm collar needed?', opts: ['Yes', 'No'] },
+        { id: 'material', label: 'Material', opts: ['Stainless', 'Galvanized'] }] },
   { id: 'crown', name: 'Crown / top of the chimney', help: 'Crown cracked, top tiles, rebuild from the roofline.', m: ['Crown size (in)', 'Courses to rebuild'] },
   { id: 'damper', name: 'Damper', help: 'Damper stuck, missing, does not seal, damper cap.', m: ['Flue shape and size (in)', 'Damper type'] },
   { id: 'smokechamber', name: 'Smoke chamber', help: 'Parging, voids, rebuild.', m: ['Chamber height (in)'] },
-  { id: 'firebox', name: 'Firebox', help: 'Mortar repair, panels, brick cleaning.', m: ['Panel sizes (in)', 'How many panels'] },
+  { id: 'firebox', name: 'Firebox', help: 'Mortar repair, panels, brick cleaning.', m: ['Panel sizes (in)', 'How many panels'], mIf: { id: 'build', is: 'Panels' },
+    q: [{ id: 'build', label: 'Built from', opts: ['Brick', 'Panels'] },
+        { id: 'cond', label: 'Condition', opts: ['Good', 'Damaged'] }] },
   { id: 'masonry', name: 'Brick / tuckpointing', help: 'Tuckpointing, spalled brick, waterproofing.', m: ['Area (sq ft)', 'Stories', 'Lift or scaffold?'] },
   { id: 'flashing', name: 'Flashing / leak', help: 'Water coming in, flashing, cricket.', m: ['Roof type', 'Cricket needed?'] },
   { id: 'gas', name: 'Gas fireplace / logs', help: 'Logs, valve, burner service, conversion.', m: ['Make and model', 'Gas line present?', 'Opening size (in)'] },
@@ -5370,6 +5430,7 @@ function fjPhotos(f) {
   (f.extraPhotos || []).forEach(function (p) { out.push(p); });
   return out;
 }
+function fjBeforeAfter(f) { return { before: (f.beforePhotos || []).slice(), after: (f.afterPhotos || []).slice() }; }
 function fjStart(kind, customer) {
   state.fj = { kind: kind, level: '1', system: '', areas: [], data: {}, extraPhotos: [], extraNote: '', customer: customer || null, review: null, busy: false, err: '' };
   state.view = 'fjsetup'; render(); try { window.scrollTo(0, 0); } catch (_) {}
@@ -5383,7 +5444,7 @@ function viewFjSetup() {
     body = '<div class="card"><div class="eyebrow">Which inspection?</div><div class="row" style="gap:8px">' +
         ['1', '2'].map(function (l) { return '<button class="btn ' + (f.level === l ? 'btn-gold btn-primary' : 'btn-ghost') + '" data-act="fj-level" data-arg="' + l + '" style="flex:1">Level ' + l + '</button>'; }).join('') +
       '</div><div style="color:var(--muted);font-size:13px;margin-top:8px">' +
-        (f.level === '2' ? 'Level 2 adds the attic and basement, the roof and top, and a camera scan.' : 'Level 1 is what you can see inside the home and from the ground — no roof, no attic.') + '</div></div>' +
+        (f.level === '2' ? 'Level 2 adds the roof and the top of the chimney, and a camera scan of the flue. No attic, no basement.' : 'Level 1 is what you can see inside the home and from the ground — no roof, no attic.') + '</div></div>' +
       '<div class="eyebrow" style="margin:4px 2px 8px">What are we inspecting?</div>' +
       FJ_SYS.map(function (s) {
         return '<button class="card card-tap" style="display:block;width:100%;text-align:left;' + (f.system === s.id ? 'border-color:var(--gold);border-width:2px' : '') + '" data-act="fj-sys" data-arg="' + s.id + '">' +
@@ -5448,6 +5509,9 @@ function viewFjForm() {
             : m.shape ? '<div class="row" style="gap:8px"><div class="field" style="flex:1;margin-bottom:0"><label>Length (in)</label><input class="fj-size" data-fj="' + esc(c.id) + '" data-k="len" inputmode="decimal" value="' + esc(m.len || '') + '"></div>' +
               '<div class="field" style="flex:1;margin-bottom:0"><label>Width (in)</label><input class="fj-size" data-fj="' + esc(c.id) + '" data-k="wid" inputmode="decimal" value="' + esc(m.wid || '') + '"></div></div>' : '') +
         '</div>' : '') +
+        (c.opening && c.opening.indexOf(f.system) >= 0 ? '<div class="row" style="gap:8px;margin-bottom:9px">' +
+            '<div class="field" style="flex:1;margin-bottom:0"><label>Fireplace opening — width (in)</label><input class="fj-size" data-fj="' + esc(c.id) + '" data-k="ow" inputmode="decimal" value="' + esc(m.ow || '') + '"></div>' +
+            '<div class="field" style="flex:1;margin-bottom:0"><label>Opening — height (in)</label><input class="fj-size" data-fj="' + esc(c.id) + '" data-k="oh" inputmode="decimal" value="' + esc(m.oh || '') + '"></div></div>' : '') +
         (fjHasPhoto(f, c) ? fjPhotoStrip(c.id, r.photos) : '') +
         '<input class="fj-note" data-fj="' + esc(c.id) + '" placeholder="' + (c.photoOnly ? 'Anything to note…' : 'A few words for the report…') + '" value="' + esc(r.note || '') + '" style="width:100%;padding:10px 11px;border:1px solid var(--rule);border-radius:8px;font-size:15px">' +
       '</div>';
@@ -5456,17 +5520,34 @@ function viewFjForm() {
     (f.areas || []).forEach(function (id) {
       var a = fjArea(id); if (!a) return;
       var r = fjRow(f, id);
+      var showM = !a.mIf || (r.q || {})[a.mIf.id] === a.mIf.is;
       body += '<div class="card">' +
         '<div style="font-weight:700;font-size:16px">' + esc(a.name) + '</div>' +
         '<div style="color:var(--muted);font-size:13px;margin:3px 0 9px">' + esc(a.help) + '</div>' +
+        (a.q || []).map(function (q) {
+          return '<div style="margin-bottom:8px"><div style="font-size:13px;color:var(--muted);margin-bottom:4px">' + esc(q.label) + '</div>' +
+            '<div class="row" style="gap:6px">' + q.opts.map(function (o) {
+              var on = (r.q || {})[q.id] === o;
+              return '<button class="btn ' + (on ? 'btn-gold btn-primary' : 'btn-ghost') + '" data-act="fj-q" data-arg="' + esc(id + '|' + q.id + '|' + o) + '" style="flex:1;min-height:38px;padding:0 6px;font-size:13px">' + esc(o) + '</button>';
+            }).join('') + '</div></div>';
+        }).join('') +
         fjPhotoStrip(id, r.photos) +
         '<input class="fj-note" data-fj="' + esc(id) + '" placeholder="' + (f.kind === 'invoice' ? 'What you did, in a few words…' : 'What you found and what it needs…') + '" value="' + esc(r.note || '') + '" style="width:100%;padding:10px 11px;border:1px solid var(--rule);border-radius:8px;font-size:15px">' +
-        (a.m.length ? '<div style="margin-top:10px"><div class="eyebrow" style="margin-bottom:6px">Measurements (for us, not for the customer)</div>' +
+        (a.m.length && showM ? '<div style="margin-top:10px"><div class="eyebrow" style="margin-bottom:6px">Measurements (for us, not for the customer)</div>' +
           '<div class="row" style="flex-wrap:wrap;gap:8px">' + a.m.map(function (label, i) {
             return '<div class="field" style="flex:1 1 46%;margin-bottom:0"><label>' + esc(label) + '</label><input class="fj-m" data-fj="' + esc(id) + '" data-mi="' + i + '" value="' + esc((r.m && r.m[label]) || '') + '"></div>';
           }).join('') + '</div></div>' : '') +
       '</div>';
     });
+  }
+  if (f.kind === 'invoice') {
+    body += '<div class="eyebrow" style="margin:14px 2px 8px">Before &amp; after (not a must, but it sells the next job)</div>' +
+      '<div class="card"><div style="font-weight:700;font-size:16px">Before</div>' +
+        '<div style="color:var(--muted);font-size:13px;margin:3px 0 9px">How it looked when you got there.</div>' +
+        fjPhotoStrip('_before', f.beforePhotos) + '</div>' +
+      '<div class="card"><div style="font-weight:700;font-size:16px">After</div>' +
+        '<div style="color:var(--muted);font-size:13px;margin:3px 0 9px">The finished work.</div>' +
+        fjPhotoStrip('_after', f.afterPhotos) + '</div>';
   }
   body += '<div class="eyebrow" style="margin:14px 2px 8px">Anything else</div>' +
     '<div class="card">' + fjPhotoStrip('_extra', f.extraPhotos) +
@@ -5521,7 +5602,10 @@ function fjAddPhoto(id, cam) {
   var f = state.fj; if (!f) return;
   pickFiles(!!cam).then(function (list) {
     var arr = (list || []).filter(Boolean); if (!arr.length) return;
-    var into = id === '_extra' ? (f.extraPhotos = f.extraPhotos || []) : fjRow(f, id).photos;
+    var into = id === '_extra' ? (f.extraPhotos = f.extraPhotos || [])
+      : id === '_before' ? (f.beforePhotos = f.beforePhotos || [])
+      : id === '_after' ? (f.afterPhotos = f.afterPhotos || [])
+      : fjRow(f, id).photos;
     arr.forEach(function (src) { into.push(src); });
     render();
   }).catch(function () {});
@@ -5538,6 +5622,7 @@ function fjTranscript(f) {
       var vv = r.v === 'good' ? 'GOOD' : r.v === 'monitor' ? 'MONITOR' : r.v === 'bad' ? 'NEEDS ATTENTION' : r.v === 'na' ? 'NOT PRESENT / NOT CHECKED' : 'no mark';
       var qtxt = fjQs(f, c).map(function (q) { return (r.q || {})[q.id] ? q.label + ' ' + r.q[q.id] : ''; }).filter(Boolean).join('; ');
       var sz = c.size ? fjSizeText(r) : '';
+      if (c.opening && ((r.m || {}).ow || (r.m || {}).oh)) sz += (sz ? ', ' : '') + 'fireplace opening ' + ((r.m || {}).ow || '?') + ' x ' + ((r.m || {}).oh || '?') + ' in';
       L.push('- [' + fjSecName(c.sec) + '] ' + c.label + ': ' + (c.photoOnly ? 'photo' : vv) + (qtxt ? ' — ' + qtxt : '') + (sz ? ' — flue size ' + sz : '') + (String(r.note || '').trim() ? ' — tech wrote: "' + String(r.note).trim() + '"' : '') + (ph ? ' (' + ph + ' photo' + (ph > 1 ? 's' : '') + ')' : ''));
       n++;
     });
@@ -5550,6 +5635,8 @@ function fjTranscript(f) {
       var a = fjArea(id), r = f.data[id] || {};
       if (!a) return;
       var ms = Object.keys(r.m || {}).filter(function (k) { return String(r.m[k] || '').trim(); }).map(function (k) { return k + ': ' + r.m[k]; });
+      var aq = (a.q || []).map(function (q) { return (r.q || {})[q.id] ? q.label + ' ' + r.q[q.id] : ''; }).filter(Boolean).join('; ');
+      if (aq) ms.unshift(aq);
       L.push('- ' + a.name + (String(r.note || '').trim() ? ' — tech wrote: "' + String(r.note).trim() + '"' : ' — (no note)') + ((r.photos || []).length ? ' (' + r.photos.length + ' photo' + (r.photos.length > 1 ? 's' : '') + ')' : ' (no photo)') + (ms.length ? ' | measurements: ' + ms.join('; ') : ' | no measurements taken'));
     });
   }
@@ -5649,13 +5736,15 @@ function fjBuildReport() {
       phone: cu.phone || (d.customer && d.customer.phone) || '',
       email: cu.email || (d.customer && d.customer.email) || ''
     });
+    var ba = fjBeforeAfter(f);
     var imgs = fjPhotos(f);
     var modeName = isInv ? 'Invoice' : 'Inspection — Level ' + f.level;
-    var blob = buildChatReport(d, imgs, state.settings, modeName);
+    if (isInv) { d.title = 'Invoice'; if (d.payStatus == null) d.payStatus = 'unpaid'; }
+    var blob = buildChatReport(d, imgs, state.settings, modeName, ba);
     var who = String(d.customer.name || 'Customer').trim().split(/\s+/)[0].replace(/[^\w-]+/g, '') || 'Customer';
     var fn = 'AIO-Pro-Chimney-' + (isInv ? 'Invoice-' : 'Inspection-') + who + '-' + isoToday() + '.pdf';
     state.chat = { mode: isInv ? 'invoice' : (f.level === '2' ? 'level2' : 'level1'), customer: cu, depth: 'full', messages: [], pending: { photos: [] }, fromForm: true };
-    state.chat.lastReport = { data: d, imgs: imgs, blob: blob, fn: fn, mode: state.chat.mode, modeName: modeName, shareId: '', at: Date.now() };
+    state.chat.lastReport = { data: d, imgs: imgs, blob: blob, fn: fn, mode: state.chat.mode, modeName: modeName, shareId: '', at: Date.now(), before: ba.before, after: ba.after };
     f.busy = false; state.fjLast = f;
     repEditOpen(true);
   }).catch(function (err) { f.busy = false; f.err = (err && err.message) || 'AI error'; if (state.view === 'fjform') render(); });

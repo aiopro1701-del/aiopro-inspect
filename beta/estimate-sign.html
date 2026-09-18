@@ -142,8 +142,39 @@ canvas{width:100%;height:200px;background:#fbfaf7;border:1.5px dashed #c9c2b5;bo
     });
     return h + '</div>';
   }
+  function isInvoice() { return /invoice/i.test(String(pay.modeName || '') + ' ' + String(pay.title || '')); }
+  function payHTML() {
+    var li = (pay.lineItems || []).filter(function (it) { return it && (String(it.description || '').trim() || num(it.amount)); });
+    var h = '';
+    if (li.length) {
+      h += '<div class="sec">What we did</div><div class="opt">';
+      li.forEach(function (it) {
+        h += '<div class="li"><div class="r"><div class="nm">' + esc(it.description || '') + (num(it.qty) > 1 ? ' <span style="color:#888">x' + num(it.qty) + '</span>' : '') + '</div><div class="amt">' + money(num(it.amount)) + '</div></div></div>';
+      });
+      var rows = [['Subtotal', num(pay.subtotal)]];
+      if (num(pay.discount)) rows.push(['Discount', -num(pay.discount)]);
+      if (num(pay.tax)) rows.push(['Tax', num(pay.tax)]);
+      rows.push(['Total', num(pay.total)]);
+      h += '<div style="border-top:1px solid #e6e1d8;margin-top:8px;padding-top:8px">' + rows.map(function (r) {
+        var big = r[0] === 'Total';
+        return '<div style="display:flex;justify-content:space-between;padding:3px 0;font-size:' + (big ? '17px;font-weight:800' : '15px') + '"><div>' + r[0] + '</div><div>' + (r[1] < 0 ? '-' : '') + money(Math.abs(r[1])) + '</div></div>';
+      }).join('') + '</div></div>';
+    }
+    var stt = pay.payStatus || '';
+    if (stt) {
+      var paid = stt === 'paid' ? num(pay.total) : Math.max(0, num(pay.paid));
+      var due = Math.max(0, num(pay.total) - paid);
+      var lbl = stt === 'paid' ? 'PAID IN FULL — thank you' : stt === 'partial' ? 'PART PAID' : 'NOT PAID YET';
+      var col = stt === 'paid' ? '#3E7D57' : stt === 'partial' ? '#C0912E' : '#B23A28';
+      h += '<div class="sec">Payment</div>' +
+        '<div style="display:inline-block;background:' + col + ';color:#fff;font-weight:800;font-size:13px;letter-spacing:.5px;border-radius:14px;padding:6px 14px;margin-bottom:10px">' + lbl + '</div>' +
+        '<div style="font-size:15px;line-height:1.7">Invoice total <b>' + money(num(pay.total)) + '</b><br>Paid <b>' + money(paid) + '</b><br>Balance due <b>' + money(due) + '</b></div>';
+    }
+    return h;
+  }
   function reportHTML() {
     var h = '';
+    if (isInvoice()) return payHTML() + (pay.summary ? '<div class="sec">Notes</div><div class="lead">' + esc(pay.summary) + '</div>' : '') + (pay.conclusion ? '<div>' + esc(pay.conclusion) + '</div>' : '');
     if (pay.levelOfInspection) h += '<div class="sec">Level of inspection</div><div>' + esc(pay.levelOfInspection) + '</div>';
     if (pay.summary) h += '<div class="sec">In short</div><div class="lead">' + esc(pay.summary) + '</div>';
     var comps = Array.isArray(pay.components) ? pay.components : [];
@@ -167,12 +198,13 @@ canvas{width:100%;height:200px;background:#fbfaf7;border:1.5px dashed #c9c2b5;bo
     if (c.name) document.getElementById('co').textContent = String(c.name).toUpperCase();
     if (c.legal) document.getElementById('cosub').textContent = c.legal;
     if (c.creds) document.getElementById('cocr').textContent = c.creds;
-    document.title = (isRep ? 'Your Inspection Report' : 'Your Estimate') + ' — ' + (c.name || 'AIO Pro Chimney');
-    var title = isRep ? (pay.title || 'Chimney Inspection Report') : (pay.title ? (/estimate/i.test(pay.title) ? pay.title : pay.title + ' estimate') : 'Your estimate');
+    var inv = isRep && isInvoice();
+    document.title = (inv ? 'Your Invoice' : isRep ? 'Your Inspection Report' : 'Your Estimate') + ' — ' + (c.name || 'AIO Pro Chimney');
+    var title = inv ? 'Invoice' : isRep ? (pay.title || 'Chimney Inspection Report') : (pay.title ? (/estimate/i.test(pay.title) ? pay.title : pay.title + ' estimate') : 'Your estimate');
     var h = '<h1>' + esc(title) + '</h1>';
     h += '<div class="grid"><div class="k">CLIENT</div><div>' + esc(cu.name || '') + '</div>' +
       (pay.no ? '<div class="k">ESTIMATE NO.</div><div>' + esc(pay.no) + '</div>' : '') +
-      (isRep && pay.modeName ? '<div class="k">INSPECTION</div><div>' + esc(pay.modeName) + '</div>' : '') +
+      (isRep && !inv && pay.modeName ? '<div class="k">INSPECTION</div><div>' + esc(pay.modeName) + '</div>' : '') +
       '<div class="k">PROPERTY</div><div>' + esc(cu.addr || '') + '</div>' +
       '<div class="k">DATE</div><div>' + esc(fmtDate(pay.visitDate || pay.date || doc.created_at)) + '</div>' +
       '<div class="k">PREPARED BY</div><div>' + esc(pay.preparedBy || '') + '</div>' +
@@ -186,13 +218,25 @@ canvas{width:100%;height:200px;background:#fbfaf7;border:1.5px dashed #c9c2b5;bo
       var notes = String(pay.notes || '').split(/\n+/).map(function (l) { return l.replace(/^[\s·•\-–]+/, '').trim(); }).filter(Boolean);
       if (notes.length) h += '<div class="sec">Scope notes</div><ul class="notes">' + notes.map(function (n) { return '<li>' + esc(n) + '</li>'; }).join('') + '</ul>';
     }
-    if (doc.photo_count) h += '<div class="sec">Photographs</div><div class="photos" id="photos">' + (photos.length ? photos.map(function (p, i) { return '<img src="' + p + '" alt="Photo ' + (i + 1) + '" data-i="' + i + '">'; }).join('') : '<div style="color:#999;font-size:14px">Loading photos…</div>') + '</div>';
+    if (doc.photo_count) {
+      var bN = num(pay.beforeN), aN = num(pay.afterN);
+      function grid(list, from) { return '<div class="photos">' + list.map(function (p, i) { return '<img src="' + p + '" alt="Photo ' + (from + i + 1) + '" data-i="' + (from + i) + '">'; }).join('') + '</div>'; }
+      if (!photos.length) h += '<div class="sec">Photographs</div><div class="photos" id="photos"><div style="color:#999;font-size:14px">Loading photos…</div></div>';
+      else {
+        h += '<div id="photos">';
+        if (bN) h += '<div class="sec">Before</div>' + grid(photos.slice(0, bN), 0);
+        if (aN) h += '<div class="sec">After</div>' + grid(photos.slice(bN, bN + aN), bN);
+        var rest = photos.slice(bN + aN);
+        if (rest.length) h += '<div class="sec">Photographs</div>' + grid(rest, bN + aN);
+        h += '</div>';
+      }
+    }
     if (!isRep) {
       var terms = (c.terms && String(c.terms).trim()) ? c.terms : 'A deposit may be required to schedule work, with the balance due on completion unless otherwise agreed. All work is performed to NFPA 211 and local codes. Workmanship warranted for one year unless stated otherwise. Prices reflect the conditions visible at the visit; if concealed damage is found once work begins, we stop and agree any change with you before continuing.';
       h += '<div class="sec">Terms &amp; conditions</div><div class="terms">' + esc(terms) + '</div>';
     }
     h += '<div class="sec" id="signsec">' + (isRep ? 'Confirm you received it' : 'To go ahead') + '</div>';
-    h += doc.status === 'signed' ? doneHTML() : '<div id="signwrap">' + (S && S.open ? '' : '<p style="margin:0 0 10px;color:#555">' + (isRep ? 'Tap below to sign that you received this report.' : 'Tap below to accept' + (multi ? ' — you choose your option first' : '') + '. It takes about a minute.') + (c.phone ? ' Or call or text ' + esc(c.phone) + '.' : '') + '</p><button class="btn wide" type="button" id="startSign">' + (isRep ? 'Sign the report' : 'Sign the estimate') + '</button>') + '</div>';
+    h += doc.status === 'signed' ? doneHTML() : '<div id="signwrap">' + (S && S.open ? '' : '<p style="margin:0 0 10px;color:#555">' + (inv ? 'Tap below to sign that you received this invoice and the work was done.' : isRep ? 'Tap below to sign that you received this report.' : 'Tap below to accept' + (multi ? ' — you choose your option first' : '') + '. It takes about a minute.') + (c.phone ? ' Or call or text ' + esc(c.phone) + '.' : '') + '</p><button class="btn wide" type="button" id="startSign">' + (inv ? 'Sign the invoice' : isRep ? 'Sign the report' : 'Sign the estimate') + '</button>') + '</div>';
     if (c.owner) h += '<div class="sig">Respectfully submitted,<div style="font-weight:800;font-size:16px;margin-top:2px">' + esc(c.owner) + '</div><div style="color:#888;font-size:12px">Owner · ' + esc(c.legal || '') + ' (' + esc(c.name || '') + ')<br>' + esc([c.phone, c.email, c.web].filter(Boolean).join(' · ')) + '</div></div>';
     app.innerHTML = h;
     var ph = document.getElementById('photos');
@@ -209,7 +253,7 @@ canvas{width:100%;height:200px;background:#fbfaf7;border:1.5px dashed #c9c2b5;bo
   function updateBar() {
     if (!doc || doc.status === 'signed' || (S && S.open)) { bar.hidden = true; return; }
     bar.hidden = false;
-    barText.textContent = doc.kind === 'report' ? 'Please confirm you received this report.' : (opts.length > 1 ? 'Ready? Pick your option and sign.' : 'Ready to go ahead?');
+    barText.textContent = doc.kind === 'report' ? (isInvoice() ? 'Please confirm you received this invoice.' : 'Please confirm you received this report.') : (opts.length > 1 ? 'Ready? Pick your option and sign.' : 'Ready to go ahead?');
     barBtn.textContent = 'Sign';
   }
   barBtn.addEventListener('click', function () { openSign(true); });
