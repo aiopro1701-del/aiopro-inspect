@@ -947,7 +947,7 @@ function docSave(rec) {
 }
 function docList() {
   return idbRun('readonly', function (st) { return st.getAll(); }, DOCS)
-    .then(function (rows) { return (rows || []).sort(function (a, b) { return (b.at || 0) - (a.at || 0); }); })
+    .then(function (rows) { return (rows || []).filter(function (r) { return r && r.kind !== 'estphotos'; }).sort(function (a, b) { return (b.at || 0) - (a.at || 0); }); })
     .catch(function () { return []; });
 }
 function docGet(id) { return idbRun('readonly', function (st) { return st.get(id); }, DOCS).catch(function () { return null; }); }
@@ -2026,6 +2026,7 @@ function viewRepEdit() {
     '<div class="screen">' +
       (st.msg ? '<div class="card" style="font-size:14px;border-color:' + (st.err ? 'var(--defect);color:var(--defect)' : 'var(--ok)') + '">' + esc(st.msg) + '</div>' : '') +
       (st.rep.lockedSigned ? '<div class="card" style="border-color:var(--defect);color:var(--defect);font-size:14px">The customer already signed this report online. Changes here will not change the signed copy.</div>' : '') +
+      fjResumeCard('') +
       (state.fjLast && state.fjLast.kind === 'inspection' && !/invoice/i.test(st.rep.modeName || '') ? (function () {
         var bad = 0, mon = 0;
         fjChecks(state.fjLast).forEach(function (c) { var r = state.fjLast.data[c.id]; if (!r) return; if (r.v === 'bad') bad++; else if (r.v === 'monitor') mon++; });
@@ -4021,7 +4022,17 @@ function estEnsureNo(e) {
 }
 var EST_KEY = 'aio-estimates';
 function loadEstimates() { try { return (JSON.parse(localStorage.getItem(EST_KEY)) || []).map(function (x) { return estCompact(estNorm(x)); }); } catch (e) { return []; } }
-function saveEstimates(l) { try { localStorage.setItem(EST_KEY, JSON.stringify(l)); } catch (e) {} }
+function saveEstimates(l) {
+  try { localStorage.setItem(EST_KEY, JSON.stringify(l, function (k, v) { return k === 'fjPhotos' ? undefined : v; })); } catch (e) {}
+}
+/* Photos live in IndexedDB instead, keyed to the estimate, so re-opening an
+   estimate later can still send them to the customer. */
+function estPhotoSave(e) { if (!e || !e.id || !(e.fjPhotos && e.fjPhotos.length)) return; docSave({ id: 'estph-' + e.id, kind: 'estphotos', photos: e.fjPhotos.slice(0, 24) }); }
+function estPhotoLoad(e) {
+  if (!e || !e.id) return Promise.resolve([]);
+  if (e.fjPhotos && e.fjPhotos.length) return Promise.resolve(e.fjPhotos);
+  return docGet('estph-' + e.id).then(function (r) { e.fjPhotos = (r && r.photos) || []; return e.fjPhotos; }).catch(function () { return []; });
+}
 function estUsed(e) { return e.options.filter(function (o) { return o.items.some(function (it) { return it.name || it.desc || estNum(it.price); }); }); }
 function estHeadline(e) { var u = estUsed(e); if (!u.length) return 0; return estTotals(u[0], e.tax).total; }
 function upsertEstimate(e) { if (!e.id) e.id = 'es-' + Date.now() + '-' + Math.random().toString(36).slice(2, 6); e.updatedAt = Date.now(); var l = loadEstimates(); var i = l.findIndex(function (x) { return x.id === e.id; }); if (i >= 0) l[i] = e; else l.unshift(e); saveEstimates(l); return e; }
@@ -4198,6 +4209,17 @@ function estRefreshOpt(i) {
 /* Re-render the estimate without jumping the page back to the top. */
 function estRender() { var y = window.scrollY || 0; render(); try { window.scrollTo(0, y); } catch (_) {} }
 function estChatReady() { var c = state.chat; return !!(c && c.messages && c.messages.length >= 3); }
+/* Back to the form that built this document: add or remove photos, change a
+   note, then build again. The estimate/report keeps its number and its link. */
+function fjResumeCard(kind) {
+  var f = state.fjLast;
+  if (!f || (kind && f.kind !== kind)) return '';
+  var what = f.kind === 'estimate' ? 'estimate' : f.kind === 'invoice' ? 'invoice' : 'report';
+  return '<button class="card card-tap" data-act="fj-resume" style="display:block;width:100%;text-align:left;border-color:var(--gold)">' +
+    '<div class="eyebrow">Need to change something?</div>' +
+    '<div style="font-size:15px;line-height:1.45">Go back to the form — add or remove photos, fix a note, change a measurement — then build the ' + what + ' again. It keeps the same number and the same link, so the customer sees the updated one.</div></button>';
+}
+
 function viewEstimate() {
   var e = estNorm(state.estimate || (state.estimate = newEstimate()));
   var ai = (state.estAi && (!state.estAi.forId || state.estAi.forId === e)) ? state.estAi : {};
@@ -4213,7 +4235,7 @@ function viewEstimate() {
     '<div id="est_pkgs" class="row" style="gap:6px;flex-wrap:wrap">' + EST_PACKAGES.map(function (p) { return '<button class="btn btn-ghost est-pkg" data-pkg="' + p.id + '" style="padding:6px 10px;font-size:13px;min-height:36px">' + esc(p.name) + '</button>'; }).join('') + '</div></div>';
   return '<div class="app">' +
     '<div class="topbar"><button class="iconbtn" data-act="est-back">‹</button><div style="flex:1"><h1>Estimate' + (e.no ? ' #' + e.no : '') + '</h1><div class="sub">' + esc(e.title || 'Your catalog · your prices') + '</div></div></div>' +
-    '<div class="screen">' + quick + (e.crmId ? '' : crmPickerHTML('est_pick')) +
+    '<div class="screen">' + fjResumeCard('estimate') + quick + (e.crmId ? '' : crmPickerHTML('est_pick')) +
       '<div class="card"><div class="eyebrow">Customer & job' + (e.crmId ? ' · linked ✓' : '') + '</div>' + cf('Name', 'name') + cf('Phone', 'phone', 'tel') + cf('Email', 'email', 'email') + addrHTML('Property address', e.customer.addr, 'id="est_addr"') +
         '<div class="field"><label>Job title (e.g. Furnace vent, Chimney liner)</label><input id="est_title" value="' + esc(e.title) + '"></div>' +
         '<div class="row" style="gap:8px"><div class="field" style="flex:1;margin-bottom:0"><label>Date of visit</label><input id="est_vdate" value="' + esc(e.visitDate) + '"></div><div class="field" style="flex:1;margin-bottom:0"><label>Prepared by</label><input id="est_prep" value="' + esc(e.preparedBy) + '"></div></div></div>' +
@@ -4660,8 +4682,10 @@ function newShareId() {
   try { var buf = new Uint8Array(18); crypto.getRandomValues(buf); for (var i = 0; i < buf.length; i++) out += abc[buf[i] % 36]; return out; }
   catch (e) { return 'e' + Date.now().toString(36) + Math.random().toString(36).slice(2, 12); }
 }
-/* Photos from the visit that made this estimate. */
+/* Photos from the visit that made this estimate: the form first (that is
+   where the technician takes them now), the old chat flow as a fallback. */
 function estPhotos(e) {
+  if (e && e.fjPhotos && e.fjPhotos.length) return e.fjPhotos.slice();
   var c = state.chat; if (!c || c.estimate !== e) return [];
   var out = []; c.messages.forEach(function (m) { if (m.role === 'user' && m.images) out = out.concat(m.images); });
   return out;
@@ -4669,6 +4693,7 @@ function estPhotos(e) {
 function estEnsureShared(e) {
   estNorm(e); estEnsureNo(e);
   var id = e.shareId || newShareId();
+  return estPhotoLoad(e).then(function () {
   var photos = estPhotos(e);
   var send = photos.length && photos.length !== e.photoCount ? photos : null;
   return cloudShare('estimate', id, estPayload(e), send).then(function (res) {
@@ -4676,6 +4701,7 @@ function estEnsureShared(e) {
     e.shareId = id; e.shareLink = CLOUD_BASE + '?id=' + id; if (send && !res.signed) e.photoCount = photos.length;
     try { upsertEstimate(e); } catch (_) {}
     return id;
+  });
   });
 }
 function shareEstimate() {
@@ -5389,6 +5415,13 @@ root.addEventListener('click', function (e) {
     case 'fj-area': if (state.fj) { var ai2 = state.fj.areas.indexOf(arg); if (ai2 >= 0) state.fj.areas.splice(ai2, 1); else state.fj.areas.push(arg); render(); } break;
     case 'fj-go': if (state.fj) { state.view = 'fjform'; render(); try { window.scrollTo(0, 0); } catch (_) {} } break;
     case 'fj-back': if (state.view === 'fjform') { state.view = 'fjsetup'; render(); } else { state.view = 'home'; render(); } break;
+    case 'fj-resume': {
+      var rf = state.fjLast;
+      if (!rf) { state.view = 'home'; render(); break; }
+      state.fj = rf; rf.busy = false; rf.err = '';
+      state.view = 'fjform'; render(); try { window.scrollTo(0, 0); } catch (_) {}
+      break;
+    }
     case 'fj-v': { var vp = String(arg).split('|'), fr = state.fj && fjRow(state.fj, vp[0]); if (fr) { fr.v = fr.v === vp[1] ? '' : vp[1]; render(); } break; }
     case 'fj-q': { var qp = String(arg).split('|'), qr = state.fj && fjRow(state.fj, qp[0]); if (qr) { qr.q = qr.q || {}; qr.q[qp[1]] = qr.q[qp[1]] === qp[2] ? '' : qp[2]; render(); } break; }
     case 'fj-shape': { var sp = String(arg).split('|'), sr = state.fj && fjRow(state.fj, sp[0]); if (sr) { sr.m = sr.m || {}; sr.m.shape = sr.m.shape === sp[1] ? '' : sp[1]; render(); } break; }
@@ -6021,9 +6054,9 @@ function viewFjForm() {
     '</div>' +
     '<div class="bottombar" style="gap:6px">' +
       (isInsp
-        ? '<button class="btn btn-gold btn-primary" data-act="fj-report"' + (f.busy ? ' disabled' : '') + '>' + (f.busy ? 'Writing the report…' : 'Create report') + '</button>'
+        ? '<button class="btn btn-gold btn-primary" data-act="fj-report"' + (f.busy ? ' disabled' : '') + '>' + (f.busy ? 'Writing the report…' : (f.builtRep ? 'Update the ' + (f.kind === 'invoice' ? 'invoice' : 'report') : 'Create report')) + '</button>'
         : '<button class="btn btn-ghost" data-act="fj-review" style="flex:1"' + (f.busy ? ' disabled' : '') + '>' + (f.busy === 'review' ? 'Checking…' : 'Check my work') + '</button>' +
-          '<button class="btn btn-gold btn-primary" data-act="' + (f.kind === 'invoice' ? 'fj-report' : 'fj-build') + '" style="flex:1.3"' + (f.busy ? ' disabled' : '') + '>' + (f.busy ? 'Building…' : f.kind === 'invoice' ? 'Create invoice' : 'Create estimate') + '</button>') +
+          '<button class="btn btn-gold btn-primary" data-act="' + (f.kind === 'invoice' ? 'fj-report' : 'fj-build') + '" style="flex:1.3"' + (f.busy ? ' disabled' : '') + '>' + (f.busy ? 'Building…' : f.kind === 'invoice' ? (f.builtRep ? 'Update the invoice' : 'Create invoice') : (f.builtEst ? 'Update the estimate' : 'Create estimate')) + '</button>') +
     '</div>' +
   '</div>';
 }
@@ -6146,8 +6179,22 @@ function fjBuildEstimate() {
     if (f.customer && f.customer.crmId) { e.crmId = f.customer.crmId; e.crmCloud = !!f.customer.crmCloud; }
     var unpriced = estApplyAi(e, d);
     e.fjPhotos = fjPhotos(f);
+    /* Built from this form before? Keep the same estimate, number and link,
+       so an edit updates what the customer already has instead of making a new one. */
+    if (f.builtEst) {
+      var prev = f.builtEst.obj || null;
+      try { prev = loadEstimates().filter(function (x) { return x.id === f.builtEst.id; })[0] || prev; } catch (_) {}
+      e.id = f.builtEst.id || e.id;
+      e.no = (prev && prev.no) || f.builtEst.no || e.no;
+      if (prev && prev.shareId) { e.shareId = prev.shareId; e.shareLink = prev.shareLink || (CLOUD_BASE + '?id=' + prev.shareId); }
+      if (prev && prev.emailedAt) e.emailedAt = prev.emailedAt;
+      if (prev && prev.crmId) { e.crmId = prev.crmId; e.crmCloud = prev.crmCloud; }
+      e.photoCount = 0;   /* photos changed - send them again */
+    }
     estEnsureNo(e);
     try { upsertEstimate(e); } catch (_) {}
+    estPhotoSave(e);
+    f.builtEst = { id: e.id, no: e.no, obj: e };
     state.estimate = e; state.estAi = { forId: e, done: 'Built from your visit. Check the prices and the scope lines' + (unpriced ? ' — ' + unpriced + ' item(s) need a price (red).' : '.') };
     f.busy = false; state.fjLast = f;
     state.view = 'estimate'; render(); try { window.scrollTo(0, 0); } catch (_) {}
@@ -6194,7 +6241,11 @@ function fjBuildReport() {
     var who = String(d.customer.name || 'Customer').trim().split(/\s+/)[0].replace(/[^\w-]+/g, '') || 'Customer';
     var fn = 'AIO-Pro-Chimney-' + (isInv ? 'Invoice-' : 'Inspection-') + who + '-' + isoToday() + '.pdf';
     state.chat = { mode: isInv ? 'invoice' : (f.level === '2' ? 'level2' : 'level1'), customer: cu, depth: 'full', messages: [], pending: { photos: [] }, fromForm: true };
-    state.chat.lastReport = { id: 'doc-' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6), data: d, imgs: imgs, blob: blob, fn: fn, mode: state.chat.mode, modeName: modeName, shareId: '', at: Date.now(), before: ba.before, after: ba.after, kind: isInv ? 'invoice' : 'inspection' };
+    var prevRep = (f.builtRep && f.builtRep.obj) || null;
+    state.chat.lastReport = { id: (f.builtRep && f.builtRep.id) || ('doc-' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6)), data: d, imgs: imgs, blob: blob, fn: fn, mode: state.chat.mode, modeName: modeName,
+      shareId: (prevRep && prevRep.shareId) || '', photosSent: false, emailedAt: (prevRep && prevRep.emailedAt) || 0,
+      at: Date.now(), before: ba.before, after: ba.after, kind: isInv ? 'invoice' : 'inspection' };
+    f.builtRep = { id: state.chat.lastReport.id, obj: state.chat.lastReport };
     docKeep(state.chat.lastReport);
     f.busy = false; state.fjLast = f;
     repEditOpen(true);
