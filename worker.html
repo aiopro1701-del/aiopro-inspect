@@ -6,8 +6,8 @@
 <meta name="robots" content="noindex,nofollow">
 <meta name="theme-color" content="#0F1D30">
 <meta name="mobile-web-app-capable" content="yes">
-<title>AIO Pro — My Jobs</title>
-<link rel="icon" href="icons/icon.svg">
+<title>AIO Pro — Installer</title>
+<link rel="icon" href="../icons/icon.svg">
 <style>
 :root{--navy:#0F1D30;--gold:#C9A24B;--ivory:#F1EAD9;--paper:#F3EEE4;--ink:#1a1614;--muted:#7a746b;--rule:#e0dacf;--a:#0F1D30;--b:#3E7D57}
 *{box-sizing:border-box}
@@ -36,12 +36,28 @@ body{background:var(--paper);color:var(--ink);font-family:-apple-system,Segoe UI
 .acts a.g{background:var(--gold);color:var(--navy)}
 .center{text-align:center;padding:56px 12px;color:var(--muted)}
 .center b{display:block;color:var(--ink);font-size:18px;margin-bottom:6px;font-family:Georgia,serif;font-weight:400}
+.det{margin-top:10px}
+.det>button{width:100%;background:#fff;border:1px solid var(--navy);color:var(--navy);border-radius:10px;padding:11px;font-size:15px;font-weight:650;cursor:pointer}
+.pk{margin-top:10px;border-top:.5px solid #eee;padding-top:10px}
+.pk h4{margin:12px 0 6px;font-size:12px;letter-spacing:1px;color:#8a6a1f;text-transform:uppercase}
+.pk .ch{display:flex;gap:10px;align-items:flex-start;padding:7px 0;border-bottom:.5px solid #f0ece4;font-size:15px}
+.pk .ch input{width:22px;height:22px;flex:none;margin-top:1px;accent-color:#8a6a1f}
+.pk .ch.done span{text-decoration:line-through;color:var(--muted)}
+.pk .it{padding:6px 0;border-bottom:.5px solid #f0ece4}
+.pk .it b{display:block}
+.pk .it ul{margin:2px 0 0 18px;padding:0;color:#5f5953;font-size:14px}
+.pk .note{background:#fbf6ea;border-radius:8px;padding:9px 10px;font-size:14.5px;white-space:pre-wrap}
+.pk .ph{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
+.pk .ph img{width:100%;height:96px;object-fit:cover;border-radius:6px;border:.5px solid var(--rule)}
+.pk .ok{display:inline-block;background:#e3f1e8;color:#2b6a45;border-radius:20px;padding:2px 9px;font-size:12px;font-weight:700}
+.lb{position:fixed;inset:0;background:rgba(0,0,0,.92);display:flex;align-items:center;justify-content:center;z-index:50;padding:10px}
+.lb img{max-width:100%;max-height:100%}
 .ro{display:inline-block;background:rgba(201,162,75,.18);color:var(--gold);border-radius:20px;padding:1px 8px;font-size:10px;letter-spacing:1px;margin-left:6px;vertical-align:2px}
 </style>
 </head>
 <body>
 <div class="top">
-  <div class="t"><div class="co">AIO Pro — My Jobs</div><div class="sub">Technician schedule <span class="ro">VIEW ONLY</span></div></div>
+  <div class="t"><div class="co">AIO Pro — My Jobs</div><div class="sub">Installer schedule <span class="ro">VIEW ONLY</span></div></div>
   <button id="refresh" type="button" aria-label="Refresh">Refresh</button>
 </div>
 <div class="wrap">
@@ -125,12 +141,77 @@ body{background:var(--paper);color:var(--ink);font-family:-apple-system,Segoe UI
           (maps ? '<a class="g" href="' + esc(maps) + '" target="_blank" rel="noopener">Directions</a>' : '') +
           (phone ? '<a href="tel:' + esc(phone) + '">Call customer</a>' : '') +
         '</div>' : '') +
+        (j.share_id ? '<div class="det" data-share="' + esc(j.share_id) + '">' + (packets[j.share_id] ? packetHTML(j.share_id) : '<button type="button" data-open="' + esc(j.share_id) + '">Job details — what to bring, scope, photos</button>') + '</div>' : '') +
       '</div>';
     });
     app.innerHTML = html;
   }
 
-  function load() {
+  /* ── Job packet: what to bring, the scope the customer accepted, and the technician's photos ── */
+  var packets = {}, openErr = {};
+  function num(v) { var n = parseFloat(String(v == null ? '' : v).replace(/[^0-9.\-]/g, '')); return isFinite(n) ? n : 0; }
+  function bullets(t) { t = String(t || '').trim(); if (!t) return []; return (t.indexOf('\n') >= 0 ? t.split(/\n+/) : t.split(/;\s+|\.\s+(?=[A-Z0-9])/)).map(function (x) { return x.replace(/^[\s·•\-–]+/, '').trim(); }).filter(Boolean); }
+  function doneKey(sid) { return 'aio-prep-done-' + sid; }
+  function getDone(sid) { try { return JSON.parse(localStorage.getItem(doneKey(sid)) || '[]'); } catch (e) { return []; } }
+  function setDone(sid, list) { try { localStorage.setItem(doneKey(sid), JSON.stringify(list)); } catch (e) {} }
+  function packetHTML(sid) {
+    var pk = packets[sid]; if (!pk) return '';
+    if (pk.err) return '<div class="pk" style="color:#b03d27;font-size:14px">' + esc(pk.err) + '</div>';
+    var pay = pk.payload || {}, h = '<div class="pk">';
+    var signed = pk.status === 'signed';
+    h += signed ? '<span class="ok">SIGNED' + (pk.signer_name ? ' — ' + esc(pk.signer_name) : '') + '</span>' : '<span style="color:var(--muted);font-size:13px">Not signed yet</span>';
+    var done = getDone(sid), prep = Array.isArray(pk.prep) ? pk.prep : [];
+    if (prep.length) {
+      h += '<h4>What to bring / prepare</h4>' + prep.map(function (x, i) { var on = done.indexOf(i) >= 0; return '<label class="ch' + (on ? ' done' : '') + '"><input type="checkbox" data-sid="' + esc(sid) + '" data-i="' + i + '"' + (on ? ' checked' : '') + '><span>' + esc(x) + '</span></label>'; }).join('');
+    }
+    if (pk.notes) h += '<h4>Notes</h4><div class="note">' + esc(pk.notes) + '</div>';
+    if (pk.kind === 'report') {
+      var comps = (pay.components || []).filter(function (c) { return c.status === 'defect'; });
+      if (comps.length) h += '<h4>Needs attention</h4>' + comps.map(function (c) { return '<div class="it"><b>' + esc(c.name) + '</b><ul><li>' + esc(c.condition) + '</li>' + (c.recommended ? '<li>' + esc(c.recommended) + '</li>' : '') + '</ul></div>'; }).join('');
+    } else {
+      var opts = (pay.options || []).filter(function (o) { return (o.items || []).some(function (it) { return it.name || it.desc; }); });
+      var chosen = typeof pk.choice === 'number' ? pk.choice : null, idx = chosen != null ? chosen : 0, m = chosen != null;
+      var o = opts[idx] || opts[0];
+      if (o) {
+        var extras = Array.isArray(pk.extras) ? pk.extras : [];
+        h += '<h4>The work' + (opts.length > 1 ? ' — Option ' + String.fromCharCode(65 + (opts[idx] ? idx : 0)) + (o.name ? ': ' + esc(o.name) : '') + (m ? '' : ' (not chosen yet)') : '') + '</h4>';
+        (o.items || []).forEach(function (it) {
+          if (!(it.name || it.desc)) return;
+          if (it.opt && extras.indexOf(it.name) < 0) return;
+          var bl = bullets(it.desc), q = num(it.qty) || 1;
+          h += '<div class="it"><b>' + (q !== 1 ? q + ' × ' : '') + esc(it.name || 'Item') + (it.opt ? ' (add-on)' : '') + '</b>' + (bl.length ? '<ul>' + bl.map(function (b) { return '<li>' + esc(b) + '</li>'; }).join('') + '</ul>' : '') + '</div>';
+        });
+      }
+      if (pay.found) h += '<h4>What the technician found</h4><div class="note">' + esc(pay.found) + '</div>';
+      if (pay.notes) h += '<h4>Scope notes</h4><div class="note">' + esc(pay.notes) + '</div>';
+    }
+    var cu = pay.customer || {};
+    if (cu.phone) h += '<h4>Customer</h4><div>' + esc(cu.name || '') + ' · <a href="tel:' + esc(String(cu.phone).replace(/[^\d+]/g, '')) + '">' + esc(cu.phone) + '</a></div>';
+    var ph = (pk.photos || []).filter(function (x) { return /^data:image\/jpeg;base64,[A-Za-z0-9+\/=]+$/.test(x); });
+    if (ph.length) h += '<h4>Photos from the visit</h4><div class="ph">' + ph.map(function (x) { return '<img src="' + x + '" alt="">'; }).join('') + '</div>';
+    return h + '</div>';
+  }
+  var loadingPk = {};
+  function openPacket(sid, box) {
+    loadingPk[sid] = true;
+    box.innerHTML = '<div class="pk" style="color:var(--muted);font-size:14px">Loading job details…</div>';
+    fetch(URL + '/rest/v1/rpc/installer_packet', { method: 'POST', headers: { apikey: KEY, Authorization: 'Bearer ' + KEY, 'Content-Type': 'application/json' }, body: JSON.stringify({ p_key: wkey, p_share: sid }) })
+      .then(function (r) { return r.json().then(function (d) { if (!r.ok) throw new Error((d && d.message) || 'HTTP ' + r.status); return d; }); })
+      .then(function (d) { delete loadingPk[sid]; packets[sid] = d || { err: 'No details for this job yet.' }; var cur = app.querySelector('.det[data-share="' + sid + '"]') || box; cur.innerHTML = packetHTML(sid); })
+      .catch(function (err) { delete loadingPk[sid]; box = app.querySelector('.det[data-share="' + sid + '"]') || box; box.innerHTML = '<button type="button" data-open="' + esc(sid) + '">Could not load (' + esc(err.message) + ') — tap to try again</button>'; });
+  }
+  app.addEventListener('click', function (ev) {
+    var b = ev.target.closest('[data-open]'); if (b) { openPacket(b.getAttribute('data-open'), b.parentNode); return; }
+    var im = ev.target.closest('.pk .ph img'); if (im) { var lb = document.createElement('div'); lb.className = 'lb'; lb.innerHTML = '<img src="' + im.src + '" alt="">'; lb.addEventListener('click', function () { lb.remove(); }); document.body.appendChild(lb); }
+  });
+  app.addEventListener('change', function (ev) {
+    var t = ev.target; var sid = t.getAttribute && t.getAttribute('data-sid'); if (!sid) return;
+    var i = Number(t.getAttribute('data-i')), list = getDone(sid), k = list.indexOf(i);
+    if (t.checked && k < 0) list.push(i); if (!t.checked && k >= 0) list.splice(k, 1);
+    setDone(sid, list); var row = t.closest('.ch'); if (row) row.classList.toggle('done', t.checked);
+  });
+
+  function load(after) {
     if (busy) return;
     if (!wkey) {
       app.innerHTML = '<div class="center"><b>Link not complete</b>Please open the worker link Refael sent you.</div>';
@@ -153,13 +234,15 @@ body{background:var(--paper);color:var(--ink);font-family:-apple-system,Segoe UI
       .then(function (rows) {
         rows = Array.isArray(rows) ? rows : [];
         loadedOnce = true;
+        if (Object.keys(loadingPk).length && typeof after !== 'function') return;
         show(rows);
+        if (typeof after === 'function') after();
         upd.textContent = 'Updated ' + new Date().toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' }) + ' · updates on its own every few minutes';
       })
       .catch(function (err) {
         if (err && err.badKey) {
           loadedOnce = false;
-          app.innerHTML = '<div class="center"><b>This link is no longer active</b>Ask Refael to send you the new worker link.</div>';
+          app.innerHTML = '<div class="center"><b>This link is no longer active</b>Ask Refael to send you the new installer link.</div>';
           upd.textContent = '';
           return;
         }
@@ -168,7 +251,10 @@ body{background:var(--paper);color:var(--ink);font-family:-apple-system,Segoe UI
       })
       .then(function () { busy = false; btn.textContent = 'Refresh'; });
   }
-  btn.addEventListener('click', load);
+  btn.addEventListener('click', function () {
+    var open = Object.keys(packets); packets = {};
+    load(function () { open.forEach(function (sid) { var box = app.querySelector('.det[data-share="' + sid + '"]'); if (box) openPacket(sid, box); }); });
+  });
   document.addEventListener('visibilitychange', function () { if (!document.hidden) load(); });
   setInterval(function () { if (!document.hidden) load(); }, 5 * 60 * 1000);
   load();

@@ -2,12 +2,16 @@
    Network-first for the app HTML so a new deploy shows up immediately when
    online; the cache is only a fallback for offline. Other assets use
    cache-first with a background refresh. Bump CACHE when this file changes. */
-var CACHE = 'aiopro-inspect-v5';
+var CACHE = 'aiopro-inspect-v6';
 var ASSETS = [
   './',
   './index.html',
   './manifest.webmanifest',
-  './icons/icon.svg'
+  './icons/icon.svg',
+  './icons/icon-192.png',
+  './icons/icon-512.png',
+  './icons/apple-touch-icon.png',
+  './estimate-sign.html'
 ];
 
 /* Only the app at the root of this scope counts as "the app" (not the /beta/ test copy). */
