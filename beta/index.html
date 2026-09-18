@@ -3550,7 +3550,8 @@ function viewAppt() {
 
 /* ── Estimate builder (catalog · one scope, optional Option B / C) ── */
 var CATALOG = [
-{name:"Inspection",price:99,description:"NFPA 211 inspection of accessible portions of the chimney — firebox, smoke chamber, flue liner/clay tile, visual from attic or basement; examine bricks, siding, flashing, cricket, crown, cap."},
+{name:"Inspection — Level 1",price:49,description:"NFPA 211 Level 1 inspection of the readily accessible portions — firebox, damper, smoke chamber, flue from below, the connection and clearances, and the chimney exterior from the ground. Written report with photos."},
+{name:"Inspection — Level 2",price:79,description:"NFPA 211 Level 2 inspection: everything in Level 1 plus the accessible attic, basement and crawl space, the roof and chimney top where safe, and a camera scan of the flue. Written report with photos."},
 {name:"Chimney sweep",price:279,description:"Top-to-bottom clean using a rotary brush to remove dust, dirt, and creosote; brush the flue, clean smoke chamber, cap, and firebox."},
 {name:"Chimney Deep Cleaning Service",price:0,description:"Full deep clean: flue swept, smoke chamber, cap, firebox; clean gas logs, clear pilot exhaust tube, replace ember material."},
 {name:"Animal removal",price:979,description:"Nesting debris and biological waste removed; full sanitize; deodorize/anti-fungus; dust repulsion; full system disinfection."},
@@ -3880,7 +3881,7 @@ function estAiPrompt(chat, transcript) {
   return 'You are the estimator for ' + (state.settings.company || 'AIO Pro Chimney') + ' (Greater St. Louis). Build a repair estimate from this field visit, using ONLY the owner\'s price catalog.\n'
     + 'RULES:\n'
     + '- Choose catalog services by their number ("n"). The owner\'s price is applied automatically — never invent or change a price.\n'
-    + '- "Inspection — Level 1" is the catalog "Inspection" service. A Level 2 inspection is not in the catalog: add it as {"custom":"Level 2 inspection"} so the owner prices it.\n'
+    + '- An inspection visit is priced from the catalog: "Inspection — Level 1" or "Inspection — Level 2".\n'
     + '- If the visit needs work that is not in the catalog, add it as {"custom":"short service name"}; the owner will price it.\n'
     + '- Return ONE option by default: the work you recommend for this house. Add a second option (Option B), or at most a third (Option C), ONLY when the visit shows a real choice between different ways to do the job — e.g. keep the existing stove vs. a new stove, stainless vs. galvanized, repair vs. replace. Never Good / Better / Best tiers, never options that only add extras.\n'
     + '- Each option is complete on its own with its full price: if Option B is "everything in Option A, and ...", repeat Option A\'s items in it.\n'
