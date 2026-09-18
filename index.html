@@ -1062,21 +1062,33 @@ function jobTypeName(id) { var t = JOB_TYPES.find(function (j) { return j.id ===
 
 /* ── Camera: file input + downscale (works on iPhone & Android) ── */
 var MAX_EDGE = 2000, QUALITY = 0.88;
-function downscale(dataUrl) {
+/* Every photo becomes a plain JPEG the moment it comes in, whatever the phone
+   handed us (HEIC/HEIF from some Androids and iPhones cannot be read by <img>,
+   and used to travel through the app unusable: a blank thumbnail, a photo the
+   customer never got, and an AI call the server refused). */
+function toJpeg(dataUrl, edge, quality) {
+  edge = edge || MAX_EDGE; quality = quality || QUALITY;
+  function draw(w, h, paint) {
+    var scale = Math.min(1, edge / Math.max(w, h));
+    var c = document.createElement('canvas');
+    c.width = Math.max(1, Math.round(w * scale)); c.height = Math.max(1, Math.round(h * scale));
+    paint(c.getContext('2d'), c.width, c.height);
+    try { return c.toDataURL('image/jpeg', quality); } catch (e) { return null; }
+  }
   return new Promise(function (resolve) {
     var img = new Image();
-    img.onload = function () {
-      var scale = Math.min(1, MAX_EDGE / Math.max(img.width, img.height));
-      var c = document.createElement('canvas');
-      c.width = Math.round(img.width * scale);
-      c.height = Math.round(img.height * scale);
-      c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
-      resolve(c.toDataURL('image/jpeg', QUALITY));
+    img.onload = function () { resolve(draw(img.width, img.height, function (cx, w, h) { cx.drawImage(img, 0, 0, w, h); })); };
+    img.onerror = function () {
+      /* <img> could not decode it — try the bitmap decoder, which handles more formats */
+      if (typeof createImageBitmap !== 'function' || typeof fetch !== 'function') { resolve(null); return; }
+      fetch(dataUrl).then(function (r) { return r.blob(); }).then(function (b) { return createImageBitmap(b); })
+        .then(function (bm) { resolve(draw(bm.width, bm.height, function (cx, w, h) { cx.drawImage(bm, 0, 0, w, h); })); })
+        .catch(function () { resolve(null); });
     };
-    img.onerror = function () { resolve(dataUrl); };
     img.src = dataUrl;
   });
 }
+function downscale(dataUrl) { return toJpeg(dataUrl); }
 function pickFile(useCamera) {
   return new Promise(function (resolve, reject) {
     var input = document.createElement('input');
@@ -1105,13 +1117,19 @@ function pickFiles(useCamera) {
       var files = Array.prototype.slice.call(input.files || []);
       if (!files.length) return reject(new Error('cancelled'));
       Promise.all(files.map(function (f) {
-        return new Promise(function (res, rej) {
+        return new Promise(function (res) {
           var r = new FileReader();
-          r.onload = function () { downscale(r.result).then(res); };
-          r.onerror = function () { rej(new Error('read failed')); };
+          r.onload = function () { downscale(r.result).then(res, function () { res(null); }); };
+          r.onerror = function () { res(null); };
           r.readAsDataURL(f);
         });
-      })).then(resolve, reject);
+      })).then(function (list) {
+        var good = (list || []).filter(Boolean);
+        var lost = files.length - good.length;
+        if (lost) alert(lost + (lost === 1 ? ' photo was' : ' photos were') + ' in a format the app cannot read (usually HEIC).\n\nTake it with the Photo button here, or set your camera to save as JPEG, and add it again.');
+        if (!good.length) { reject(new Error('unreadable')); return; }
+        resolve(good);
+      }, reject);
     };
     input.click();
   });
@@ -1835,7 +1853,7 @@ function chatApiMessages(chat) {
     if (msg.text) content.push({ type: 'text', text: msg.text });
     (msg.aiImages || msg.images || []).forEach(function (src) {
       if (skip > 0) { skip--; content.push({ type: 'text', text: '[earlier photo]' }); return; }
-      var mm = /^data:(image\/[\w.+-]+);base64,(.*)$/.exec(src);
+      var mm = /^data:(image\/(?:jpeg|png|gif|webp));base64,(.*)$/.exec(src);
       if (mm) content.push({ type: 'image', source: { type: 'base64', media_type: mm[1], data: mm[2] } });
     });
     if (!content.length) content.push({ type: 'text', text: '(no message)' });
@@ -1856,20 +1874,15 @@ function chatCacheMark(msgs) {
 /* Small copies of photos for the AI (the full photos stay for the PDF). */
 function aiCopy(src, edge) {
   edge = edge || 1024;
-  return new Promise(function (resolve) {
-    var img = new Image();
-    img.onload = function () {
-      var sc = Math.min(1, edge / Math.max(img.width, img.height));
-      if (sc >= 1 && /^data:image\/jpeg/.test(src) && src.length < 400000) { resolve(src); return; }
-      var c = document.createElement('canvas'); c.width = Math.round(img.width * sc); c.height = Math.round(img.height * sc);
-      c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
-      resolve(c.toDataURL('image/jpeg', 0.72));
-    };
-    img.onerror = function () { resolve(src); };
-    img.src = src;
-  });
+  if (/^data:image\/jpeg/.test(src) && src.length < 400000) return Promise.resolve(src);
+  return toJpeg(src, edge, 0.72);
 }
-function aiCopies(list, edge) { return Promise.all((list || []).map(function (s) { return aiCopy(s, edge); })); }
+/* Anything that could not be turned into a JPEG is left out rather than
+   sent — one bad photo used to make the whole answer fail. */
+function aiCopies(list, edge) {
+  return Promise.all((list || []).map(function (s) { return aiCopy(s, edge).catch(function () { return null; }); }))
+    .then(function (out) { return out.filter(function (x) { return typeof x === 'string' && /^data:image\/(jpeg|png|gif|webp);base64,/.test(x); }); });
+}
 function chatCall(extraUserText, isReport) {
   var chat = state.chat, s = state.settings;
   var msgs = chatApiMessages(chat);
@@ -5878,7 +5891,7 @@ function aiStep() {
   Promise.all(imgs.slice(0, 4).map(function (o) { return compositeMarks(o.src, pmarks[o.key] || []); })).then(function (composited) {
     var content = [{ type: 'text', text: instr }];
     composited.forEach(function (src) {
-      var m = /^data:(image\/[\w.+-]+);base64,(.*)$/.exec(src);
+      var m = /^data:(image\/(?:jpeg|png|gif|webp));base64,(.*)$/.exec(src);
       if (m) content.push({ type: 'image', source: { type: 'base64', media_type: m[1], data: m[2] } });
     });
     return fetch('https://api.anthropic.com/v1/messages', {
@@ -6383,7 +6396,7 @@ function fjAiCall(userText, maxTokens, withPhotos) {
   return aiCopies(photos).then(function (small) {
     var content = [{ type: 'text', text: userText }];
     small.forEach(function (src) {
-      var mm = /^data:(image\/[\w.+-]+);base64,(.*)$/.exec(src);
+      var mm = /^data:(image\/(?:jpeg|png|gif|webp));base64,(.*)$/.exec(src);
       if (mm) content.push({ type: 'image', source: { type: 'base64', media_type: mm[1], data: mm[2] } });
     });
     return fetch('https://api.anthropic.com/v1/messages', {
