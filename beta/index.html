@@ -1917,6 +1917,15 @@ function viewRepEdit() {
     '<div class="screen">' +
       (st.msg ? '<div class="card" style="font-size:14px;border-color:' + (st.err ? 'var(--defect);color:var(--defect)' : 'var(--ok)') + '">' + esc(st.msg) + '</div>' : '') +
       (st.rep.lockedSigned ? '<div class="card" style="border-color:var(--defect);color:var(--defect);font-size:14px">The customer already signed this report online. Changes here will not change the signed copy.</div>' : '') +
+      (state.fjLast && state.fjLast.kind === 'inspection' && !/invoice/i.test(st.rep.modeName || '') ? (function () {
+        var bad = 0, mon = 0;
+        fjChecks(state.fjLast).forEach(function (c) { var r = state.fjLast.data[c.id]; if (!r) return; if (r.v === 'bad') bad++; else if (r.v === 'monitor') mon++; });
+        return '<div class="card" style="border-color:var(--gold)"><div class="eyebrow">Next step</div>' +
+          '<div style="font-size:15px;line-height:1.5;margin-bottom:10px">' + (bad || mon
+            ? 'You marked <b>' + bad + '</b> item(s) that need attention' + (mon ? ' and <b>' + mon + '</b> to monitor' : '') + '. Want to price the repairs for this customer now?'
+            : 'Nothing was marked for repair. You can still price work for this customer.') + '</div>' +
+          '<button class="btn btn-gold btn-primary" data-act="fj-to-estimate" style="width:100%">Make an estimate from this inspection</button></div>';
+      })() : '') +
       '<div class="card"><div class="eyebrow">Customer</div>' + inp('Name', 'customer.name', c.name) + inp('Phone', 'customer.phone', c.phone, ' inputmode="tel"') + inp('Email', 'customer.email', c.email, ' inputmode="email" autocapitalize="off"') +
         addrHTML('Service address', d._addr, 'data-r="_addr"') + '</div>' +
       '<div class="card"><div class="eyebrow">Report</div>' + inp('Title', 'title', d.title) + ta('Level of inspection', 'levelOfInspection', d.levelOfInspection, 50) + ta('Overall diagnosis', 'summary', d.summary, 110) + '</div>' +
@@ -5080,6 +5089,7 @@ root.addEventListener('click', function (e) {
     case 'fj-cam': fjAddPhoto(arg, true); break;
     case 'fj-gal': fjAddPhoto(arg, false); break;
     case 'fj-photo-del': { var pp = String(arg).split('|'), f2 = state.fj; if (f2) { var arr0 = pp[0] === '_extra' ? f2.extraPhotos : pp[0] === '_before' ? f2.beforePhotos : pp[0] === '_after' ? f2.afterPhotos : fjRow(f2, pp[0]).photos; if (arr0) arr0.splice(Number(pp[1]), 1); render(); } break; }
+    case 'fj-to-estimate': fjFromInspection(); break;
     case 'fj-review': fjReview(); break;
     case 'fj-build': fjBuildEstimate(); break;
     case 'fj-report': fjBuildReport(); break;
@@ -5475,6 +5485,17 @@ var FJ_AREAS = [
   { id: 'vent', name: 'Furnace / water heater vent', help: 'Connector, B-vent, power vent conversion.', m: ['Appliance type', 'Connector size (in)', 'Run length (ft)'] },
   { id: 'other', name: 'Something else', help: 'Anything not on this list.', m: [] }
 ];
+/* An inspection finding turns into the work that fixes it. */
+var FJ_FIX = {
+  'ext': 'masonry', 'appl': 'other', 'appl-run': 'other',
+  'fb-walls': 'firebox', 'fb-panels': 'firebox', 'fb-doors': 'firebox',
+  'gas-burner': 'gas', 'gas-pilot': 'gas', 'gas-valve': 'gas', 'gas-leak': 'gas',
+  'dmp': 'damper', 'sc-cond': 'smokechamber',
+  'flue-view': 'liner', 'flue-cam': 'liner', 'flue-build': 'sweep',
+  'vent-conn': 'vent', 'vent-clear': 'vent', 'vent-draft': 'vent', 'dv-term': 'vent', 'dv-seal': 'vent',
+  'room-air': 'other',
+  'roof-crown': 'crown', 'roof-cap': 'cap', 'roof-flash': 'flashing', 'roof-brick': 'masonry', 'roof-height': 'masonry'
+};
 function fjArea(id) { for (var i = 0; i < FJ_AREAS.length; i++) if (FJ_AREAS[i].id === id) return FJ_AREAS[i]; return null; }
 function fjSysName(id) { for (var i = 0; i < FJ_SYS.length; i++) if (FJ_SYS[i].id === id) return FJ_SYS[i].name; return ''; }
 function fjSecName(id) { for (var i = 0; i < FJ_SECS.length; i++) if (FJ_SECS[i][0] === id) return FJ_SECS[i][1]; return id; }
@@ -5511,6 +5532,37 @@ function fjPhotos(f) {
   return out;
 }
 function fjBeforeAfter(f) { return { before: (f.beforePhotos || []).slice(), after: (f.afterPhotos || []).slice() }; }
+/* "Do you want an estimate?" — carries the findings, notes and photos across. */
+function fjFromInspection() {
+  var f = state.fjLast, rep2 = state.chat && state.chat.lastReport;
+  if (!f || f.kind !== 'inspection') { alert('Do an inspection first.'); return; }
+  fjStart('estimate', f.customer);
+  var g = state.fj;
+  g.fromInspection = { level: f.level, system: f.system, text: fjTranscript(f) };
+  var order = [];
+  fjChecks(f).forEach(function (c) {
+    var r = f.data[c.id]; if (!r || (r.v !== 'bad' && r.v !== 'monitor')) return;
+    var aid = FJ_FIX[c.id] || 'other'; if (!fjArea(aid)) aid = 'other';
+    if (order.indexOf(aid) < 0) order.push(aid);
+    var row = fjRow(g, aid);
+    var line = c.label + (r.v === 'bad' ? ' — needs attention' : ' — monitor') + (String(r.note || '').trim() ? ': ' + String(r.note).trim() : '');
+    row.note = row.note ? row.note + '. ' + line : line;
+    (r.photos || []).forEach(function (src) { if (row.photos.indexOf(src) < 0) row.photos.push(src); });
+    if (c.size && (r.m || {}).shape) {
+      row.m = row.m || {};
+      var a2 = fjArea(aid), lbl = (a2 && a2.m || []).filter(function (x) { return /flue size/i.test(x); })[0];
+      if (lbl && !row.m[lbl]) row.m[lbl] = fjSizeText(r);
+      var lw = (a2 && a2.m || []).filter(function (x) { return /opening — width/i.test(x); })[0];
+      var lh = (a2 && a2.m || []).filter(function (x) { return /opening — height/i.test(x); })[0];
+      if (lw && (r.m || {}).ow) row.m[lw] = r.m.ow;
+      if (lh && (r.m || {}).oh) row.m[lh] = r.m.oh;
+    }
+  });
+  g.areas = order;
+  if (rep2 && rep2.data && rep2.data.summary) g.extraNote = 'From the inspection: ' + String(rep2.data.summary).trim();
+  state.view = order.length ? 'fjform' : 'fjsetup';
+  render(); try { window.scrollTo(0, 0); } catch (_) {}
+}
 function fjStart(kind, customer) {
   state.fj = { kind: kind, level: '1', system: '', areas: [], data: {}, extraPhotos: [], extraNote: '', customer: customer || null, review: null, busy: false, err: '' };
   state.view = 'fjsetup'; render(); try { window.scrollTo(0, 0); } catch (_) {}
@@ -5632,6 +5684,8 @@ function viewFjForm() {
   body += '<div class="eyebrow" style="margin:14px 2px 8px">Anything else</div>' +
     '<div class="card">' + fjPhotoStrip('_extra', f.extraPhotos) +
       '<textarea class="fj-note" data-fj="_extra" placeholder="Anything else worth writing down…" style="width:100%;min-height:70px;padding:10px 11px;border:1px solid var(--rule);border-radius:8px;font-size:15px">' + esc(f.extraNote || '') + '</textarea></div>';
+  var fromI = f.fromInspection ? '<div class="card" style="border-color:var(--gold)"><div class="eyebrow">From the inspection</div>' +
+      '<div style="font-size:14px;line-height:1.5">Everything marked <b>Needs attention</b> or <b>Monitor</b> in the Level ' + esc(f.fromInspection.level) + ' inspection is already here, with its photos and your words. Add prices info, take anything out, then build the estimate.</div></div>' : '';
   var rev = f.review;
   var revBox = rev ? '<div class="card" style="border-color:' + (rev.ready ? 'var(--ok)' : 'var(--gold)') + '">' +
       '<div class="eyebrow">Before you price it</div>' +
@@ -5648,7 +5702,7 @@ function viewFjForm() {
     '<div class="topbar"><button class="iconbtn" data-act="fj-back">‹</button><div style="flex:1;min-width:0"><h1 style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + esc(K.name) + (isInsp ? ' — Level ' + esc(f.level) : '') + '</h1><div class="sub">' + (isInsp ? esc(fjSysName(f.system)) + ' · ' : '') + p.n + ' of ' + p.all + ' done</div></div></div>' +
     '<div class="screen">' +
       (f.err ? '<div class="card" style="border-color:var(--defect);color:var(--defect);font-size:14px">' + esc(f.err) + '</div>' : '') +
-      revBox + body +
+      fromI + revBox + body +
     '</div>' +
     '<div class="bottombar" style="gap:6px">' +
       (isInsp
@@ -5757,6 +5811,7 @@ function fjReview() {
     + 'Also list the photos the INSTALLER will need to do the job without guessing. '
     + 'Be short and practical, at most 4 items per list, plain words, no jargon. Do not repeat what he already has. If nothing is missing, return empty lists and ready true.\n'
     + 'Return ONLY JSON: {"ready":true,"photos":[""],"measure":[""],"checks":[""],"installer":[""],"refael":""}\n\n'
+    + (f.fromInspection ? 'THE INSPECTION WE JUST DID:\n' + f.fromInspection.text + '\n\n' : '')
     + fjTranscript(f);
   fjAiCall(prompt, 900, true).then(function (d) {
     f.busy = false;
@@ -5769,7 +5824,7 @@ function fjBuildEstimate() {
   var f = state.fj; if (!f || f.busy) return;
   if (!fjDone(f).n) { f.err = 'Fill in at least one of the jobs above first.'; render(); return; }
   f.busy = 'build'; f.err = ''; render();
-  var prompt = estAiPrompt(null, fjTranscript(f));
+  var prompt = estAiPrompt(null, (f.fromInspection ? 'THE INSPECTION WE JUST DID (use it for the cause and for what to recommend):\n' + f.fromInspection.text + '\n\n' : '') + fjTranscript(f));
   fjAiCall(prompt, 4096, true).then(function (d) {
     var e = newEstimate();
     e.customer = { name: (f.customer && f.customer.name) || '', phone: (f.customer && f.customer.phone) || '', email: (f.customer && f.customer.email) || '', addr: (f.customer && f.customer.address) || '' };
