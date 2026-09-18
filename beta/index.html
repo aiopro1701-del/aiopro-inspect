@@ -1659,7 +1659,7 @@ function chatSystem(mode) {
     + 'RULES. '
     + '1) Never guess. From a photo, say only what is plainly visible, in a few words. If you are not sure what something is (logs or rocks, vented or vent-free, masonry or factory-built), ask one short question instead of assuming. Never call out a problem (ash, soot, creosote, cracks, rust, damage) unless it is clearly visible or the technician says so; if something might be a problem, ask them to confirm it. Do not call a measurement good or bad unless you are sure of the rule; for an appliance, the manufacturer\'s label sets clearances, so ask them to compare with the label. '
     + '2) What the technician says is the fact. If they correct you or say something does not apply, accept it in a few words and move on. Never argue and never ask again something already answered. '
-    + '3) Only check parts that exist in THIS system. Vent-free gas (no flue): no damper, smoke chamber, liner, flue or roof checks — check the unit, burner and logs or media, pilot / oxygen sensor, gas valve and leak check, clearances to the mantel and walls, and a CO alarm in the room. Direct-vent gas: check the vent pipe and its outside termination instead of a chimney flue. Factory-built fireplace: no masonry or smoke chamber questions. Gas logs in a masonry fireplace: the damper and the flue do matter. Furnace or water heater flue: connector, slope, clearances and draft. '
+    + '3) Only check parts that exist in THIS system. Vent-free gas (no flue): no damper, smoke chamber, liner, flue or roof checks — check the unit, burner and logs or media, pilot / oxygen sensor, and the gas valve and leak check. Direct-vent gas: check the vent pipe and its outside termination instead of a chimney flue. Factory-built fireplace: no masonry or smoke chamber questions. Gas logs in a masonry fireplace: the damper and the flue do matter. Furnace or water heater flue: connector, slope, clearances and draft. '
     + '4) ' + level
     + '5) Be efficient: one step per message, 1-2 short sentences, plain words. No markdown, no asterisks, no headings. Join small checks into one step. Accept short answers like "good", "ok", "n/a", "skip". Ask for a photo only when it adds something to the report. '
     + coach
@@ -4914,6 +4914,8 @@ root.addEventListener('click', function (e) {
     case 'fj-go': if (state.fj) { state.view = 'fjform'; render(); try { window.scrollTo(0, 0); } catch (_) {} } break;
     case 'fj-back': if (state.view === 'fjform') { state.view = 'fjsetup'; render(); } else { state.view = 'home'; render(); } break;
     case 'fj-v': { var vp = String(arg).split('|'), fr = state.fj && fjRow(state.fj, vp[0]); if (fr) { fr.v = fr.v === vp[1] ? '' : vp[1]; render(); } break; }
+    case 'fj-q': { var qp = String(arg).split('|'), qr = state.fj && fjRow(state.fj, qp[0]); if (qr) { qr.q = qr.q || {}; qr.q[qp[1]] = qr.q[qp[1]] === qp[2] ? '' : qp[2]; render(); } break; }
+    case 'fj-shape': { var sp = String(arg).split('|'), sr = state.fj && fjRow(state.fj, sp[0]); if (sr) { sr.m = sr.m || {}; sr.m.shape = sr.m.shape === sp[1] ? '' : sp[1]; render(); } break; }
     case 'fj-cam': fjAddPhoto(arg, true); break;
     case 'fj-gal': fjAddPhoto(arg, false); break;
     case 'fj-photo-del': { var pp = String(arg).split('|'), f2 = state.fj; if (f2) { if (pp[0] === '_extra') f2.extraPhotos.splice(Number(pp[1]), 1); else fjRow(f2, pp[0]).photos.splice(Number(pp[1]), 1); render(); } break; }
@@ -5243,7 +5245,7 @@ var FJ_SECS = [
 ];
 /* sys: '*' = every system. lvl 2 = only on a Level 2 inspection. */
 var FJ_CHECKS = [
-  { id: 'front', sec: 'out', label: 'Front of the house', help: 'One photo — it goes on the front of the report.', sys: '*', lvl: 1 },
+  { id: 'front', sec: 'out', label: 'Photo of the house', help: 'Optional — it goes on the front of the report.', sys: '*', lvl: 1, photoOnly: true },
   { id: 'ext', sec: 'out', label: 'Chimney from the ground', help: 'Brick, mortar, lean, staining, what you can see of the top.', sys: ['wood', 'factory', 'insert', 'gaslog', 'flue'], lvl: 1 },
 
   { id: 'appl', sec: 'appl', label: 'The appliance', help: 'One photo facing it. Note make and model if there is a label.', sys: '*', lvl: 1 },
@@ -5258,16 +5260,19 @@ var FJ_CHECKS = [
   { id: 'gas-valve', sec: 'gas', label: 'Gas shut-off valve', help: 'Can you reach it and turn it? Photo of where it is.', sys: ['gaslog', 'dv', 'ventfree'], lvl: 1 },
   { id: 'gas-leak', sec: 'gas', label: 'Leak test at the fittings', help: 'Bubble test every connection you can reach. Any leak = stop and call Refael.', sys: ['gaslog', 'dv', 'ventfree'], lvl: 1 },
 
-  { id: 'dmp-move', sec: 'dmp', label: 'Damper opens, closes and seals', help: 'Move it by hand: free, closes flat, handle works.', sys: ['wood', 'gaslog', 'factory'], lvl: 1 },
-  { id: 'dmp-type', sec: 'dmp', label: 'Damper against the flue', help: 'A square plate cannot seal a round liner — note the shapes.', sys: ['wood', 'gaslog'], lvl: 1 },
-  { id: 'dmp-clamp', sec: 'dmp', label: 'Damper fixed open for gas', help: 'Vented gas logs need the damper blocked open. Is it?', sys: ['gaslog'], lvl: 1 },
+  { id: 'dmp', sec: 'dmp', label: 'Damper', help: 'Move it by hand and look at it against the flue.', sys: ['wood', 'gaslog', 'factory'], lvl: 1,
+    q: [{ id: 'seal', label: 'Seals when closed?', opts: ['Yes', 'No', 'Partly'] },
+        { id: 'handle', label: 'Handle / lever works?', opts: ['Yes', 'No'] },
+        { id: 'fit', label: 'Fits the flue shape?', opts: ['Yes', 'No'], sys: ['wood', 'gaslog'] },
+        { id: 'clamp', label: 'Fixed open for gas?', opts: ['Yes', 'No'], sys: ['gaslog'] }] },
 
   { id: 'sc-cond', sec: 'sc', label: 'Smoke chamber', help: 'Look up with a light: voids, rough brick, missing mortar, buildup.', sys: ['wood', 'gaslog'], lvl: 1 },
 
-  { id: 'flue-type', sec: 'flue', label: 'Liner type and size', help: 'Clay tile, stainless, or none. Inside size if you can measure it.', sys: ['wood', 'factory', 'insert', 'gaslog', 'flue'], lvl: 1 },
-  { id: 'flue-view', sec: 'flue', label: 'Flue from below', help: 'Flashlight up: cracks, offsets, daylight, debris, blockage.', sys: ['wood', 'factory', 'insert', 'gaslog', 'flue'], lvl: 1 },
+  { id: 'flue-view', sec: 'flue', label: 'Flue from below', help: 'Flashlight up: liner type, cracks, offsets, daylight, debris, blockage.', sys: ['wood', 'factory', 'insert', 'gaslog', 'flue'], lvl: 1,
+    noPhotoLvl: 2, size: true,
+    q: [{ id: 'liner', label: 'Liner', opts: ['Clay tile', 'Stainless', 'None'] }] },
   { id: 'flue-build', sec: 'flue', label: 'Creosote or buildup', help: 'How thick, and is it flaky, tarry or glazed?', sys: ['wood', 'insert'], lvl: 1 },
-  { id: 'flue-cam', sec: 'flue', label: 'Camera scan of the flue', help: 'Run the camera. Photo the worst spot you find.', sys: ['wood', 'factory', 'insert', 'gaslog', 'flue'], lvl: 2 },
+  { id: 'flue-cam', sec: 'flue', label: 'Camera scan of the flue', help: 'Run the camera and add as many photos as you need — top, middle and every bad spot.', sys: ['wood', 'factory', 'insert', 'gaslog', 'flue'], lvl: 2 },
 
   { id: 'vent-conn', sec: 'vent', label: 'Vent connector', help: 'Rust, holes, sags; rises toward the chimney; joints screwed; supported.', sys: ['flue'], lvl: 1 },
   { id: 'vent-clear', sec: 'vent', label: 'Connector clearance to wood', help: 'Single-wall 6 in, B-vent 1 in, unless the label says otherwise.', sys: ['flue'], lvl: 1 },
@@ -5275,9 +5280,7 @@ var FJ_CHECKS = [
   { id: 'dv-term', sec: 'vent', label: 'Vent termination outside', help: 'Photo it: clear of decks, windows and snow line; cap intact.', sys: ['dv'], lvl: 1 },
   { id: 'dv-seal', sec: 'vent', label: 'Glass gasket and seals', help: 'Sealed unit: gasket all round, glass clamped, no soot leak.', sys: ['dv'], lvl: 1 },
 
-  { id: 'room-clear', sec: 'room', label: 'Mantel, trim and clearances', help: 'Measure from the opening; compare with the label on the unit.', sys: ['wood', 'factory', 'insert', 'gaslog', 'dv', 'ventfree'], lvl: 1 },
   { id: 'room-hearth', sec: 'room', label: 'Hearth extension', help: 'How far it runs in front and to the sides; carpet or wood at the edge.', sys: ['wood', 'factory', 'insert', 'gaslog'], lvl: 1 },
-  { id: 'room-co', sec: 'room', label: 'CO and smoke alarms', help: 'In the room and on each floor; check the date on them.', sys: '*', lvl: 1 },
   { id: 'room-air', sec: 'room', label: 'Combustion air / tight room', help: 'Closed room, big exhaust fan or new windows can starve it.', sys: ['ventfree', 'flue', 'gaslog'], lvl: 1 },
 
   { id: 'att-chase', sec: 'att', label: 'Chimney in the attic', help: 'Gaps, water stains, framing touching the chimney.', sys: ['wood', 'factory', 'insert', 'gaslog', 'flue'], lvl: 2 },
@@ -5315,10 +5318,18 @@ function fjChecks(f) {
     return c.sys === '*' || c.sys.indexOf(f.system) >= 0;
   });
 }
-function fjRow(f, id) { return (f.data[id] = f.data[id] || { v: '', note: '', photos: [], m: {} }); }
+function fjRow(f, id) { var r = (f.data[id] = f.data[id] || { v: '', note: '', photos: [], m: {} }); r.q = r.q || {}; return r; }
+function fjHasPhoto(f, c) { return !(c.noPhotoLvl && Number(f.level || 1) >= c.noPhotoLvl); }
+function fjQs(f, c) { return (c.q || []).filter(function (q) { return !q.sys || q.sys.indexOf(f.system) >= 0; }); }
+function fjSizeText(r) {
+  var m = r.m || {};
+  if (m.shape === 'Round') return m.dia ? 'round, ' + m.dia + ' in' : '';
+  if (m.len || m.wid) return 'rectangle, ' + (m.len || '?') + ' x ' + (m.wid || '?') + ' in';
+  return '';
+}
 function fjDone(f) {
   if (f.kind === 'inspection') {
-    var list = fjChecks(f), n = 0;
+    var list = fjChecks(f).filter(function (c) { return !c.photoOnly; }), n = 0;
     list.forEach(function (c) { var r = f.data[c.id]; if (r && (r.v || (r.photos || []).length || String(r.note || '').trim())) n++; });
     return { n: n, all: list.length };
   }
@@ -5386,15 +5397,33 @@ function viewFjForm() {
     list.forEach(function (c) {
       var r = fjRow(f, c.id);
       if (c.sec !== lastSec) { lastSec = c.sec; body += '<div class="eyebrow" style="margin:14px 2px 8px">' + esc(fjSecName(c.sec)) + '</div>'; }
+      var qs = fjQs(f, c), m = r.m || {};
       body += '<div class="card" style="' + (r.v ? 'border-left:4px solid ' + (r.v === 'bad' ? 'var(--defect)' : r.v === 'monitor' ? 'var(--monitor)' : r.v === 'na' ? 'var(--rule)' : 'var(--ok)') : '') + '">' +
         '<div style="font-weight:700;font-size:16px">' + esc(c.label) + '</div>' +
         '<div style="color:var(--muted);font-size:13px;margin:3px 0 9px">' + esc(c.help) + '</div>' +
-        '<div class="row" style="gap:6px;margin-bottom:9px">' + FJ_V.map(function (v) {
+        (c.photoOnly ? '' : '<div class="row" style="gap:6px;margin-bottom:9px">' + FJ_V.map(function (v) {
           var on = r.v === v[0];
           return '<button class="btn ' + (on ? '' : 'btn-ghost') + '" data-act="fj-v" data-arg="' + esc(c.id + '|' + v[0]) + '" style="flex:1;min-height:42px;padding:0 4px;font-size:13px;' + (on ? 'background:' + v[2] + ';color:#fff;border-color:' + v[2] : '') + '">' + v[1] + '</button>';
-        }).join('') + '</div>' +
-        fjPhotoStrip(c.id, r.photos) +
-        '<input class="fj-note" data-fj="' + esc(c.id) + '" placeholder="A few words for the report…" value="' + esc(r.note || '') + '" style="width:100%;padding:10px 11px;border:1px solid var(--rule);border-radius:8px;font-size:15px">' +
+        }).join('') + '</div>') +
+        qs.map(function (q) {
+          return '<div style="margin-bottom:8px"><div style="font-size:13px;color:var(--muted);margin-bottom:4px">' + esc(q.label) + '</div>' +
+            '<div class="row" style="gap:6px">' + q.opts.map(function (o) {
+              var on = (r.q || {})[q.id] === o;
+              return '<button class="btn ' + (on ? 'btn-gold btn-primary' : 'btn-ghost') + '" data-act="fj-q" data-arg="' + esc(c.id + '|' + q.id + '|' + o) + '" style="flex:1;min-height:38px;padding:0 6px;font-size:13px">' + esc(o) + '</button>';
+            }).join('') + '</div></div>';
+        }).join('') +
+        (c.size ? '<div style="margin-bottom:9px"><div style="font-size:13px;color:var(--muted);margin-bottom:4px">Flue size, if you know it</div>' +
+          '<div class="row" style="gap:6px;margin-bottom:6px">' + ['Rectangle', 'Round'].map(function (sh) {
+            var on = m.shape === sh;
+            return '<button class="btn ' + (on ? 'btn-gold btn-primary' : 'btn-ghost') + '" data-act="fj-shape" data-arg="' + esc(c.id + '|' + sh) + '" style="flex:1;min-height:38px;font-size:13px">' + sh + '</button>';
+          }).join('') + '</div>' +
+          (m.shape === 'Round'
+            ? '<div class="field" style="margin-bottom:0"><label>Diameter (in)</label><input class="fj-size" data-fj="' + esc(c.id) + '" data-k="dia" inputmode="decimal" value="' + esc(m.dia || '') + '"></div>'
+            : m.shape ? '<div class="row" style="gap:8px"><div class="field" style="flex:1;margin-bottom:0"><label>Length (in)</label><input class="fj-size" data-fj="' + esc(c.id) + '" data-k="len" inputmode="decimal" value="' + esc(m.len || '') + '"></div>' +
+              '<div class="field" style="flex:1;margin-bottom:0"><label>Width (in)</label><input class="fj-size" data-fj="' + esc(c.id) + '" data-k="wid" inputmode="decimal" value="' + esc(m.wid || '') + '"></div></div>' : '') +
+        '</div>' : '') +
+        (fjHasPhoto(f, c) ? fjPhotoStrip(c.id, r.photos) : '') +
+        '<input class="fj-note" data-fj="' + esc(c.id) + '" placeholder="' + (c.photoOnly ? 'Anything to note…' : 'A few words for the report…') + '" value="' + esc(r.note || '') + '" style="width:100%;padding:10px 11px;border:1px solid var(--rule);border-radius:8px;font-size:15px">' +
       '</div>';
     });
   } else {
@@ -5451,6 +5480,9 @@ function wireFj() {
       if (id === '_extra') f.extraNote = el.value; else fjRow(f, id).note = el.value;
     });
   });
+  root.querySelectorAll('.fj-size').forEach(function (el) {
+    el.addEventListener('input', function () { var r = fjRow(f, el.getAttribute('data-fj')); r.m = r.m || {}; r.m[el.getAttribute('data-k')] = el.value; });
+  });
   root.querySelectorAll('.fj-m').forEach(function (el) {
     el.addEventListener('input', function () {
       var id = el.getAttribute('data-fj'), a = fjArea(id); if (!a) return;
@@ -5478,11 +5510,13 @@ function fjTranscript(f) {
       var r = f.data[c.id]; if (!r || (!r.v && !String(r.note || '').trim() && !(r.photos || []).length)) return;
       var ph = (r.photos || []).length;
       var vv = r.v === 'good' ? 'GOOD' : r.v === 'monitor' ? 'MONITOR' : r.v === 'bad' ? 'NEEDS ATTENTION' : r.v === 'na' ? 'NOT PRESENT / NOT CHECKED' : 'no mark';
-      L.push('- [' + fjSecName(c.sec) + '] ' + c.label + ': ' + vv + (String(r.note || '').trim() ? ' — tech wrote: "' + String(r.note).trim() + '"' : '') + (ph ? ' (' + ph + ' photo' + (ph > 1 ? 's' : '') + ')' : ''));
+      var qtxt = fjQs(f, c).map(function (q) { return (r.q || {})[q.id] ? q.label + ' ' + r.q[q.id] : ''; }).filter(Boolean).join('; ');
+      var sz = c.size ? fjSizeText(r) : '';
+      L.push('- [' + fjSecName(c.sec) + '] ' + c.label + ': ' + (c.photoOnly ? 'photo' : vv) + (qtxt ? ' — ' + qtxt : '') + (sz ? ' — flue size ' + sz : '') + (String(r.note || '').trim() ? ' — tech wrote: "' + String(r.note).trim() + '"' : '') + (ph ? ' (' + ph + ' photo' + (ph > 1 ? 's' : '') + ')' : ''));
       n++;
     });
     if (!n) L.push('- (nothing marked yet)');
-    var skipped = fjChecks(f).filter(function (c) { var r = f.data[c.id]; return !r || (!r.v && !String(r.note || '').trim() && !(r.photos || []).length); });
+    var skipped = fjChecks(f).filter(function (c) { if (c.photoOnly) return false; var r = f.data[c.id]; return !r || (!r.v && !String(r.note || '').trim() && !(r.photos || []).length); });
     if (skipped.length) L.push('NOT CHECKED: ' + skipped.map(function (c) { return c.label; }).join(', ') + '.');
   } else {
     L.push((f.kind === 'invoice' ? 'WORK DONE' : 'ESTIMATE VISIT') + ':');
