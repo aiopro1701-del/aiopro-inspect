@@ -113,6 +113,7 @@ body{background:var(--paper);color:var(--ink);font-family:-apple-system,Segoe UI
       shoot: 'Tomar la foto', extraTitle: 'Otras fotos', addExtra: 'Añadir una foto',
       uploading: 'Subiendo…', removeShot: 'Quitar esta foto', shotFail: 'No se pudo subir la foto',
       doneAll: 'Trabajo terminado', ofDone: 'hecho',
+      noScope: 'Refael todavía no ha enlazado el presupuesto a este trabajo. Puedes tomar fotos igual.',
       updated: 'Actualizado', auto: 'se actualiza solo cada pocos minutos',
       stale: 'No se pudo actualizar — mostrando la última lista. Revisa tu internet.',
       loc: 'es-US'
@@ -140,6 +141,7 @@ body{background:var(--paper);color:var(--ink);font-family:-apple-system,Segoe UI
       shoot: 'Take the photo', extraTitle: 'Other photos', addExtra: 'Add a photo',
       uploading: 'Uploading…', removeShot: 'Remove this photo', shotFail: 'Could not upload the photo',
       doneAll: 'Job finished', ofDone: 'done',
+      noScope: 'Refael has not linked the estimate to this job yet. You can still take your photos.',
       updated: 'Updated', auto: 'updates on its own every few minutes',
       stale: 'Could not refresh — showing the last list. Check your internet.',
       loc: 'en-US'
@@ -207,6 +209,10 @@ body{background:var(--paper);color:var(--ink);font-family:-apple-system,Segoe UI
     return m ? m[0].replace(/[^\d+]/g, '') : '';
   }
 
+  /* A job always has a work order. If an estimate is linked it hangs off that,
+     so he sees what was sold; if not, it hangs off the job and he can still
+     take his photos. */
+  function woId(j) { return j.share_id || j.event_id || ''; }
   function show(rows) {
     var today = isoOf(new Date());
     if (!rows.length) {
@@ -235,16 +241,17 @@ body{background:var(--paper);color:var(--ink);font-family:-apple-system,Segoe UI
           (maps ? '<a class="g" href="' + esc(maps) + '" target="_blank" rel="noopener">' + t('directions') + '</a>' : '') +
           (phone ? '<a href="tel:' + esc(phone) + '">' + t('callCust') + '</a>' : '') +
         '</div>' : '') +
-        (j.share_id ? '<div class="det" data-share="' + esc(j.share_id) + '">' + (packets[j.share_id] ? packetHTML(j.share_id) : '<button type="button" data-open="' + esc(j.share_id) + '">' + t('openPacket') + '</button>') + '</div>' : '') +
+        (function () { var wid = woId(j); return '<div class="det" data-share="' + esc(wid) + '">' + (packets[wid] ? packetHTML(wid) : '<button type="button" data-open="' + esc(wid) + '">' + t('openPacket') + '</button>') + '</div>'; })() +
       '</div>';
     });
     app.innerHTML = html;
     /* The job he is standing in front of should already be open. */
     var soon = [today, addDays(today, 1)];
     rows.forEach(function (j) {
-      if (!j.share_id || soon.indexOf(j.day) < 0 || packets[j.share_id] || loadingPk[j.share_id]) return;
-      var box = app.querySelector('.det[data-share="' + j.share_id + '"]');
-      if (box) openPacket(j.share_id, box);
+      var wid = woId(j);
+      if (!wid || soon.indexOf(j.day) < 0 || packets[wid] || loadingPk[wid]) return;
+      var box = app.querySelector('.det[data-share="' + wid + '"]');
+      if (box) openPacket(wid, box);
     });
   }
 
@@ -261,8 +268,13 @@ body{background:var(--paper);color:var(--ink);font-family:-apple-system,Segoe UI
     var pk = packets[sid]; if (!pk) return '';
     if (pk.err) return '<div class="pk" style="color:#b03d27;font-size:14px">' + esc(pk.err) + '</div>';
     var pay = pk.payload || {}, h = '<div class="pk">';
-    var signed = pk.status === 'signed';
-    h += signed ? '<span class="ok">' + t('signed') + (pk.signer_name ? ' — ' + esc(pk.signer_name) : '') + '</span>' : '<span style="color:var(--muted);font-size:13px">' + t('notSigned') + '</span>';
+    var linked = pk.linked !== false;
+    if (linked) {
+      var signed = pk.status === 'signed';
+      h += signed ? '<span class="ok">' + t('signed') + (pk.signer_name ? ' — ' + esc(pk.signer_name) : '') + '</span>' : '<span style="color:var(--muted);font-size:13px">' + t('notSigned') + '</span>';
+    } else {
+      h += '<div style="color:var(--muted);font-size:13px">' + t('noScope') + '</div>';
+    }
     var done = getDone(sid), prep = Array.isArray(pk.prep) ? pk.prep : [];
     if (prep.length) {
       h += '<h4>' + t('bring') + '</h4>' + prep.map(function (x, i) { var on = done.indexOf('p' + i) >= 0; return '<label class="ch' + (on ? ' done' : '') + '"><input type="checkbox" data-sid="' + esc(sid) + '" data-k="p' + i + '"' + (on ? ' checked' : '') + '><span>' + esc(x) + '</span></label>'; }).join('');
