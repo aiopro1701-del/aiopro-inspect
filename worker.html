@@ -140,6 +140,20 @@ body{background:var(--paper);color:var(--ink);font-family:-apple-system,Segoe UI
     else wkey = localStorage.getItem('aio-worker-key') || '';
   } catch (e) {}
 
+  /* A note written in both languages: [ES] ... [EN] ... — he reads the one he
+     picked, and the button switches the job itself, not just the buttons. */
+  function noteFor(text) {
+    var t = String(text || '');
+    if (!/\[(ES|EN)\]/i.test(t)) return t;
+    var parts = {}, cur = '';
+    t.split(/\r?\n/).forEach(function (line) {
+      var m = line.match(/^\s*\[(ES|EN)\]\s*(.*)$/i);
+      if (m) { cur = m[1].toLowerCase(); parts[cur] = (m[2] || '').trim(); return; }
+      if (cur) parts[cur] = (parts[cur] ? parts[cur] + '\n' : '') + line;
+    });
+    var pick = parts[lang] || parts[lang === 'es' ? 'en' : 'es'] || t;
+    return String(pick).trim();
+  }
   function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
   function pad(n) { return (n < 10 ? '0' : '') + n; }
   function isoOf(d) { return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate()); }
@@ -192,7 +206,7 @@ body{background:var(--paper);color:var(--ink);font-family:-apple-system,Segoe UI
         '<div class="tm">' + esc(time) + '</div>' +
         '<div class="ti">' + esc(j.title || t('jobTitle')) + '</div>' +
         (j.location ? '<a class="loc" href="' + esc(maps) + '" target="_blank" rel="noopener">' + esc(j.location) + '</a>' : '') +
-        (j.notes ? '<div class="no">' + linkify(j.notes) + '</div>' : '') +
+        (noteFor(j.notes) ? '<div class="no">' + linkify(noteFor(j.notes)) + '</div>' : '') +
         ((maps || phone) ? '<div class="acts">' +
           (maps ? '<a class="g" href="' + esc(maps) + '" target="_blank" rel="noopener">' + t('directions') + '</a>' : '') +
           (phone ? '<a href="tel:' + esc(phone) + '">' + t('callCust') + '</a>' : '') +
@@ -227,7 +241,7 @@ body{background:var(--paper);color:var(--ink);font-family:-apple-system,Segoe UI
     if (prep.length) {
       h += '<h4>' + t('bring') + '</h4>' + prep.map(function (x, i) { var on = done.indexOf(i) >= 0; return '<label class="ch' + (on ? ' done' : '') + '"><input type="checkbox" data-sid="' + esc(sid) + '" data-i="' + i + '"' + (on ? ' checked' : '') + '><span>' + esc(x) + '</span></label>'; }).join('');
     }
-    if (pk.notes) h += '<h4>' + t('notes') + '</h4><div class="note">' + esc(pk.notes) + '</div>';
+    if (noteFor(pk.notes)) h += '<h4>' + t('notes') + '</h4><div class="note">' + esc(noteFor(pk.notes)) + '</div>';
     if (pk.kind === 'report') {
       var comps = (pay.components || []).filter(function (c) { return c.status === 'defect'; });
       if (comps.length) h += '<h4>' + t('attention') + '</h4>' + comps.map(function (c) { return '<div class="it"><b>' + esc(c.name) + '</b><ul><li>' + esc(c.condition) + '</li>' + (c.recommended ? '<li>' + esc(c.recommended) + '</li>' : '') + '</ul></div>'; }).join('');
