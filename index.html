@@ -3710,7 +3710,7 @@ function gcalFetch() {
             var et = ev.end && ev.end.dateTime ? new Date(ev.end.dateTime).toTimeString().slice(0, 5) : '';
             var xp = (ev.extendedProperties && ev.extendedProperties.private) || {};
             var dday = ev.start && ev.start.dateTime ? gcalDay(ev.start.dateTime) : String(sd).slice(0, 10);
-            mine.push({ id: ev.id, acct: a.slot, color: a.color, title: ev.summary || '(no title)', date: dday, time: tm, endTime: et, location: ev.location || '', notes: ev.description || '', worker: xp.aioWorker === '1' || (xp.aioWorker !== '0' && wkAuto(ev.summary, ev.description)), workerAuto: xp.aioWorker !== '1' && xp.aioWorker !== '0' && wkAuto(ev.summary, ev.description), share: /^[a-z0-9]{6,40}$/.test(xp.aioShare || '') ? xp.aioShare : '' });
+            mine.push({ id: ev.id, acct: a.slot, color: a.color, title: ev.summary || '(no title)', date: dday, time: tm, endTime: et, location: ev.location || '', notes: ev.description || '', worker: xp.aioWorker === '1' || (xp.aioWorker !== '0' && wkAuto(ev.summary, ev.description)), workerAuto: xp.aioWorker !== '1' && xp.aioWorker !== '0' && wkAuto(ev.summary, ev.description), share: /^[a-z0-9]{6,40}$/.test(xp.aioShare || '') ? xp.aioShare : wkShare(ev.description) });
           });
           if (data.nextPageToken && n < 8) return page(data.nextPageToken, n + 1);
           complete = !data.nextPageToken;
@@ -3763,6 +3763,12 @@ function cloudRpc(fn, args) {
       return d;
     });
   });
+}
+/* Paste the customer's link into the calendar note and the installer gets the
+   whole job with it — what was sold, the scope, the prep list and the photos. */
+function wkShare(notes) {
+  var m = String(notes || '').match(/estimate-sign\.html\?id=([a-z0-9]{6,40})/i);
+  return m ? m[1].toLowerCase() : '';
 }
 /* An event the calendar itself marks as the installer's: writing INSTALLER JOB
    in the title or the note is enough, so a job does not have to be ticked by

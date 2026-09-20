@@ -50,6 +50,7 @@ body{background:var(--paper);color:var(--ink);font-family:-apple-system,Segoe UI
 .pk .note{background:#fbf6ea;border-radius:8px;padding:9px 10px;font-size:14.5px;white-space:pre-wrap}
 .pk .ph{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
 .pk .ph img{width:100%;height:96px;object-fit:cover;border-radius:6px;border:.5px solid var(--rule)}
+.pk .ph figcaption{font-size:10.5px;color:var(--muted);margin-top:3px;line-height:1.25}
 .pk .ok{display:inline-block;background:#e3f1e8;color:#2b6a45;border-radius:20px;padding:2px 9px;font-size:12px;font-weight:700}
 .lb{position:fixed;inset:0;background:rgba(0,0,0,.92);display:flex;align-items:center;justify-content:center;z-index:50;padding:10px}
 .lb img{max-width:100%;max-height:100%}
@@ -200,6 +201,13 @@ body{background:var(--paper);color:var(--ink);font-family:-apple-system,Segoe UI
       '</div>';
     });
     app.innerHTML = html;
+    /* The job he is standing in front of should already be open. */
+    var soon = [today, addDays(today, 1)];
+    rows.forEach(function (j) {
+      if (!j.share_id || soon.indexOf(j.day) < 0 || packets[j.share_id] || loadingPk[j.share_id]) return;
+      var box = app.querySelector('.det[data-share="' + j.share_id + '"]');
+      if (box) openPacket(j.share_id, box);
+    });
   }
 
   /* ── Job packet: what to bring, the scope the customer accepted, and the technician's photos ── */
@@ -243,7 +251,13 @@ body{background:var(--paper);color:var(--ink);font-family:-apple-system,Segoe UI
     var cu = pay.customer || {};
     if (cu.phone) h += '<h4>' + t('customer') + '</h4><div>' + esc(cu.name || '') + ' · <a href="tel:' + esc(String(cu.phone).replace(/[^\d+]/g, '')) + '">' + esc(cu.phone) + '</a></div>';
     var ph = (pk.photos || []).filter(function (x) { return /^data:image\/jpeg;base64,[A-Za-z0-9+\/=]+$/.test(x); });
-    if (ph.length) h += '<h4>' + t('photos') + '</h4><div class="ph">' + ph.map(function (x) { return '<img src="' + x + '" alt="">'; }).join('') + '</div>';
+    if (ph.length) {
+      var pcaps = Array.isArray(pay.caps) ? pay.caps : [];
+      h += '<h4>' + t('photos') + '</h4><div class="ph">' + ph.map(function (x, i) {
+        var c = String(pcaps[i] || '').trim();
+        return '<figure style="margin:0"><img src="' + x + '" alt="">' + (c ? '<figcaption>' + esc(c) + '</figcaption>' : '') + '</figure>';
+      }).join('') + '</div>';
+    }
     return h + '</div>';
   }
   var loadingPk = {};
