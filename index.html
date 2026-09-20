@@ -3710,7 +3710,7 @@ function gcalFetch() {
             var et = ev.end && ev.end.dateTime ? new Date(ev.end.dateTime).toTimeString().slice(0, 5) : '';
             var xp = (ev.extendedProperties && ev.extendedProperties.private) || {};
             var dday = ev.start && ev.start.dateTime ? gcalDay(ev.start.dateTime) : String(sd).slice(0, 10);
-            mine.push({ id: ev.id, acct: a.slot, color: a.color, title: ev.summary || '(no title)', date: dday, time: tm, endTime: et, location: ev.location || '', notes: ev.description || '', worker: xp.aioWorker === '1', share: /^[a-z0-9]{6,40}$/.test(xp.aioShare || '') ? xp.aioShare : '' });
+            mine.push({ id: ev.id, acct: a.slot, color: a.color, title: ev.summary || '(no title)', date: dday, time: tm, endTime: et, location: ev.location || '', notes: ev.description || '', worker: xp.aioWorker === '1' || (xp.aioWorker !== '0' && wkAuto(ev.summary, ev.description)), workerAuto: xp.aioWorker !== '1' && xp.aioWorker !== '0' && wkAuto(ev.summary, ev.description), share: /^[a-z0-9]{6,40}$/.test(xp.aioShare || '') ? xp.aioShare : '' });
           });
           if (data.nextPageToken && n < 8) return page(data.nextPageToken, n + 1);
           complete = !data.nextPageToken;
@@ -3764,11 +3764,25 @@ function cloudRpc(fn, args) {
     });
   });
 }
+/* An event the calendar itself marks as the installer's: writing INSTALLER JOB
+   in the title or the note is enough, so a job does not have to be ticked by
+   hand in the app. Ticking "No, only me" still wins over this. */
+function wkAuto(title, notes) { return /installer\s*job/i.test(String(title || '') + '\n' + String(notes || '')); }
+/* What the installer is allowed to read. Everything above an "INSTALLER:" line
+   is Refael's own note — prices, payment terms, whatever he keeps there — and
+   stays with him. With no such line the whole note goes, as it always did. */
+function wkNote(notes) {
+  var txt = String(notes || '');
+  var m = txt.match(/^[^\S\n]*INSTALLER[^\S\n]*:[^\S\n]*(.*)$/im);
+  if (!m) return txt;
+  var rest = txt.slice(txt.indexOf(m[0]) + m[0].length);
+  return ((m[1] || '') + '\n' + rest).trim();
+}
 /* Copy one calendar's "worker can see" jobs (inside the loaded window) to the worker list. */
 function workerSync(slot, range, events) {
   var key = ownerKey(); if (!key) return;
   var jobs = events.filter(function (e) { return e.worker; }).map(function (e) {
-    return { event_id: e.id, title: e.title, day: (e.date < range.from ? range.from : e.date), start_time: e.time || '', end_time: e.endTime || '', location: e.location || '', notes: e.notes || '', share_id: e.share || '' };
+    return { event_id: e.id, title: e.title, day: (e.date < range.from ? range.from : e.date), start_time: e.time || '', end_time: e.endTime || '', location: e.location || '', notes: wkNote(e.notes), share_id: e.share || '' };
   });
   cloudRpc('worker_jobs_sync', { p_owner: key, p_acct: slot, p_from: range.from, p_to: range.to, p_jobs: jobs })
     .then(function () { var had = state.workerSyncErr; state.workerSyncErr = null; if (had && state.view === 'schedule') render(); })
@@ -4118,6 +4132,10 @@ function viewCalEvent() {
         '<button class="btn ' + (e.worker ? 'btn-gold btn-primary' : 'btn-ghost') + '" data-act="cev-worker" data-arg="1" style="flex:1">Yes, installer sees</button>' +
         '<button class="btn ' + (!e.worker ? 'btn-gold btn-primary' : 'btn-ghost') + '" data-act="cev-worker" data-arg="0" style="flex:1">No, only me</button>' +
       '</div>' +
+      (e.workerAuto ? '<div style="font-size:13px;margin-top:8px;color:var(--ok)">The note says INSTALLER JOB, so this one goes to the installer on its own. Tap "No, only me" to keep it off his list.</div>' : '') +
+      (e.worker ? (/^[^\S\n]*INSTALLER[^\S\n]*:/im.test(e.notes || '')
+        ? '<div style="font-size:13px;margin-top:6px;color:var(--muted)">He reads only what is under the <b>INSTALLER:</b> line. Everything above it stays with you.</div>'
+        : '<div style="font-size:13px;margin-top:6px;color:var(--muted)">He reads the whole note. Put a line saying <b>INSTALLER:</b> in it and he sees only what is below that line.</div>') : '') +
     '</div></div>' +
     '<div class="bottombar" style="gap:8px"><button class="btn btn-gold btn-primary" data-act="cal-save">Save to calendar</button>' + (e.id ? '<button class="btn btn-ghost" data-act="cal-del" data-arg="' + esc(e.acct + '|' + e.id) + '">Delete</button>' : '') + '</div>' +
   '</div>';
@@ -5783,7 +5801,7 @@ root.addEventListener('click', function (e) {
     case 'cal-day': state.editEvent = { title: '', date: arg, time: '09:00', location: '', notes: '', acct: 'A' }; state.view = 'calevent'; render(); break;
     case 'cal-new': state.editEvent = { title: '', date: isoToday(), time: '09:00', location: '', notes: '', acct: 'A' }; state.view = 'calevent'; render(); break;
     case 'cev-acct': if (state.editEvent) { state.editEvent.acct = arg; render(); } break;
-    case 'cev-worker': if (state.editEvent) { state.editEvent.worker = arg === '1'; render(); } break;
+    case 'cev-worker': if (state.editEvent) { state.editEvent.worker = arg === '1'; state.editEvent.workerAuto = false; render(); } break;
     case 'worker-link': workerLink(false); break;
     case 'estmail-open': estMailOpen('estimate'); break;
     case 'report-mail': estMailOpen('report'); break;
@@ -5932,7 +5950,7 @@ root.addEventListener('click', function (e) {
     case 'rep-li-del': if (state.repEdit) { state.repEdit.d.lineItems.splice(Number(arg), 1); state.repEdit.dirty = true; render(); } break;
     case 'tech-reset': techLink(true); break;
     case 'worker-reset': workerLink(true); break;
-    case 'cal-open': { var op = String(arg).split('|'), oSlot = op[0], oId = op[1]; var ce = (state.gcalEvents || []).filter(function (x) { return x.id === oId && x.acct === oSlot; })[0] || (state.gcalEvents || []).filter(function (x) { return x.id === oId; })[0]; if (ce) { state.editEvent = { id: ce.id, acct: ce.acct || 'A', title: ce.title, date: ce.date, time: ce.time, location: ce.location, notes: ce.notes, worker: !!ce.worker, share: ce.share || '', shareLabel: ce.share ? 'a linked estimate' : '' }; state.view = 'calevent'; render(); } break; }
+    case 'cal-open': { var op = String(arg).split('|'), oSlot = op[0], oId = op[1]; var ce = (state.gcalEvents || []).filter(function (x) { return x.id === oId && x.acct === oSlot; })[0] || (state.gcalEvents || []).filter(function (x) { return x.id === oId; })[0]; if (ce) { state.editEvent = { id: ce.id, acct: ce.acct || 'A', title: ce.title, date: ce.date, time: ce.time, location: ce.location, notes: ce.notes, worker: !!ce.worker, workerAuto: !!ce.workerAuto, share: ce.share || '', shareLabel: ce.share ? 'a linked estimate' : '' }; state.view = 'calevent'; render(); } break; }
     case 'cal-save': gcalSaveEvent(state.editEvent, function () { state.view = 'schedule'; render(); }); break;
     case 'cal-del': if (confirm('Delete this job from the calendar?')) { var dp = String(arg).split('|'); gcalDeleteEvent(dp[1] || dp[0], dp[1] ? dp[0] : (state.editEvent && state.editEvent.acct) || 'A'); state.view = 'schedule'; render(); } break;
     case 'appt-new': state.editAppt = newAppt(); state.view = 'appt'; render(); break;
