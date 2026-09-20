@@ -5370,6 +5370,82 @@ function estMailSend() {
 }
 
 /* ── For the installer: what to bring, notes, and putting the job on the calendar ── */
+/* ── The work order ─────────────────────────────────────────
+   What was sold, what the installer has ticked off, and the photo he took
+   from the same angle as the picture that sold the job. */
+function woOpen(e) {
+  var key = sendKey();
+  if (!e || !e.shareId) { alert('Send the estimate to the customer first — the work order hangs off that link.'); return; }
+  if (!key) { alert('This phone is not set up yet.'); return; }
+  state.wo = { est: e, busy: true };
+  state.view = 'workorder'; render();
+  cloudRpc('wo_get', { p_key: key, p_share: e.shareId }).then(function (d) {
+    state.wo = { est: e, data: d || null };
+    if (state.view === 'workorder') render();
+  }).catch(function (err) {
+    state.wo = { est: e, err: (err && err.message) || 'error' };
+    if (state.view === 'workorder') render();
+  });
+}
+function woPairs(d) {
+  var photos = (d.photos || []).filter(function (x) { return typeof x === 'string' && x.indexOf('data:image') === 0; });
+  var caps = (d.payload && d.payload.caps) || [];
+  var shots = Array.isArray(d.shots) ? d.shots : [];
+  function at(ref, kind) { for (var i = 0; i < shots.length; i++) { if (Number(shots[i].ref) === ref && shots[i].kind === kind) return shots[i]; } return null; }
+  return photos.map(function (src, i) {
+    return { cap: String(caps[i] || '').trim() || ('Photo ' + (i + 1)), ref: src, before: at(i, 'before'), after: at(i, 'after') };
+  });
+}
+function viewWorkOrder() {
+  var w = state.wo;
+  if (!w || !w.est) { state.view = 'estimates'; return viewEstimatesList(); }
+  var e = w.est, d = w.data;
+  var body;
+  if (w.busy) body = '<div class="empty">Loading the work order…</div>';
+  else if (w.err) body = '<div class="card" style="border-color:var(--defect);color:var(--defect);font-size:14px">' + esc(w.err) + '</div>';
+  else if (!d) body = '<div class="empty">Nothing yet. Send the estimate and put the job on the installer\'s calendar first.</div>';
+  else {
+    var pairs = woPairs(d), shots = Array.isArray(d.shots) ? d.shots : [];
+    var loose = shots.filter(function (x) { return Number(x.ref) < 0; });
+    var done = Array.isArray(d.done) ? d.done : [];
+    var pay = d.payload || {};
+    var opts = (pay.options || []).filter(function (o) { return (o.items || []).some(function (it) { return it.name || it.desc; }); });
+    var idx = typeof d.choice === 'number' ? d.choice : 0, o = opts[idx] || opts[0];
+    var items = [];
+    if (o) (o.items || []).forEach(function (it) { if (it.name || it.desc) items.push(it); });
+    var nDone = items.filter(function (_, i) { return done.indexOf('w' + i) >= 0; }).length;
+    body =
+      '<div class="card"><div class="eyebrow">The work he was given</div>' +
+        (items.length ? '<div style="font-size:13px;color:var(--muted);margin-bottom:8px">' + nDone + ' of ' + items.length + ' ticked off</div>' +
+          items.map(function (it, i) {
+            var on = done.indexOf('w' + i) >= 0;
+            return '<div style="display:flex;gap:8px;padding:6px 0;border-top:1px solid var(--rule);font-size:15px' + (on ? ';color:var(--muted)' : '') + '">' +
+              '<span style="flex:0 0 18px;color:' + (on ? 'var(--ok)' : 'var(--rule)') + '">' + (on ? '✓' : '○') + '</span>' +
+              '<span style="flex:1' + (on ? ';text-decoration:line-through' : '') + '">' + esc(it.name || 'Item') + '</span></div>';
+          }).join('')
+          : '<div style="color:var(--muted);font-size:14px">No work lines on this estimate.</div>') + '</div>' +
+      (d.specs ? '<div class="card"><div class="eyebrow">Measurements you sent him</div><div style="font-size:15px;white-space:pre-wrap">' + esc(d.specs) + '</div></div>' : '') +
+      (pairs.length
+        ? pairs.map(function (p) {
+            function cell(lbl, sh) {
+              return '<div style="flex:1;min-width:0;text-align:center">' +
+                '<div class="eyebrow" style="margin-bottom:3px">' + lbl + '</div>' +
+                (sh ? '<img src="' + (sh.data || sh) + '" style="width:100%;height:96px;object-fit:cover;border-radius:8px;border:.5px solid var(--rule)">'
+                    : '<div style="height:96px;border-radius:8px;border:1px dashed var(--rule);display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:12px">not yet</div>') +
+              '</div>';
+            }
+            return '<div class="card"><div style="font-weight:650;font-size:15px;margin-bottom:8px">' + esc(p.cap) + '</div>' +
+              '<div class="row" style="gap:6px">' + cell('Sold on', p.ref) + cell('Before', p.before) + cell('After', p.after) + '</div></div>';
+          }).join('')
+        : '<div class="card"><div style="color:var(--muted);font-size:14px">No photos were sent with this estimate, so there is nothing for him to match.</div></div>') +
+      (loose.length ? '<div class="card"><div class="eyebrow">Other photos he took (' + loose.length + ')</div><div>' +
+        loose.map(function (x) { return '<img src="' + x.data + '" style="height:88px;border-radius:8px;margin:0 8px 8px 0;border:.5px solid var(--rule)">'; }).join('') + '</div></div>' : '');
+  }
+  return '<div class="app">' +
+    '<div class="topbar"><button class="iconbtn" data-act="wo-back">‹</button><div style="flex:1;min-width:0"><h1>Work order</h1><div class="sub">' + esc(e.customer.name || 'Estimate #' + (e.no || '')) + '</div></div>' +
+      '<button class="iconbtn" data-act="wo-open" aria-label="Refresh">↻</button></div>' +
+    '<div class="screen">' + body + '</div></div>';
+}
 function prepCardHTML(e) {
   if (!e.shareId) return '<div class="card"><div class="eyebrow">For the installer</div><div style="color:var(--muted);font-size:13px">Email or share the estimate first — then you can make the installer\'s prep list and put the job on the calendar.</div></div>';
   var pr = state.prep && state.prep.est === e ? state.prep : {};
@@ -5378,10 +5454,12 @@ function prepCardHTML(e) {
     (e.prep === undefined && !pr.err ? '<div style="color:var(--muted);font-size:13px;margin-bottom:6px">Loading…</div>' : '') +
     '<div class="field"><label>What to bring / prepare — one per line</label><textarea id="prep_list" style="min-height:120px" placeholder="e.g. 30 ft of 6 in insulated stainless liner kit">' + esc(list) + '</textarea></div>' +
     '<div class="field"><label>Notes for the installer</label><textarea id="prep_notes" style="min-height:60px" placeholder="Parking, dog, gate code, customer prefers…">' + esc(e.prepNotes || '') + '</textarea></div>' +
+    '<div class="field"><label>Measurements and details — he reads these on the job</label><textarea id="prep_specs" style="min-height:60px" placeholder="6 in liner, 25 ft · chase cover 13 x 13 · crown 2 in overhang">' + esc(e.specs || '') + '</textarea></div>' +
     (pr.msg ? '<div style="font-size:13px;margin-bottom:8px;color:' + (pr.err ? 'var(--defect)' : 'var(--ok)') + '">' + esc(pr.msg) + '</div>' : '') +
     '<div class="row" style="gap:8px;flex-wrap:wrap"><button class="btn btn-ghost" id="prep_ai" style="flex:1"' + (pr.busy ? ' disabled' : '') + '>' + (pr.busy === 'ai' ? 'Thinking…' : '✨ Suggest list') + '</button>' +
     '<button class="btn btn-gold" id="prep_save" style="flex:1"' + (pr.busy ? ' disabled' : '') + '>' + (pr.busy === 'save' ? 'Saving…' : 'Save for installer') + '</button>' +
-    '<button class="btn btn-ghost" data-act="est-schedule" style="flex:1 1 100%">📅 Put the job on the calendar</button></div></div>';
+    '<button class="btn btn-ghost" data-act="est-schedule" style="flex:1 1 100%">📅 Put the job on the calendar</button>' +
+    '<button class="btn btn-ghost" data-act="wo-open" style="flex:1 1 100%">🛠 Work order — before / after photos</button></div></div>';
 }
 function prepLoad(e) {
   if (!e.shareId || e.prep !== undefined || (state.prep && state.prep.est === e && state.prep.loading)) return;
@@ -5389,7 +5467,7 @@ function prepLoad(e) {
   var key = sendKey(); if (!key) { e.prep = []; setTimeout(function () { if (state.view === 'estimate' && state.estimate === e) estRender(); }, 0); return; }
   state.prep = { est: e, loading: true };
   cloudRpc('packet_get', { p_key: key, p_share: e.shareId }).then(function (d) {
-    e.prep = (d && Array.isArray(d.prep)) ? d.prep : []; e.prepNotes = (d && d.notes) || e.prepNotes || '';
+    e.prep = (d && Array.isArray(d.prep)) ? d.prep : []; e.prepNotes = (d && d.notes) || e.prepNotes || ''; e.specs = (d && d.specs) || e.specs || '';
     state.prep = { est: e };
     if (state.view === 'estimate' && state.estimate === e) estRender();
   }).catch(function () { state.prep = { est: e, err: true, msg: 'Could not load the saved list — check the internet and reopen the estimate.' }; if (state.view === 'estimate' && state.estimate === e) estRender(); });
@@ -5399,11 +5477,16 @@ function prepWire(e) {
   var ta = root.querySelector('#prep_list'), nt = root.querySelector('#prep_notes');
   if (ta) ta.addEventListener('input', function () { e.prep = ta.value.split('\n').map(function (x) { return x.trim(); }).filter(Boolean); });
   if (nt) nt.addEventListener('input', function () { e.prepNotes = nt.value; });
+  var sp = root.querySelector('#prep_specs');
+  if (sp) sp.addEventListener('input', function () { e.specs = sp.value; });
   var sv = root.querySelector('#prep_save'); if (sv) sv.addEventListener('click', function () {
     var key = sendKey(); if (!key) { alert('This phone is not set up yet.'); return; }
     if (ta) e.prep = ta.value.split('\n').map(function (x) { return x.trim(); }).filter(Boolean);
     state.prep = { est: e, busy: 'save' }; prepRender(e);
-    cloudRpc('packet_put', { p_key: key, p_share: e.shareId, p_prep: e.prep || [], p_notes: e.prepNotes || '' }).then(function () {
+    if (sp) e.specs = sp.value;
+    cloudRpc('packet_put', { p_key: key, p_share: e.shareId, p_prep: e.prep || [], p_notes: e.prepNotes || '' })
+      .then(function () { return cloudRpc('wo_specs_put', { p_key: key, p_share: e.shareId, p_specs: e.specs || '' }); })
+      .then(function () {
       try { upsertEstimate(e); } catch (_) {}
       state.prep = { est: e, msg: 'Saved — the installer sees it on jobs linked to this estimate.' }; prepRender(e);
     }).catch(function (err) { state.prep = { est: e, err: true, msg: 'Not saved: ' + ((err && err.message) || err) }; prepRender(e); });
@@ -5474,6 +5557,7 @@ function render() {
   else if (state.view === 'custform') html = viewCustForm();
   else if (state.view === 'estimates') html = viewEstimatesList();
   else if (state.view === 'estimate') html = viewEstimate();
+  else if (state.view === 'workorder') html = viewWorkOrder();
   else if (state.view === 'estmail') html = viewEstMail();
   else if (state.view === 'chat') html = viewChat();
   else if (state.view === 'clients') html = viewClients();
@@ -5752,6 +5836,8 @@ root.addEventListener('click', function (e) {
       break;
     }
     case 'est-open': { var eo = loadEstimates().filter(function (x) { return x.id === arg; })[0]; if (eo) { state.estimate = estNorm(eo); state.fjLast = null; if (!(state.estAi && state.estAi.busy)) state.estAi = null; state.view = 'estimate'; render(); estPhotoLoad(eo).then(function () { if (state.view === 'estimate' && state.estimate === eo) estRender(); }); } break; }
+    case 'wo-open': woOpen(state.wo && state.wo.est ? state.wo.est : state.estimate); break;
+    case 'wo-back': state.wo = null; state.view = 'estimate'; render(); break;
     case 'est-del': removeEstimate(arg); render(); break;
     case 'est-back': { var eb = state.estimate; if (eb && eb.options.some(function (o) { return o.items.length; })) upsertEstimate(eb); state.view = 'estimates'; render(); break; }
     case 'chat-mode': state.editClient = state.presetClient || newClient(); state.presetClient = null; state.pendingMode = arg; state.pendingDepth = 'full'; state.view = 'custform'; render(); break;
