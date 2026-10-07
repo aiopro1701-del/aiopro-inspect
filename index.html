@@ -3931,6 +3931,17 @@ function accessCheck() {
     return state.access;
   });
 }
+/* A phone opened from the home-screen icon has its own storage on iOS: the link
+   the technician tapped in his browser never reaches it, and there is no address
+   bar to paste one into. So the locked screen takes the link itself. */
+function lockKeyCard() {
+  return '<div class="card" style="margin-top:12px"><div class="eyebrow">Technician</div>' +
+    '<div style="color:var(--muted);font-size:13px;margin:4px 0 9px">Opened this from the icon on your home screen? Paste the link Refael sent you here, once.</div>' +
+    '<input id="lock_key" type="text" autocapitalize="off" autocorrect="off" spellcheck="false" placeholder="Paste your link" style="width:100%;box-sizing:border-box;font-size:15px;padding:11px;border:1px solid var(--rule);border-radius:10px;background:transparent;color:inherit">' +
+    '<button class="btn btn-gold" data-act="lock-key" style="width:100%;margin-top:10px">Use this link</button>' +
+    (state.lockMsg ? '<div style="color:var(--defect);font-size:13px;margin-top:9px;line-height:1.5">' + esc(state.lockMsg) + '</div>' : '') +
+  '</div>';
+}
 function viewLocked() {
   var a = state.access || { why: 'nokey' };
   var body;
@@ -3941,7 +3952,7 @@ function viewLocked() {
   }
   if (a.why === 'revoked') {
     body = '<div class="card" style="border-color:var(--defect)"><div style="font-size:18px;font-weight:700;color:var(--defect);margin-bottom:6px">This phone is no longer allowed in</div>' +
-      '<div style="font-size:15px;line-height:1.55">The access link for this phone was cancelled, and everything it had saved has been cleared. If this is a mistake, call Refael at ' + esc(EST_BRAND.phone) + ' and he will send a new link.</div></div>';
+      '<div style="font-size:15px;line-height:1.55">The access link for this phone was cancelled, and everything it had saved has been cleared. If this is a mistake, call Refael at ' + esc(EST_BRAND.phone) + ' and he will send a new link.</div></div>' + lockKeyCard();
   } else if (a.why === 'stale' || a.why === 'offline') {
     body = '<div class="card" style="border-color:var(--gold)"><div style="font-size:18px;font-weight:700;margin-bottom:6px">Connect to the internet once</div>' +
       '<div style="font-size:15px;line-height:1.55">The app checks who you are with the office. Get a signal or Wi-Fi and tap Try again.</div>' +
@@ -3951,6 +3962,7 @@ function viewLocked() {
       '<div style="font-size:15px;line-height:1.55">This app is for the AIO Pro Chimney crew.<br><br><b>Technician:</b> open the link Refael sent you, once, on this phone.<br><b>Refael:</b> set this phone up with a code to your email.</div>' +
       pairSetupBtn('home', 'Set up this phone (Refael)') +
       '</div>' +
+      lockKeyCard() +
       '<div class="card" style="font-size:14px;color:var(--muted)">Questions: ' + esc(EST_BRAND.phone) + '</div>';
   }
   return '<div class="app">' +
@@ -4059,7 +4071,8 @@ function techLink(reset, blocked) {
 }
 function viewTechCard() {
   if (!ownerKey()) {
-    if (techKey()) return '<div class="card"><div class="eyebrow">This phone</div><div style="font-size:14px">Set up as a <b>technician</b> phone ✓ — you can email estimates and reports.</div></div>';
+    if (techKey()) return '<div class="card"><div class="eyebrow">This phone</div><div style="font-size:14px">Set up as a <b>technician</b> phone ✓ — you can email estimates and reports.</div>' +
+      '<button class="btn btn-ghost" data-act="phone-signout" style="width:100%;margin-top:12px;color:var(--defect);border-color:var(--defect)">This is not my phone — sign out</button></div>';
     return '<div class="card" style="border-color:var(--gold,#C9A24B)"><div class="eyebrow">This phone</div><div style="font-size:14px">Not set up yet. Refael: set it up once to send emails, see customers and share jobs. Technician: open the link Refael sent you.</div>' + pairSetupBtn('settings', 'Set up this phone (Refael)') + '</div>';
   }
   var cw = state.crewKeys || {};
@@ -4081,7 +4094,8 @@ function viewTechCard() {
     (cw.busy ? '<div style="font-size:14px;color:var(--muted);padding:8px 0">Loading…</div>' : '') +
     (cw.err ? '<div style="color:var(--defect);font-size:13px;padding:6px 0">' + esc(cw.err) + '</div>' : '') +
     (rows || (cw.loaded && !cw.busy ? '<div style="font-size:14px;color:var(--muted);padding:8px 0">Nobody yet.</div>' : '')) +
-    '<button class="btn btn-gold" data-act="crew-key-add" style="width:100%;margin-top:12px">+ Add a technician</button></div>';
+    '<button class="btn btn-gold" data-act="crew-key-add" style="width:100%;margin-top:12px">+ Add a technician</button>' +
+    '<button class="btn btn-ghost" data-act="phone-signout" style="width:100%;margin-top:8px;color:var(--defect);border-color:var(--defect)">Sign this phone out</button></div>';
 }
 function crewKeysLoad(force) {
   var k = ownerKey(); if (!k) return Promise.resolve([]);
@@ -5905,6 +5919,33 @@ root.addEventListener('click', function (e) {
     case 'tech-link': techLink(false); break;
     case 'tech-block':
       if (confirm('Cut the technician off?\n\nHis phone stops working the next time it has internet, and what is saved on it is cleared. His old link will never work again.')) techLink(true, true);
+      break;
+    case 'lock-key': {
+      var lkEl = root.querySelector('#lock_key');
+      var lkRaw = lkEl ? String(lkEl.value || '') : '';
+      var lkM = lkRaw.match(/[?&]techkey=([A-Za-z0-9_-]{16,})/i);
+      var lkOwn = false;
+      if (!lkM) { lkM = lkRaw.match(/[?&]ownerkey=([A-Za-z0-9_-]{16,})/i); lkOwn = !!lkM; }
+      var lkKey = lkM ? lkM[1] : (/^[A-Za-z0-9_-]{16,}$/.test(lkRaw.trim()) ? lkRaw.trim() : '');
+      if (!lkKey) { state.lockMsg = 'That does not look like your link. Copy the whole link Refael sent you and paste it here.'; render(); break; }
+      try { localStorage.setItem(lkOwn ? 'aio-owner-key' : 'aio-tech-key', lkKey); } catch (_) {}
+      state.lockMsg = ''; state.access = { ok: false, why: 'checking' }; render();
+      accessCheck().then(function (a) {
+        if (!a.ok) {
+          try { localStorage.removeItem('aio-tech-key'); localStorage.removeItem('aio-owner-key'); } catch (_) {}
+          state.access = { ok: false, why: 'nokey' };
+          state.lockMsg = 'The office does not know that link. Ask Refael to send you a new one.';
+          render(); return;
+        }
+        brandPull();
+        refresh().then(function () { return crmLoadStats(); }).catch(function () {}).then(function () { state.view = 'home'; render(); });
+      });
+      break;
+    }
+    case 'phone-signout':
+      if (!confirm('Sign this phone out of AIO Pro Inspect? Everything saved on this phone is cleared. Anything already sent to the office stays safe.')) break;
+      wipeThisPhone();
+      try { location.replace(location.pathname); } catch (_) { location.reload(); }
       break;
     case 'lock-retry': accessCheck().then(function (a) { if (a.ok) { state.view = 'home'; refresh().then(function () { return crmLoadStats(); }).catch(function () {}); } render(); }); break;
     case 'pair-open': pairOpen(arg || state.view); break;
