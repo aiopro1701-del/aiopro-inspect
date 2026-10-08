@@ -1446,7 +1446,7 @@ function viewHome() {
     if (crmOn()) dueBlk = '';
     if (crmOn() && state.crmStats && state.crmStats.due) dueBlk = '<button class="card card-tap" data-act="crm-due" style="display:block;width:100%;text-align:left;border-color:var(--gold)"><div style="font-weight:650">' + state.crmStats.due + ' customer(s) due for service</div><div style="color:var(--muted);font-size:13px">Tap to see who to call this month</div></button>';
     var recentBlk = recent ? ('<div class="eyebrow">Recent inspections</div>' + recent) : '';
-    body = hero + todayBlk + tomBlk + dueBlk + recentBlk;
+    body = hero + fjDraftCard() + todayBlk + tomBlk + dueBlk + recentBlk;
   }
 
   return '<div class="app">' +
@@ -4740,6 +4740,7 @@ function estAiPrompt(chat, transcript) {
     + '- An inspection visit is priced from the catalog: "Inspection — Level 1" or "Inspection — Level 2".\n'
     + '- If the visit needs work that is not in the catalog, add it as {"custom":"short service name"}; the owner will price it.\n'
     + '- Return ONE option by default: the work you recommend for this house. Add a second option (Option B), or at most a third (Option C), ONLY when the visit shows a real choice between different ways to do the job — e.g. keep the existing stove vs. a new stove, stainless vs. galvanized, repair vs. replace. Never Good / Better / Best tiers, never options that only add extras.\n'
+    + '- EXCEPTION, and it overrides the line above: when the field visit contains a line marked ALTERNATIVE, the technician has already decided the customer gets a choice. You MUST return one extra option for each ALTERNATIVE listed. Option A is the work he recommended; each further option swaps that area for its alternative and keeps everything else the same. Do not drop an alternative and do not merge two of them into one option.\n'
     + '- Each option is complete on its own with its full price: if Option B is "everything in Option A, and ...", repeat Option A\'s items in it.\n'
     + '- Something the customer can take or leave (a vent cap, a second liner) is an optional add-on: put it in the option with "opt": true. It is not counted in the total.\n'
     + '- name: only when there is more than one option — 2 to 5 words saying what makes that option different, e.g. "Keep your stove", "New stove insert". Leave name empty for a single option.\n'
@@ -5600,6 +5601,7 @@ function render() {
   wirePair();
   wireRepEdit();
   wireFj();
+  if (state.fj && (state.view === 'fjform' || state.view === 'fjsetup')) fjDraftSave();
   wireAddr();
   var af = root.querySelector('[autofocus]');
   if (af) { try { af.focus(); } catch (e) {} }
@@ -5957,6 +5959,34 @@ root.addEventListener('click', function (e) {
     case 'fj-sys': if (state.fj) { state.fj.system = arg; render(); } break;
     case 'fj-area': if (state.fj) { var ai2 = state.fj.areas.indexOf(arg); if (ai2 >= 0) state.fj.areas.splice(ai2, 1); else state.fj.areas.push(arg); render(); } break;
     case 'fj-go': if (state.fj) { state.view = 'fjform'; render(); try { window.scrollTo(0, 0); } catch (_) {} } break;
+    case 'fj-draft': {
+      var dg = state.fjDraft; if (!dg) break;
+      state.fj = dg; state.fj.busy = false; state.fj.err = ''; state.fj.review = null;
+      state.fjDraft = null;
+      state.view = (state.fj.kind === 'inspection' ? (state.fj.system ? 'fjform' : 'fjsetup') : ((state.fj.areas || []).length ? 'fjform' : 'fjsetup'));
+      render(); try { window.scrollTo(0, 0); } catch (_) {}
+      break;
+    }
+    case 'fj-draft-x':
+      if (!confirm('Throw away the unfinished job? Everything you typed and photographed on it is deleted.')) break;
+      fjDraftClear(); render();
+      break;
+    case 'fj-more': if (state.fj) { state.view = 'fjsetup'; render(); try { window.scrollTo(0, 0); } catch (_) {} } break;
+    case 'fj-own': {
+      if (!state.fj) break;
+      var ownName = window.prompt('What is this one? (it becomes its own topic)', '');
+      if (!ownName || !ownName.trim()) break;
+      var na = fjOwnArea(ownName);
+      if (na) { state.fj.areas.push(na.id); fjRow(state.fj, na.id).title = na.name; render(); }
+      break;
+    }
+    case 'fj-alt-add': if (state.fj) { fjRow(state.fj, arg).alts.push({ name: '', note: '' }); render(); } break;
+    case 'fj-alt-del': {
+      if (!state.fj) break;
+      var ad = String(arg).split('|'), ar = fjRow(state.fj, ad[0]);
+      ar.alts.splice(Number(ad[1]), 1); render();
+      break;
+    }
     case 'fj-back': if (state.view === 'fjform') { state.view = 'fjsetup'; render(); } else { state.view = 'home'; render(); } break;
     case 'fj-resume': {
       var rf = state.fjLast;
@@ -6467,7 +6497,22 @@ var FJ_FIX = {
   'room-air': 'other',
   'roof-crown': 'crown', 'roof-cap': 'cap', 'roof-flash': 'flashing', 'roof-brick': 'masonry', 'roof-height': 'masonry'
 };
-function fjArea(id) { for (var i = 0; i < FJ_AREAS.length; i++) if (FJ_AREAS[i].id === id) return FJ_AREAS[i]; return null; }
+function fjArea(id) {
+  for (var i = 0; i < FJ_AREAS.length; i++) if (FJ_AREAS[i].id === id) return FJ_AREAS[i];
+  var own = (state.fj && state.fj.custom) || [];
+  for (var j = 0; j < own.length; j++) if (own[j].id === id) return own[j];
+  return null;
+}
+/* A topic the technician named himself. Same shape as an FJ_AREAS entry so every
+   renderer, the transcript and the measurements code treat it identically. */
+function fjOwnArea(name) {
+  var f = state.fj; if (!f) return null;
+  f.custom = f.custom || [];
+  var a = { id: 'own-' + (Date.now().toString(36)) + '-' + f.custom.length, name: String(name || '').trim().slice(0, 40), help: 'Your own topic.', m: [], q: [], own: true };
+  if (!a.name) return null;
+  f.custom.push(a);
+  return a;
+}
 function fjSysName(id) { for (var i = 0; i < FJ_SYS.length; i++) if (FJ_SYS[i].id === id) return FJ_SYS[i].name; return ''; }
 function fjSecName(id) { for (var i = 0; i < FJ_SECS.length; i++) if (FJ_SECS[i][0] === id) return FJ_SECS[i][1]; return id; }
 function fjChecks(f) {
@@ -6476,7 +6521,16 @@ function fjChecks(f) {
     return c.sys === '*' || c.sys.indexOf(f.system) >= 0;
   });
 }
-function fjRow(f, id) { var r = (f.data[id] = f.data[id] || { v: '', note: '', photos: [], m: {} }); r.q = r.q || {}; return r; }
+function fjRow(f, id) { var r = (f.data[id] = f.data[id] || { v: '', note: '', photos: [], m: {} }); r.q = r.q || {}; r.alts = r.alts || []; return r; }
+/* The heading the customer-facing document should use for this topic: what the
+   technician typed, or the catalog name when he typed nothing. */
+function fjTitleOf(f, id) {
+  var r = f.data[id] || {}, a = fjArea(id);
+  return String(r.title || '').trim() || (a ? a.name : id);
+}
+function fjAlts(r) {
+  return (r.alts || []).filter(function (x) { return String(x.name || '').trim() || String(x.note || '').trim(); });
+}
 function fjHasPhoto(f, c) { return !(c.noPhotoLvl && Number(f.level || 1) >= c.noPhotoLvl); }
 function fjQs(f, c) { return (c.q || []).filter(function (q) { return !q.sys || q.sys.indexOf(f.system) >= 0; }); }
 function fjSizeText(r) {
@@ -6520,6 +6574,52 @@ function fjFormSave(docId, f) {
   Object.keys(f).forEach(function (k) { if (k !== 'busy' && k !== 'err' && k !== 'review' && k !== 'builtEst' && k !== 'builtRep') copy[k] = f[k]; });
   docSave({ id: 'form-' + docId, kind: 'fjform', at: Date.now(), form: copy });
 }
+/* A form in progress is kept after every keystroke, not only when the document
+   is built. A technician who is interrupted mid-visit picks it up from the home
+   screen instead of starting over. */
+var fjDraftTimer = null;
+function fjDraftSave() {
+  var f = state.fj; if (!f) return;
+  if (fjDraftTimer) clearTimeout(fjDraftTimer);
+  fjDraftTimer = setTimeout(function () {
+    fjDraftTimer = null;
+    var g = state.fj; if (!g) return;
+    var copy = {};
+    Object.keys(g).forEach(function (k) { if (k !== 'busy' && k !== 'err' && k !== 'review' && k !== 'builtEst' && k !== 'builtRep') copy[k] = g[k]; });
+    try { docSave({ id: 'fjdraft', kind: 'fjdraft', at: Date.now(), form: copy }); } catch (_) {}
+  }, 700);
+}
+function fjDraftClear() {
+  if (fjDraftTimer) { clearTimeout(fjDraftTimer); fjDraftTimer = null; }
+  state.fjDraft = null;
+  try { docDelete('fjdraft'); } catch (_) {}
+}
+function fjDraftProbe() {
+  if (state.fjDraftLoaded) return;
+  state.fjDraftLoaded = true;
+  docGet('fjdraft').then(function (rec) {
+    var g = rec && rec.form;
+    if (!g) return;
+    var started = (g.areas || []).length || (g.system || '') || Object.keys(g.data || {}).length;
+    if (!started) return;
+    state.fjDraft = g;
+    if (state.view === 'home') render();
+  }).catch(function () {});
+}
+function fjDraftCard() {
+  fjDraftProbe();
+  var g = state.fjDraft;
+  if (!g || state.fj) return '';
+  var K = FJ_KINDS[g.kind] || { name: 'Job' };
+  var who = (g.customer && g.customer.name) ? ' for ' + g.customer.name : '';
+  return '<div class="card" style="border-color:var(--gold)">' +
+    '<div class="eyebrow">Unfinished ' + esc(String(K.name).toLowerCase()) + '</div>' +
+    '<div style="font-size:15px;line-height:1.45;margin-bottom:10px">You were filling this in' + esc(who) + ' and never finished it. Everything you typed and photographed is still here.</div>' +
+    '<div class="row" style="gap:8px">' +
+      '<button class="btn btn-gold" data-act="fj-draft" style="flex:1.4">Carry on</button>' +
+      '<button class="btn btn-ghost" data-act="fj-draft-x" style="flex:1">Throw it away</button>' +
+    '</div></div>';
+}
 function fjFormLoad(docId) {
   if (!docId) return Promise.resolve(null);
   return docGet('form-' + docId).then(function (r) { return (r && r.form) || null; }).catch(function () { return null; });
@@ -6557,7 +6657,7 @@ function fjFromInspection() {
 }
 function fjStart(kind, customer) {
   state.fjProbe = null;
-  state.fj = { kind: kind, level: '1', system: '', areas: [], data: {}, extraPhotos: [], extraNote: '', customer: customer || null, review: null, busy: false, err: '' };
+  state.fj = { kind: kind, level: '1', system: '', areas: [], custom: [], data: {}, extraPhotos: [], extraNote: '', customer: customer || null, review: null, busy: false, err: '' };
   state.view = 'fjsetup'; render(); try { window.scrollTo(0, 0); } catch (_) {}
 }
 var FJ_V = [['good', 'Good', 'var(--ok)'], ['monitor', 'Monitor', 'var(--monitor)'], ['bad', 'Needs attention', 'var(--defect)'], ['na', 'N/A', 'var(--muted)']];
@@ -6578,10 +6678,12 @@ function viewFjSetup() {
   } else {
     body = '<div class="card"><div style="font-size:16px;line-height:1.5">' + (f.kind === 'invoice' ? 'What work did we do? Tap everything that applies.' : 'What did we come for? Tap everything that applies.') + '</div></div>' +
       '<div class="row" style="flex-wrap:wrap;gap:8px;margin-bottom:8px">' +
-      FJ_AREAS.map(function (a) {
+      FJ_AREAS.concat(f.custom || []).map(function (a) {
         var on = (f.areas || []).indexOf(a.id) >= 0;
         return '<button class="btn ' + (on ? 'btn-gold btn-primary' : 'btn-ghost') + '" data-act="fj-area" data-arg="' + a.id + '" style="flex:1 1 46%;min-height:56px;padding:6px 10px;font-size:14px;text-align:center">' + esc(a.name) + '</button>';
-      }).join('') + '</div>';
+      }).join('') +
+      '<button class="btn btn-ghost" data-act="fj-own" style="flex:1 1 46%;min-height:56px;padding:6px 10px;font-size:14px;text-align:center;border-style:dashed">+ Something else</button>' +
+      '</div>';
   }
   var ready = f.kind === 'inspection' ? !!f.system : (f.areas || []).length > 0;
   return '<div class="app">' +
@@ -6599,6 +6701,27 @@ function fjPhotoStrip(id, photos) {
     }).join('') +
     '<button class="btn btn-ghost" data-act="fj-cam" data-arg="' + esc(id) + '" style="min-height:44px;padding:0 14px;font-size:14px">📷 Photo</button>' +
     '<button class="btn btn-ghost" data-act="fj-gal" data-arg="' + esc(id) + '" style="min-height:44px;padding:0 14px;margin-left:6px;font-size:14px">Gallery ▦</button>' +
+  '</div>';
+}
+/* "I recommend a liner — but she could also do X instead." Each alternative the
+   technician writes here becomes a real Option B on the estimate, so he decides
+   what the customer gets to choose between, not the AI. */
+function fjAltBlockHTML(id, r) {
+  var alts = r.alts || [];
+  return '<div style="margin-top:12px">' +
+    (alts.length ? '<div class="eyebrow" style="margin-bottom:6px">Instead of the above, she could also</div>' : '') +
+    alts.map(function (alt, i) {
+      return '<div style="border:1px dashed var(--gold);border-radius:10px;padding:10px;margin-bottom:8px">' +
+        '<div class="row" style="align-items:center;gap:6px;margin-bottom:7px">' +
+          '<div class="eyebrow" style="flex:1;margin:0">Other way ' + (i + 1) + '</div>' +
+          '<button class="btn btn-ghost" data-act="fj-alt-del" data-arg="' + esc(id + '|' + i) + '" aria-label="Remove this alternative" style="flex:0 0 30px;min-height:30px;height:30px;width:30px;padding:0;border-radius:15px;font-size:13px;color:var(--defect);border-color:var(--defect)">\u2715</button>' +
+        '</div>' +
+        '<input class="fj-alt" data-fj="' + esc(id) + '" data-ai="' + i + '" data-k="name" placeholder="Call it something \u2014 e.g. Stainless liner" value="' + esc(alt.name || '') + '" style="width:100%;box-sizing:border-box;padding:9px 11px;border:1px solid var(--rule);border-radius:8px;font-size:15px;margin-bottom:6px">' +
+        '<input class="fj-alt" data-fj="' + esc(id) + '" data-ai="' + i + '" data-k="note" placeholder="Why she might want this one instead\u2026" value="' + esc(alt.note || '') + '" style="width:100%;box-sizing:border-box;padding:9px 11px;border:1px solid var(--rule);border-radius:8px;font-size:15px">' +
+      '</div>';
+    }).join('') +
+    '<button class="btn btn-ghost" data-act="fj-alt-add" data-arg="' + esc(id) + '" style="width:100%;border-style:dashed;min-height:44px;font-size:14px">+ Another way to do this</button>' +
+    (alts.length ? '' : '<div style="color:var(--muted);font-size:12px;margin:6px 2px 0">Only when there is a real choice. What you wrote above stays Option A \u2014 each one you add here becomes Option B, C on the estimate.</div>') +
   '</div>';
 }
 function viewFjForm() {
@@ -6647,7 +6770,8 @@ function viewFjForm() {
       var r = fjRow(f, id);
       var showM = !a.mIf || (r.q || {})[a.mIf.id] === a.mIf.is;
       body += '<div class="card">' +
-        '<div style="font-weight:700;font-size:16px">' + esc(a.name) + '</div>' +
+        '<div class="eyebrow" style="margin-bottom:5px">' + esc(a.name) + '</div>' +
+        '<input class="fj-title" data-fj="' + esc(id) + '" placeholder="' + esc(a.name) + '" value="' + esc(r.title || '') + '" style="width:100%;box-sizing:border-box;font-weight:700;font-size:16px;padding:9px 11px;border:1px solid var(--rule);border-radius:8px;margin-bottom:5px">' +
         '<div style="color:var(--muted);font-size:13px;margin:3px 0 9px">' + esc(a.help) + '</div>' +
         (a.q || []).map(function (q) {
           return '<div style="margin-bottom:8px"><div style="font-size:13px;color:var(--muted);margin-bottom:4px">' + esc(q.label) + '</div>' +
@@ -6662,8 +6786,11 @@ function viewFjForm() {
           '<div class="row" style="flex-wrap:wrap;gap:8px">' + a.m.map(function (label, i) {
             return '<div class="field" style="flex:1 1 46%;margin-bottom:0"><label>' + esc(label) + '</label><input class="fj-m" data-fj="' + esc(id) + '" data-mi="' + i + '" value="' + esc((r.m && r.m[label]) || '') + '"></div>';
           }).join('') + '</div></div>' : '') +
+        fjAltBlockHTML(id, r) +
       '</div>';
     });
+    body += '<button class="btn btn-ghost" data-act="fj-more" style="width:100%;border-style:dashed;min-height:52px;font-size:15px;margin-bottom:4px">+ Add another topic</button>' +
+      '<div style="color:var(--muted);font-size:12px;margin:0 2px 10px">Pick one more from the list, or name your own.</div>';
   }
   if (f.kind === 'invoice') {
     body += '<div class="eyebrow" style="margin:14px 2px 8px">Before &amp; after (not a must, but it sells the next job)</div>' +
@@ -6712,16 +6839,29 @@ function wireFj() {
     el.addEventListener('input', function () {
       var id = el.getAttribute('data-fj');
       if (id === '_extra') f.extraNote = el.value; else fjRow(f, id).note = el.value;
+      fjDraftSave();
+    });
+  });
+  root.querySelectorAll('.fj-title').forEach(function (el) {
+    el.addEventListener('input', function () { fjRow(f, el.getAttribute('data-fj')).title = el.value; fjDraftSave(); });
+  });
+  root.querySelectorAll('.fj-alt').forEach(function (el) {
+    el.addEventListener('input', function () {
+      var r = fjRow(f, el.getAttribute('data-fj')), i = Number(el.getAttribute('data-ai'));
+      if (!r.alts[i]) return;
+      r.alts[i][el.getAttribute('data-k')] = el.value;
+      fjDraftSave();
     });
   });
   root.querySelectorAll('.fj-size').forEach(function (el) {
-    el.addEventListener('input', function () { var r = fjRow(f, el.getAttribute('data-fj')); r.m = r.m || {}; r.m[el.getAttribute('data-k')] = el.value; });
+    el.addEventListener('input', function () { var r = fjRow(f, el.getAttribute('data-fj')); r.m = r.m || {}; r.m[el.getAttribute('data-k')] = el.value; fjDraftSave(); });
   });
   root.querySelectorAll('.fj-m').forEach(function (el) {
     el.addEventListener('input', function () {
       var id = el.getAttribute('data-fj'), a = fjArea(id); if (!a) return;
       var label = a.m[Number(el.getAttribute('data-mi'))];
       var r = fjRow(f, id); r.m = r.m || {}; r.m[label] = el.value;
+      fjDraftSave();
     });
   });
 }
@@ -6769,8 +6909,14 @@ function fjTranscript(f) {
       if (aq) ms.unshift(aq);
       var pn = [];
       for (var qi = 0; qi < (r.photos || []).length; qi++) { photoNo2++; pn.push(photoNo2); }
-      L.push('- ' + a.name + (String(r.note || '').trim() ? ' — tech wrote: "' + String(r.note).trim() + '"' : ' — (no note)') + (pn.length ? ' (photo ' + pn.join(', ') + ')' : ' (no photo)') + (ms.length ? ' | measurements: ' + ms.join('; ') : ' | no measurements taken'));
+      var heading = fjTitleOf(f, id);
+      L.push('- ' + heading + (heading !== a.name ? ' [' + a.name + ']' : '') + (String(r.note || '').trim() ? ' — tech wrote: "' + String(r.note).trim() + '"' : ' — (no note)') + (pn.length ? ' (photo ' + pn.join(', ') + ')' : ' (no photo)') + (ms.length ? ' | measurements: ' + ms.join('; ') : ' | no measurements taken'));
+      fjAlts(r).forEach(function (alt) {
+        L.push('    ALTERNATIVE for "' + heading + '" — the customer may choose this INSTEAD of the above: ' + (String(alt.name || '').trim() || '(unnamed)') + (String(alt.note || '').trim() ? ' — ' + String(alt.note).trim() : ''));
+      });
     });
+    var anyAlt = (f.areas || []).some(function (id) { return fjAlts(f.data[id] || {}).length; });
+    if (anyAlt) L.push('NOTE: every line marked ALTERNATIVE is a real choice the technician wants the customer to be offered.');
   }
   if (String(f.extraNote || '').trim()) L.push('ALSO: ' + String(f.extraNote).trim());
   var cu = f.customer || {};
@@ -6859,6 +7005,7 @@ function fjBuildEstimate() {
     try { upsertEstimate(e); } catch (_) {}
     estPhotoSave(e);
     fjFormSave(e.id, f);
+    fjDraftClear();
     f.builtEst = { id: e.id, no: e.no, obj: e };
     state.estimate = e; state.estAi = { forId: e, done: 'Built from your visit. Check the prices and the scope lines' + (unpriced ? ' — ' + unpriced + ' item(s) need a price (red).' : '.') };
     f.busy = false; state.fjLast = f;
@@ -6914,6 +7061,7 @@ function fjBuildReport() {
     f.builtRep = { id: state.chat.lastReport.id, obj: state.chat.lastReport };
     docKeep(state.chat.lastReport);
     fjFormSave(state.chat.lastReport.id, f);
+    fjDraftClear();
     f.busy = false; state.fjLast = f;
     repEditOpen(true);
   }).catch(function (err) { f.busy = false; f.err = (err && err.message) || 'AI error'; if (state.view === 'fjform') render(); });
