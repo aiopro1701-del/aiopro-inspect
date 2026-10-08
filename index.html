@@ -2040,6 +2040,7 @@ function viewRepEdit() {
       (st.msg ? '<div class="card" style="font-size:14px;border-color:' + (st.err ? 'var(--defect);color:var(--defect)' : 'var(--ok)') + '">' + esc(st.msg) + '</div>' : '') +
       (st.rep.lockedSigned ? '<div class="card" style="border-color:var(--defect);color:var(--defect);font-size:14px">The customer already signed this report online. Changes here will not change the signed copy.</div>' : '') +
       fjResumeCard('') +
+      docAiCardHTML() +
       repPhotoCardHTML(st.rep) +
       (state.fjLast && state.fjLast.kind === 'inspection' && !/invoice/i.test(st.rep.modeName || '') ? (function () {
         var bad = 0, mon = 0;
@@ -4623,6 +4624,244 @@ function photoPick(useCamera) {
   return useCamera ? pickFile(true).then(function (x) { return x ? [x] : []; }) : pickFiles(false);
 }
 
+/* ── The AI reads the finished document ────────────────────────
+   Building the document is only half the job. This is the second pair of eyes:
+   it reads the estimate or the report back against the photos and against what
+   the technician filled in on site, says what does not add up, and rewrites
+   anything Refael asks for — but nothing changes until he taps Use this. */
+function docAiKey() {
+  if (state.view === 'estimate' && state.estimate) return 'est:' + (state.estimate.id || 'new');
+  if (state.view === 'repedit' && state.repEdit && state.repEdit.rep) return 'rep:' + (state.repEdit.rep.id || 'new');
+  return '';
+}
+function docAiState() {
+  var k = docAiKey(), A = state.docAi;
+  if (!A || A.forId !== k) A = state.docAi = { forId: k, busy: false, err: '', msg: '', check: null, ask: '', proposal: null };
+  return A;
+}
+function aiAsk(userText, maxTokens, photos) {
+  var s = state.settings;
+  if (!s.aiKey) return Promise.reject(new Error('Add your Anthropic API key in Settings first.'));
+  return aiCopies((photos || []).slice(0, 14)).then(function (small) {
+    var content = [{ type: 'text', text: userText }];
+    small.forEach(function (src) {
+      var mm = /^data:(image\/(?:jpeg|png|gif|webp));base64,(.*)$/.exec(src);
+      if (mm) content.push({ type: 'image', source: { type: 'base64', media_type: mm[1], data: mm[2] } });
+    });
+    return fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json', 'x-api-key': s.aiKey, 'anthropic-version': '2023-06-01', 'anthropic-dangerous-direct-browser-access': 'true' },
+      body: JSON.stringify({ model: EST_AI_MODEL, max_tokens: maxTokens, system: [{ type: 'text', text: chatKnowledge(), cache_control: { type: 'ephemeral' } }], messages: [{ role: 'user', content: content }] })
+    });
+  }).then(function (r) { return r.json(); }).then(function (d) {
+    if (d.error) throw new Error((d.error && d.error.message) || 'AI request failed.');
+    var t = ''; (d.content || []).forEach(function (b) { if (b && b.type === 'text') t += b.text; });
+    var parsed = parseAiJson(t);
+    if (!parsed) throw new Error(d.stop_reason === 'max_tokens' ? 'The answer was cut off — tap again.' : 'Could not read the AI answer — tap again.');
+    return parsed;
+  });
+}
+function docAiEstimateText(e) {
+  var L = ['THE ESTIMATE AS IT STANDS' + (e.no ? ' (#' + e.no + ')' : '') + ':'];
+  L.push('Job title: ' + (e.title || '(none)'));
+  if (String(e.found || '').trim()) L.push('What we found: ' + String(e.found).trim());
+  var used = estUsed(e);
+  used.forEach(function (o, i) {
+    var t = estTotals(o, e.tax);
+    L.push((used.length > 1 ? 'OPTION ' + estLetter(i) + (o.name ? ' — ' + o.name : '') : 'THE WORK') + ' — total ' + money(t.total));
+    if (String(o.summary || '').trim()) L.push('  summary: ' + String(o.summary).trim());
+    (o.items || []).forEach(function (it) {
+      L.push('  • ' + (it.name || '(no name)') + ' x' + (it.qty || 1) + ' — ' + money(estNum(it.price) * (estNum(it.qty) || 1)) + (it.opt ? ' (optional add-on)' : '') + (estNum(it.price) > 0 ? '' : ' (NO PRICE SET)'));
+      String(it.desc || '').split('\n').forEach(function (ln) { if (ln.trim()) L.push('      - ' + ln.trim()); });
+    });
+  });
+  if (!used.length) L.push('(no work on it yet)');
+  if (String(e.notes || '').trim()) L.push('Scope notes: ' + String(e.notes).trim().replace(/\n/g, ' | '));
+  return L.join('\n');
+}
+function docAiReportText(d, rep) {
+  var L = ['THE ' + String(rep.modeName || 'REPORT').toUpperCase() + ' AS IT STANDS:'];
+  L.push('Title: ' + (d.title || '(none)'));
+  if (d.levelOfInspection) L.push('Level of inspection: ' + d.levelOfInspection);
+  if (d.summary) L.push('Overall diagnosis: ' + d.summary);
+  (d.components || []).forEach(function (cp, i) {
+    L.push('  [' + (i + 1) + '] ' + (cp.name || '(unnamed)') + ' — ' + String(cp.status || 'ok').toUpperCase() +
+      ' — found: ' + (String(cp.condition || '').trim() || '(nothing written)') +
+      (String(cp.recommended || '').trim() ? ' — we recommend: ' + String(cp.recommended).trim() : ''));
+  });
+  if (!(d.components || []).length) L.push('  (no items on it yet)');
+  if (d.conclusion) L.push('Conclusion: ' + d.conclusion);
+  if (d.limitations) L.push('Limitations: ' + d.limitations);
+  (d.lineItems || []).forEach(function (it) { L.push('  price line: ' + (it.description || '') + ' x' + (it.qty || 1) + ' @ ' + money(it.unitPrice || 0)); });
+  return L.join('\n');
+}
+function docAiFieldText() {
+  var f = state.fj || state.fjLast;
+  if (!f) return '';
+  try {
+    var t = fjTranscript(f);
+    return t ? 'WHAT THE TECHNICIAN FILLED IN ON SITE:\n' + t : '';
+  } catch (_) { return ''; }
+}
+function docAiTarget() {
+  if (state.view === 'estimate' && state.estimate) {
+    var e = state.estimate;
+    return { kind: 'estimate', what: 'estimate', photos: estPhotos(e), text: docAiEstimateText(e) };
+  }
+  if (state.view === 'repedit' && state.repEdit && state.repEdit.rep) {
+    var st = state.repEdit;
+    return { kind: 'report', what: /invoice/i.test(st.rep.modeName || '') ? 'invoice' : 'report', photos: (st.rep.imgs || []).slice(), text: docAiReportText(st.d, st.rep) };
+  }
+  return null;
+}
+function docAiCheck() {
+  var A = docAiState(), t = docAiTarget();
+  if (!t || A.busy) return;
+  A.busy = 'check'; A.err = ''; A.msg = ''; A.proposal = null; render();
+  var field = docAiFieldText();
+  var prompt = 'You are Refael Maman, owner of AIO Pro Chimney in St. Louis, reading over a document before it goes to the customer. '
+    + 'You have the photos from the visit, what the technician filled in on site, and the document as it stands.\n'
+    + 'Go through it in this order:\n'
+    + '1. WRONG — anything in the document the photos or the visit notes do not support, or that contradicts them: the wrong appliance or fuel, a component named wrongly, work priced for something that is not there, a size that does not match what was measured, a recommendation that does not fit the system in the pictures. Say which photo or which note shows it. Be strict here; this list matters more than the other two.\n'
+    + '2. MISSING — something the visit plainly shows that the document never mentions.\n'
+    + '3. WORDING — lines you would have written differently, in your own plain, confident customer voice. Give the line as it is now and the line as you would write it. No jargon, no code sections, no sales filler.\n'
+    + 'Never invent a problem to fill a list. If the document holds up, return empty lists and ok true. At most 4 items per list.\n'
+    + 'verdict: one short sentence a busy owner can act on.\n'
+    + 'Return ONLY JSON: {"ok":true,"verdict":"","wrong":[{"what":"","why":""}],"missing":[""],"wording":[{"now":"","instead":""}]}\n\n'
+    + (field ? field + '\n\n' : 'No field form was kept for this one — work from the photos and the document.\n\n')
+    + t.text;
+  aiAsk(prompt, 1200, t.photos).then(function (d) {
+    A.busy = false;
+    A.check = {
+      ok: d.ok === true,
+      verdict: String(d.verdict || '').trim(),
+      wrong: (Array.isArray(d.wrong) ? d.wrong : []).filter(function (x) { return x && String(x.what || '').trim(); }),
+      missing: (Array.isArray(d.missing) ? d.missing : []).map(function (x) { return String(x || '').trim(); }).filter(Boolean),
+      wording: (Array.isArray(d.wording) ? d.wording : []).filter(function (x) { return x && String(x.instead || '').trim(); })
+    };
+    render(); try { window.scrollTo(0, 0); } catch (_) {}
+  }).catch(function (err) { A.busy = false; A.err = (err && err.message) || 'AI error'; render(); });
+}
+function docAiAskRun() {
+  var A = docAiState(), t = docAiTarget();
+  if (!t || A.busy) return;
+  var el = root.querySelector('#docai_ask');
+  if (el) A.ask = el.value;
+  var q = String(A.ask || '').trim();
+  if (!q) { A.err = 'Write what you want changed first.'; render(); return; }
+  A.busy = 'ask'; A.err = ''; A.msg = ''; A.proposal = null; render();
+  var field = docAiFieldText();
+  var prompt;
+  if (t.kind === 'estimate') {
+    prompt = estAiPrompt(null, field ? field.replace(/^WHAT THE TECHNICIAN FILLED IN ON SITE:\n/, '') : 'No field form was kept — work from the document below and the photos.')
+      + '\n\n' + t.text
+      + '\n\nWHAT REFAEL WANTS CHANGED: ' + q
+      + '\nRebuild the WHOLE estimate in the JSON above with that change made. Keep every option, item, price and scope line that he did not ask you to touch exactly as it is.';
+  } else {
+    prompt = 'You are Refael Maman, owner of AIO Pro Chimney, rewriting a customer document in his own plain, confident voice. '
+      + 'Change only what he asks for, and return every field — including the ones you did not change — so nothing is lost. '
+      + 'status is one of ok, monitor, defect.\n'
+      + 'Return ONLY JSON: {"title":"","levelOfInspection":"","summary":"","components":[{"name":"","status":"ok","condition":"","recommended":""}],"conclusion":"","limitations":""}\n\n'
+      + (field ? field + '\n\n' : '')
+      + t.text
+      + '\n\nWHAT REFAEL WANTS CHANGED: ' + q;
+  }
+  aiAsk(prompt, t.kind === 'estimate' ? 4096 : 2600, t.photos).then(function (d) {
+    A.busy = false; A.proposal = { kind: t.kind, data: d }; render();
+  }).catch(function (err) { A.busy = false; A.err = (err && err.message) || 'AI error'; render(); });
+}
+function docAiApply() {
+  var A = docAiState(), pr = A.proposal;
+  if (!pr) return;
+  try {
+    if (pr.kind === 'estimate') {
+      var e = state.estimate; if (!e) return;
+      estApplyAi(e, pr.data);
+      try { if (e.id) upsertEstimate(e); } catch (_) {}
+    } else {
+      var st = state.repEdit; if (!st) return;
+      var d = st.d, q = pr.data;
+      ['title', 'levelOfInspection', 'summary', 'conclusion', 'limitations'].forEach(function (k) {
+        if (typeof q[k] === 'string' && q[k].trim()) d[k] = q[k].trim();
+      });
+      if (Array.isArray(q.components) && q.components.length) {
+        d.components = q.components.filter(function (c) { return c && String(c.name || '').trim(); }).map(function (c) {
+          return { name: String(c.name).trim(), status: ['ok', 'monitor', 'defect'].indexOf(c.status) >= 0 ? c.status : 'ok', condition: String(c.condition || '').trim(), recommended: String(c.recommended || '').trim() };
+        });
+      }
+      st.dirty = true; st.err = false; st.msg = 'Changed — tap Save to rebuild the PDF.';
+    }
+    A.proposal = null; A.ask = ''; A.check = null; A.err = '';
+    A.msg = 'Done. Read it over before you send it.';
+  } catch (err) {
+    A.err = (err && err.message) || 'Could not use that answer.';
+  }
+  render(); try { window.scrollTo(0, 0); } catch (_) {}
+}
+function docAiCheckHTML(c) {
+  function list(title, rows, color) {
+    if (!rows.length) return '';
+    return '<div style="margin-top:10px"><div style="font-weight:650;font-size:14px;color:' + color + '">' + title + '</div>' +
+      '<ul style="margin:5px 0 0 18px;padding:0;font-size:14px;line-height:1.5">' + rows.map(function (x) { return '<li style="margin:4px 0">' + x + '</li>'; }).join('') + '</ul></div>';
+  }
+  return '<div style="margin-top:12px;border-top:1px solid var(--rule);padding-top:10px">' +
+    (c.verdict ? '<div style="font-size:15px;font-weight:650;line-height:1.5;color:' + (c.ok ? 'var(--ok)' : 'var(--ink)') + '">' + esc(c.verdict) + '</div>' : '') +
+    (c.ok && !c.wrong.length && !c.missing.length && !c.wording.length ? '<div style="color:var(--ok);font-size:14px;margin-top:6px">Nothing to fix — it reads right against the photos.</div>' : '') +
+    list('This does not match the photos', c.wrong.map(function (x) { return '<b>' + esc(String(x.what || '').trim()) + '</b>' + (String(x.why || '').trim() ? '<br><span style="color:var(--muted)">' + esc(String(x.why).trim()) + '</span>' : ''); }), 'var(--defect)') +
+    list('Missing from the document', c.missing.map(esc), 'var(--gold)') +
+    list('How I would have written it', c.wording.map(function (x) {
+      return (String(x.now || '').trim() ? '<span style="color:var(--muted);text-decoration:line-through">' + esc(String(x.now).trim()) + '</span><br>' : '') + esc(String(x.instead || '').trim());
+    }), 'var(--muted)') +
+  '</div>';
+}
+function docAiProposalHTML(pr) {
+  var d = pr.data || {}, lines = [];
+  if (pr.kind === 'estimate') {
+    if (String(d.title || '').trim()) lines.push('Title: ' + d.title);
+    (d.options || []).forEach(function (o, i) {
+      lines.push('Option ' + estLetter(i) + (String(o.name || '').trim() ? ' — ' + o.name : '') + ': ' + (String(o.summary || '').trim() || ((o.items || []).length + ' item(s)')));
+    });
+    if (!(d.options || []).length) lines.push('(the AI returned nothing usable — try saying it another way)');
+  } else {
+    if (String(d.title || '').trim()) lines.push('Title: ' + d.title);
+    if (String(d.summary || '').trim()) lines.push('Overall: ' + d.summary);
+    (d.components || []).forEach(function (cp) {
+      lines.push('• ' + (cp.name || '') + ' — ' + String(cp.status || 'ok').toUpperCase() + (String(cp.condition || '').trim() ? ': ' + cp.condition : ''));
+    });
+  }
+  return '<div style="margin-top:12px;border:1px solid var(--ok);border-radius:10px;padding:11px">' +
+    '<div class="eyebrow" style="margin-bottom:6px">What it would change it to</div>' +
+    '<div style="font-size:14px;line-height:1.55">' + lines.slice(0, 16).map(esc).join('<br>') + '</div>' +
+    '<div class="row" style="gap:8px;margin-top:11px">' +
+      '<button class="btn btn-gold btn-primary" data-act="docai-apply" style="flex:1.3">Use this</button>' +
+      '<button class="btn btn-ghost" data-act="docai-drop" style="flex:1">Leave it</button>' +
+    '</div>' +
+    '<div style="color:var(--muted);font-size:12px;margin-top:8px">Nothing on the document changes until you tap Use this.</div>' +
+  '</div>';
+}
+function docAiCardHTML() {
+  var t = docAiTarget(); if (!t) return '';
+  var A = docAiState();
+  return '<div class="card" style="border-color:var(--gold)">' +
+    '<div class="eyebrow">Second pair of eyes</div>' +
+    '<div style="color:var(--muted);font-size:13px;margin:2px 0 10px;line-height:1.45">Reads the ' + esc(t.what) + ' back against the photos and what was filled in on site, and says what does not add up.</div>' +
+    '<button class="btn btn-gold" data-act="docai-check" style="width:100%"' + (A.busy ? ' disabled' : '') + '>' +
+      (A.busy === 'check' ? 'Reading it over…' : (A.check ? 'Check it again' : 'Check this ' + esc(t.what))) + '</button>' +
+    (A.err ? '<div style="color:var(--defect);font-size:13px;margin-top:9px">' + esc(A.err) + '</div>' : '') +
+    (A.msg ? '<div style="color:var(--ok);font-size:13px;margin-top:9px">' + esc(A.msg) + '</div>' : '') +
+    (A.check ? docAiCheckHTML(A.check) : '') +
+    '<div style="margin-top:14px;border-top:1px solid var(--rule);padding-top:11px">' +
+      '<div class="eyebrow" style="margin-bottom:6px">Want something changed?</div>' +
+      '<textarea id="docai_ask" placeholder="In your own words — take the cap out of Option A, make the liner 25 ft, say the firebox part softer…" style="width:100%;box-sizing:border-box;min-height:64px;padding:10px 11px;border:1px solid var(--rule);border-radius:8px;font-size:15px">' + esc(A.ask || '') + '</textarea>' +
+      '<button class="btn btn-ghost" data-act="docai-ask" style="width:100%;margin-top:8px"' + (A.busy ? ' disabled' : '') + '>' + (A.busy === 'ask' ? 'Writing it…' : 'Ask for the change') + '</button>' +
+    '</div>' +
+    (A.proposal ? docAiProposalHTML(A.proposal) : '') +
+  '</div>';
+}
+function wireDocAi() {
+  var el = root.querySelector('#docai_ask'); if (!el) return;
+  el.addEventListener('input', function () { var A = docAiState(); A.ask = el.value; });
+}
 function viewEstimate() {
   var e = estNorm(state.estimate || (state.estimate = newEstimate()));
   var ai = (state.estAi && (!state.estAi.forId || state.estAi.forId === e)) ? state.estAi : {};
@@ -4638,7 +4877,7 @@ function viewEstimate() {
     '<div id="est_pkgs" class="row" style="gap:6px;flex-wrap:wrap">' + EST_PACKAGES.map(function (p) { return '<button class="btn btn-ghost est-pkg" data-pkg="' + p.id + '" style="padding:6px 10px;font-size:13px;min-height:36px">' + esc(p.name) + '</button>'; }).join('') + '</div></div>';
   return '<div class="app">' +
     '<div class="topbar"><button class="iconbtn" data-act="est-back">‹</button><div style="flex:1"><h1>Estimate' + (e.no ? ' #' + e.no : '') + '</h1><div class="sub">' + esc(e.title || 'Your catalog · your prices') + '</div></div></div>' +
-    '<div class="screen">' + fjResumeCard('estimate') + estPhotoCardHTML(e) + quick + (e.crmId ? '' : crmPickerHTML('est_pick')) +
+    '<div class="screen">' + fjResumeCard('estimate') + docAiCardHTML() + estPhotoCardHTML(e) + quick + (e.crmId ? '' : crmPickerHTML('est_pick')) +
       '<div class="card"><div class="eyebrow">Customer & job' + (e.crmId ? ' · linked ✓' : '') + '</div>' + cf('Name', 'name') + cf('Phone', 'phone', 'tel') + cf('Email', 'email', 'email') + addrHTML('Property address', e.customer.addr, 'id="est_addr"') +
         '<div class="field"><label>Job title (e.g. Furnace vent, Chimney liner)</label><input id="est_title" value="' + esc(e.title) + '"></div>' +
         '<div class="row" style="gap:8px"><div class="field" style="flex:1;margin-bottom:0"><label>Date of visit</label><input id="est_vdate" value="' + esc(e.visitDate) + '"></div><div class="field" style="flex:1;margin-bottom:0"><label>Prepared by</label><input id="est_prep" value="' + esc(e.preparedBy) + '"></div></div></div>' +
@@ -5601,6 +5840,7 @@ function render() {
   wirePair();
   wireRepEdit();
   wireFj();
+  wireDocAi();
   if (state.fj && (state.view === 'fjform' || state.view === 'fjsetup')) fjDraftSave();
   wireAddr();
   var af = root.querySelector('[autofocus]');
@@ -5959,6 +6199,10 @@ root.addEventListener('click', function (e) {
     case 'fj-sys': if (state.fj) { state.fj.system = arg; render(); } break;
     case 'fj-area': if (state.fj) { var ai2 = state.fj.areas.indexOf(arg); if (ai2 >= 0) state.fj.areas.splice(ai2, 1); else state.fj.areas.push(arg); render(); } break;
     case 'fj-go': if (state.fj) { state.view = 'fjform'; render(); try { window.scrollTo(0, 0); } catch (_) {} } break;
+    case 'docai-check': docAiCheck(); break;
+    case 'docai-ask': docAiAskRun(); break;
+    case 'docai-apply': docAiApply(); break;
+    case 'docai-drop': { var Ad = docAiState(); Ad.proposal = null; render(); break; }
     case 'fj-draft': {
       var dg = state.fjDraft; if (!dg) break;
       state.fj = dg; state.fj.busy = false; state.fj.err = ''; state.fj.review = null;
@@ -6497,9 +6741,10 @@ var FJ_FIX = {
   'room-air': 'other',
   'roof-crown': 'crown', 'roof-cap': 'cap', 'roof-flash': 'flashing', 'roof-brick': 'masonry', 'roof-height': 'masonry'
 };
-function fjArea(id) {
+function fjArea(id, form) {
   for (var i = 0; i < FJ_AREAS.length; i++) if (FJ_AREAS[i].id === id) return FJ_AREAS[i];
-  var own = (state.fj && state.fj.custom) || [];
+  var f = form || state.fj;
+  var own = (f && f.custom) || [];
   for (var j = 0; j < own.length; j++) if (own[j].id === id) return own[j];
   return null;
 }
@@ -6525,7 +6770,7 @@ function fjRow(f, id) { var r = (f.data[id] = f.data[id] || { v: '', note: '', p
 /* The heading the customer-facing document should use for this topic: what the
    technician typed, or the catalog name when he typed nothing. */
 function fjTitleOf(f, id) {
-  var r = f.data[id] || {}, a = fjArea(id);
+  var r = (f.data || {})[id] || {}, a = fjArea(id, f);
   return String(r.title || '').trim() || (a ? a.name : id);
 }
 function fjAlts(r) {
@@ -6902,7 +7147,7 @@ function fjTranscript(f) {
     L.push((f.kind === 'invoice' ? 'WORK DONE' : 'ESTIMATE VISIT') + ':');
     var photoNo2 = 0;
     (f.areas || []).forEach(function (id) {
-      var a = fjArea(id), r = f.data[id] || {};
+      var a = fjArea(id, f), r = f.data[id] || {};
       if (!a) return;
       var ms = Object.keys(r.m || {}).filter(function (k) { return String(r.m[k] || '').trim(); }).map(function (k) { return k + ': ' + r.m[k]; });
       var aq = (a.q || []).map(function (q) { return (r.q || {})[q.id] ? q.label + ' ' + r.q[q.id] : ''; }).filter(Boolean).join('; ');
