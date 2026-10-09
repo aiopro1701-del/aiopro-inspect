@@ -2063,7 +2063,7 @@ function viewRepEdit() {
           '<div class="field" style="flex:1"><label>Tax %</label><input data-r="taxPct" data-num="1" inputmode="decimal" value="' + esc(d.taxPct || '') + '"></div>' +
           '<div class="field" style="flex:1"><label>Deposit ($)</label><input data-r="deposit" data-num="1" inputmode="decimal" value="' + esc(d.deposit || '') + '"></div></div>' : '') +
         '<div id="rep_totals">' + repTotalsHTML(d) + '</div></div>' +
-      (/invoice/i.test(st.rep.modeName || '') ? '<div class="card"><div class="eyebrow">Payment</div>' +
+      ((/invoice/i.test(st.rep.modeName || '') || d.lineItems.length) ? '<div class="card"><div class="eyebrow">Payment</div>' +
         '<div class="row" style="gap:6px;margin-bottom:8px">' + [['paid', 'Paid'], ['partial', 'Part paid'], ['unpaid', 'Not paid']].map(function (o) {
           var on = (d.payStatus || 'unpaid') === o[0];
           return '<button class="btn ' + (on ? 'btn-gold btn-primary' : 'btn-ghost') + '" data-act="rep-pay" data-arg="' + o[0] + '" style="flex:1;min-height:42px;font-size:14px">' + o[1] + '</button>';
@@ -5561,6 +5561,18 @@ function viewEstMail() {
     '<div class="screen">' +
       (warn ? '<div class="card" style="border-color:var(--defect);color:var(--defect);font-size:14px">' + esc(warn) + (ready && !key ? pairSetupBtn('estmail') : '') + '</div>' : '') +
       (m.done ? '<div class="card" style="border-color:var(--ok);color:var(--ok);font-size:15px;font-weight:650">' + esc(m.done) + '</div>' : '') +
+      (m.done && isRep && !/invoice/i.test(m.rep.modeName || '') && state.fjLast && state.fjLast.kind === 'inspection'
+        ? (function () {
+            var bad = 0, mon = 0;
+            try { fjChecks(state.fjLast).forEach(function (c) { var r = state.fjLast.data[c.id]; if (!r) return; if (r.v === 'bad') bad++; else if (r.v === 'monitor') mon++; }); } catch (_) {}
+            return '<div class="card" style="border-color:var(--gold)">' +
+              '<div class="eyebrow">Next step</div>' +
+              '<div style="font-size:15px;line-height:1.5;margin-bottom:11px">' + (bad || mon
+                ? 'The report is with her. You marked <b>' + bad + '</b> item(s) that need attention' + (mon ? ' and <b>' + mon + '</b> to keep an eye on' : '') + ' — price them now, while she is still reading it.'
+                : 'The report is with her. You can still price work off this visit.') + '</div>' +
+              '<button class="btn btn-gold btn-primary" data-act="fj-to-estimate" style="width:100%;min-height:52px;font-size:16px">Build the estimate from the findings</button></div>';
+          })()
+        : '') +
       (m.err ? '<div class="card" style="border-color:var(--defect);color:var(--defect);font-size:14px">' + esc(m.err) + '</div>' : '') +
       '<div class="card">' +
         '<div class="field"><label>To (customer email)</label><input id="em_to" type="email" inputmode="email" autocapitalize="off" value="' + esc(m.to) + '" placeholder="name@example.com"></div>' +
@@ -6273,6 +6285,8 @@ root.addEventListener('click', function (e) {
       render();
       break;
     }
+    case 'fj-fee-paid': if (state.fj) { var fp = fjFee(state.fj); fp.paid = (fp.paid === arg ? '' : arg); render(); } break;
+    case 'fj-fee-how': if (state.fj) { var fh = fjFee(state.fj); fh.how = (fh.how === arg ? '' : arg); render(); } break;
     case 'fj-ask-back': if (state.fj) { state.fj.ask = null; state.fj.askPending = null; state.view = 'fjform'; render(); } break;
     case 'fj-ask-go': if (state.fj) fjWarrantySave(state.fj); fjBuildEstimate(); break;
     case 'fj-ask-skip': {
@@ -7075,6 +7089,35 @@ function fjAskCardHTML(f) {
     '<div style="color:var(--muted);font-size:12px;margin-top:8px">Anything you leave empty is left out of the estimate rather than guessed.</div>' +
   '</div>';
 }
+/* An inspection is a job that gets paid for. The fee and whether it was paid
+   belong on the report itself, not in a separate invoice. */
+var FJ_PAY = [['paid', 'Paid'], ['partial', 'Part paid'], ['unpaid', 'Not paid']];
+var FJ_HOW = ['Cash', 'Check', 'Card', 'Zelle'];
+function fjFee(f) { return (f.fee = f.fee || { price: '', paid: '', amt: '', how: '' }); }
+function fjFeeDefault(f) {
+  var want = 'Inspection ' + '\u2014' + ' Level ' + (f.level || '1');
+  for (var i = 0; i < CATALOG.length; i++) if (CATALOG[i].name === want) return CATALOG[i].price || '';
+  return '';
+}
+function fjFeeCardHTML(f) {
+  var fe = fjFee(f), def = fjFeeDefault(f);
+  return '<div class="eyebrow" style="margin:14px 2px 8px">What the inspection cost</div>' +
+    '<div class="card">' +
+      '<div style="color:var(--muted);font-size:13px;margin-bottom:9px;line-height:1.45">Goes on the report as a price line, so the customer sees what it was and whether it is already settled.</div>' +
+      '<div class="field"><label>Inspection fee ($)</label><input class="fj-fee" data-k="price" inputmode="decimal" placeholder="' + esc(def === '' ? '0' : String(def)) + '" value="' + esc(fe.price) + '"></div>' +
+      '<div class="row" style="gap:6px;margin-bottom:9px">' + FJ_PAY.map(function (o) {
+        var on = fe.paid === o[0];
+        return '<button class="btn ' + (on ? 'btn-gold btn-primary' : 'btn-ghost') + '" data-act="fj-fee-paid" data-arg="' + o[0] + '" style="flex:1;min-height:42px;font-size:14px">' + o[1] + '</button>';
+      }).join('') + '</div>' +
+      (fe.paid === 'partial' ? '<div class="field"><label>Paid so far ($)</label><input class="fj-fee" data-k="amt" inputmode="decimal" value="' + esc(fe.amt) + '"></div>' : '') +
+      (fe.paid === 'paid' || fe.paid === 'partial'
+        ? '<div><div style="font-size:13px;color:var(--muted);margin-bottom:5px">Paid how?</div><div class="row" style="gap:6px;flex-wrap:wrap">' + FJ_HOW.map(function (h) {
+            var on = fe.how === h;
+            return '<button class="btn ' + (on ? 'btn-gold btn-primary' : 'btn-ghost') + '" data-act="fj-fee-how" data-arg="' + esc(h) + '" style="flex:1 1 22%;min-height:40px;font-size:13px">' + esc(h) + '</button>';
+          }).join('') + '</div></div>'
+        : '') +
+    '</div>';
+}
 function fjAltBlockHTML(id, r) {
   var alts = r.alts || [];
   return '<div style="margin-top:12px">' +
@@ -7170,6 +7213,7 @@ function viewFjForm() {
         '<div style="color:var(--muted);font-size:13px;margin:3px 0 9px">The finished work.</div>' +
         fjPhotoStrip('_after', f.afterPhotos) + '</div>';
   }
+  if (f.kind === 'inspection') body += fjFeeCardHTML(f);
   body += '<div class="eyebrow" style="margin:14px 2px 8px">Anything else</div>' +
     '<div class="card">' + fjPhotoStrip('_extra', f.extraPhotos) +
       '<textarea class="fj-note" data-fj="_extra" placeholder="Anything else worth writing down…" style="width:100%;min-height:70px;padding:10px 11px;border:1px solid var(--rule);border-radius:8px;font-size:15px">' + esc(f.extraNote || '') + '</textarea></div>';
@@ -7210,6 +7254,9 @@ function wireFj() {
       if (id === '_extra') f.extraNote = el.value; else fjRow(f, id).note = el.value;
       fjDraftSave();
     });
+  });
+  root.querySelectorAll('.fj-fee').forEach(function (el) {
+    el.addEventListener('input', function () { fjFee(f)[el.getAttribute('data-k')] = el.value; fjDraftSave(); });
   });
   root.querySelectorAll('.fj-ask').forEach(function (el) {
     el.addEventListener('input', function () {
@@ -7466,6 +7513,21 @@ function fjBuildReport() {
     ba.captions = fjCaptions(f);
     var modeName = isInv ? 'Invoice' : 'Inspection — Level ' + f.level;
     if (isInv) { d.title = 'Invoice'; if (d.payStatus == null) d.payStatus = 'unpaid'; }
+    if (!isInv) {
+      /* What the inspection cost, and whether it is settled, belongs on the report. */
+      var fe = f.fee || {}, fp = Number(String(fe.price || '').replace(/[^0-9.]/g, ''));
+      if (fp > 0) {
+        d.lineItems = (Array.isArray(d.lineItems) ? d.lineItems : []).filter(function (it) { return it && String(it.description || '').trim(); });
+        var already = d.lineItems.some(function (it) { return /inspection/i.test(it.description || ''); });
+        if (!already) d.lineItems.unshift({ description: 'Chimney inspection — Level ' + (f.level || '1'), qty: 1, unitPrice: fp });
+        if (fe.paid) {
+          d.payStatus = fe.paid;
+          if (fe.paid === 'paid') d.paid = fp;
+          else if (fe.paid === 'partial') d.paid = Number(String(fe.amt || '').replace(/[^0-9.]/g, '')) || 0;
+          if (fe.how) d.paidHow = fe.how;
+        }
+      }
+    }
     var blob = buildChatReport(d, imgs, state.settings, modeName, ba);
     var who = String(d.customer.name || 'Customer').trim().split(/\s+/)[0].replace(/[^\w-]+/g, '') || 'Customer';
     var fn = 'AIO-Pro-Chimney-' + (isInv ? 'Invoice-' : 'Inspection-') + who + '-' + isoToday() + '.pdf';
