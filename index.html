@@ -2528,7 +2528,10 @@ function buildChatReport(data, images, settings, modeName, extra) {
     head('At a glance');
     doc.setFont('helvetica', 'bold').setFontSize(12).setTextColor(INK[0], INK[1], INK[2]);
     if (bits.length) { doc.text(bits.join('  \u00b7  '), M, y); y += 17; }
-    if (li) { doc.text('Total ' + money(li), M, y); y += 17; }
+    if (li) {
+      var payTxt = data.payStatus === 'paid' ? '  \u00b7  paid in full' : data.payStatus === 'partial' ? '  \u00b7  part paid' : data.payStatus === 'unpaid' ? '  \u00b7  not paid yet' : '';
+      doc.text('Total ' + money(li) + payTxt, M, y); y += 17;
+    }
     var one = String(data.conclusion || data.summary || '').trim();
     var stop = one.search(/[.!?]\s/);
     if (stop > 20) one = one.slice(0, stop + 1);
@@ -2690,7 +2693,7 @@ function buildChatReport(data, images, settings, modeName, extra) {
     photos2(restIdx.map(function (i) { return images[i]; }), 0.7, restIdx.map(function (i) { return captions[i] || ''; }));
   }
 
-  if (/invoice/i.test(modeName || '') && (data.payStatus || (data.lineItems || []).length)) {
+  if (data.payStatus && ((data.lineItems || []).length || Number(data.total || 0) > 0)) {
     head('Payment');
     var stTxt = data.payStatus === 'paid' ? 'PAID IN FULL — thank you' : data.payStatus === 'partial' ? 'PART PAID' : 'NOT PAID YET';
     var stCol = data.payStatus === 'paid' ? SEV.ok : data.payStatus === 'partial' ? SEV.monitor : SEV.defect;
@@ -2700,8 +2703,11 @@ function buildChatReport(data, images, settings, modeName, extra) {
     doc.roundedRect(M, y - 12, bw, 20, 4, 4, 'F');
     doc.setTextColor(255, 255, 255); doc.text(stTxt, M + 11, y + 2);
     y += 24;
-    var tot = Number(data.total || 0), pd = data.payStatus === 'paid' ? tot : Math.max(0, Number(data.paid || 0));
-    var lines2 = [['Invoice total', tot], ['Paid', pd], ['Balance due', Math.max(0, tot - pd)]];
+    var tot = Number(data.total || 0);
+    if (!tot) tot = (data.lineItems || []).reduce(function (t2, it) { return t2 + (Number(it.amount) || (Number(it.qty) || 1) * (Number(it.unitPrice) || 0)); }, 0);
+    var pd = data.payStatus === 'paid' ? tot : Math.max(0, Number(data.paid || 0));
+    var totLbl = /invoice/i.test(modeName || '') ? 'Invoice total' : 'Total';
+    var lines2 = [[totLbl, tot], ['Paid' + (data.paidHow ? ' by ' + data.paidHow : ''), pd], ['Balance due', Math.max(0, tot - pd)]];
     doc.setFont('helvetica', 'normal').setFontSize(10.5).setTextColor(INK[0], INK[1], INK[2]);
     lines2.forEach(function (r2, i2) {
       ensure(16);
@@ -5628,7 +5634,7 @@ function reportPayload(rep) {
     conclusion: d.conclusion || '', limitations: d.limitations || '', preparedBy: (d.customer || {}).preparedBy || EST_BRAND.preparedBy,
     lineItems: (Array.isArray(d.lineItems) ? d.lineItems : []).map(function (it) { return { description: it.description || '', qty: Number(it.qty) || 1, unitPrice: Number(it.unitPrice) || 0, amount: Number(it.amount) || 0 }; }),
     subtotal: Number(d.subtotal) || 0, discount: Number(d.discount) || 0, tax: Number(d.tax) || 0, total: Number(d.total) || 0, deposit: Number(d.deposit) || 0,
-    payStatus: d.payStatus || '', paid: Number(d.paid) || 0,
+    payStatus: d.payStatus || '', paid: Number(d.paid) || 0, paidHow: d.paidHow || '',
     beforeN: (rep.before || []).length, afterN: (rep.after || []).length,
     company: { name: s.company, phone: (s.phone && s.phone.trim()) || EST_BRAND.phone, email: (s.email && s.email.trim()) || EST_BRAND.email, address: EST_BRAND.address, legal: EST_BRAND.legal, creds: EST_BRAND.creds, web: EST_BRAND.web, owner: EST_BRAND.owner } };
 }
@@ -7519,7 +7525,10 @@ function fjBuildReport() {
       if (fp > 0) {
         d.lineItems = (Array.isArray(d.lineItems) ? d.lineItems : []).filter(function (it) { return it && String(it.description || '').trim(); });
         var already = d.lineItems.some(function (it) { return /inspection/i.test(it.description || ''); });
-        if (!already) d.lineItems.unshift({ description: 'Chimney inspection — Level ' + (f.level || '1'), qty: 1, unitPrice: fp });
+        if (!already) d.lineItems.unshift({ description: 'Chimney inspection — Level ' + (f.level || '1'), qty: 1, unitPrice: fp, amount: fp });
+        d.lineItems = d.lineItems.map(function (it) { var q = Number(it.qty) || 1, up = Number(it.unitPrice) || 0; return { description: it.description, qty: q, unitPrice: up, amount: Math.round(q * up * 100) / 100 }; });
+        var sb = d.lineItems.reduce(function (t2, it) { return t2 + it.amount; }, 0);
+        d.subtotal = sb; d.total = sb;
         if (fe.paid) {
           d.payStatus = fe.paid;
           if (fe.paid === 'paid') d.paid = fp;
