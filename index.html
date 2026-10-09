@@ -2514,6 +2514,27 @@ function buildChatReport(data, images, settings, modeName, extra) {
   doc.setFont('helvetica', 'normal').setFontSize(10).setTextColor(MUTED[0], MUTED[1], MUTED[2]);
   doc.text(modeName + '  ·  ' + new Date().toLocaleDateString(), M, y); y += 22;
 
+  /* At a glance \u2014 the whole report in two lines, before any detail. */
+  (function () {
+    var cps = data.components || [];
+    var bad = 0, mon = 0, good = 0;
+    cps.forEach(function (x) { if (x.status === 'defect') bad++; else if (x.status === 'monitor') mon++; else good++; });
+    var bits = [];
+    if (bad) bits.push(bad + (bad === 1 ? ' item needs attention' : ' items need attention'));
+    if (mon) bits.push(mon + ' to keep an eye on');
+    if (good) bits.push(good + ' in good shape');
+    var li = (data.lineItems || []).reduce(function (t, it) { return t + (Number(it.qty) || 0) * (Number(it.unitPrice) || 0); }, 0);
+    if (!bits.length && !li) return;
+    head('At a glance');
+    doc.setFont('helvetica', 'bold').setFontSize(12).setTextColor(INK[0], INK[1], INK[2]);
+    if (bits.length) { doc.text(bits.join('  \u00b7  '), M, y); y += 17; }
+    if (li) { doc.text('Total ' + money(li), M, y); y += 17; }
+    var one = String(data.conclusion || data.summary || '').trim();
+    var stop = one.search(/[.!?]\s/);
+    if (stop > 20) one = one.slice(0, stop + 1);
+    if (one) y = wrapped(doc, one, M, y, CONTENT, 10.5, MUTED) + 12; else y += 6;
+  })();
+
   var c = data.customer || {};
   head('Customer information');
   if (isCoverShot(0)) {
@@ -5006,7 +5027,7 @@ function estAiPrompt(chat, transcript) {
     + '- summary: 1 to 3 plain sentences per option. Say what this option is, and when its items belong to one job say why they go together, e.g. "Everything in Option A, and the stove is replaced with a new one." When there is more than one option, the summary is what makes THIS one different.\n'
     + '- title: 2 to 4 words naming the job, e.g. "Furnace vent", "Chimney liner", "Chimney leak repair".\n'
     + '- found: 3 to 5 plain sentences. What is there and exactly where, what is causing it, and what happens if it is left alone. Only what the visit and the photos support — if the technician did not see it, it does not go in.\n'
-    + '- notes: 3 to 6 short notes, one per line: the warranty EXACTLY as the catalog states it for the services you chose, never a length the catalog does not give; that if hidden damage shows up once it is opened you stop and agree the difference with the customer before continuing; what is NOT included; that the price covers the work described and nothing is added without written approval; and anything the customer has to prepare or move.\n'
+    + '- notes: 3 to 6 short notes, one per line: the warranty EXACTLY as Refael answered it under YOU ASKED, REFAEL ANSWERED — give the materials warranty and the labour warranty, and never a length he did not give (if he did not answer, leave the warranty out entirely); that if hidden damage shows up once it is opened you stop and agree the difference with the customer before continuing; what is NOT included; that the price covers the work described and nothing is added without written approval; and anything the customer has to prepare or move.\n'
     + 'Return ONLY JSON, no markdown:\n'
     + '{"title":"","found":"","options":[{"name":"","summary":"","items":[{"n":0,"qty":1,"lines":["",""]},{"custom":"","qty":1,"lines":[""]}]}],"notes":[""],"questions":[{"q":"","why":"","opts":["",""]}]}\n\n'
     + 'CATALOG (n | name | owner price | standard scope):\n' + cat + '\n\n'
@@ -6251,7 +6272,7 @@ root.addEventListener('click', function (e) {
       render();
       break;
     }
-    case 'fj-ask-go': fjBuildEstimate(); break;
+    case 'fj-ask-go': if (state.fj) fjWarrantySave(state.fj); fjBuildEstimate(); break;
     case 'fj-ask-skip': {
       var fs2 = state.fj; if (!fs2) break;
       fs2.askDone = true;
@@ -6989,6 +7010,25 @@ function fjPhotoStrip(id, photos) {
 /* The AI is allowed to not know something. Rather than guess a price, a length
    or a material into a document a customer will sign, it hands the gap back as a
    question with real answers to tap. */
+var FJ_WARR = ['1 year', '2 years', '3 years', '5 years'];
+/* The warranty is a promise, so it is never inferred from the catalog and never
+   assumed: Refael confirms the material and the labour warranty on every
+   estimate, with last time's answer already selected. */
+function fjWarrantyQs() {
+  return [
+    { wk: 'mat', q: 'Warranty on the materials for this job?', why: 'It goes on the estimate, so it has to be the real one.', opts: FJ_WARR.concat(['Manufacturer warranty only']) },
+    { wk: 'lab', q: 'And on your labour?', why: 'Printed next to it.', opts: FJ_WARR }
+  ];
+}
+function fjWarrantySave(f) {
+  var A = f.ask; if (!A) return;
+  A.q.forEach(function (x, i) {
+    var v = String((A.a || {})[i] || '').trim(); if (!v) return;
+    if (x.wk === 'mat') state.settings.warrMat = v;
+    if (x.wk === 'lab') state.settings.warrLab = v;
+  });
+  try { saveSettings(state.settings); } catch (_) {}
+}
 function fjAskAnswers(f) {
   var A = f.ask; if (!A || !A.q.length) return '';
   var L = [];
@@ -7298,10 +7338,17 @@ function fjBuildEstimate() {
       .map(function (x) { return { q: String(x.q).trim(), why: String(x.why || '').trim(), opts: (Array.isArray(x.opts) ? x.opts : []).map(function (o) { return String(o || '').trim(); }).filter(Boolean).slice(0, 4) }; })
       .slice(0, 4);
     f.askRounds = (f.askRounds || 0) + 1;
-    if (qs.length && !f.askDone && f.askRounds <= 2) {
+    var all = fjWarrantyQs().concat(qs);
+    var prevByQ = {};
+    if (f.ask) f.ask.q.forEach(function (x, i) { prevByQ[x.q] = String((f.ask.a || {})[i] || ''); });
+    var ans = {};
+    all.forEach(function (x, i) {
+      ans[i] = prevByQ[x.q] || (x.wk === 'mat' ? (state.settings.warrMat || '') : x.wk === 'lab' ? (state.settings.warrLab || '') : '');
+    });
+    if ((f.askRounds === 1 || qs.length) && !f.askDone && f.askRounds <= 2) {
       f.busy = false;
       f.askPending = d;
-      f.ask = { q: qs, a: (f.ask && f.ask.a) || {} };
+      f.ask = { q: all, a: ans };
       if (state.view === 'fjform') { render(); try { window.scrollTo(0, 0); } catch (_) {} }
       return;
     }
