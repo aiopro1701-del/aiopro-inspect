@@ -4210,7 +4210,7 @@ var CATALOG = [
 {name:"Firebox panel replacement",price:799,description:"Heat-resistant panels; tarp area, remove grill, clean firebox, remove clamp and panel, install new panels. 1-year parts & labor."},
 {name:"Fireplace mortar repair",price:399,description:"Remove loose mortar, seal firebox cracks, fill tuck points, apply high-heat mortar. 1-year labor warranty."},
 {name:"Smoke chamber parging",price:1499,description:"Parge the smoke chamber to a smooth funnel so smoke flows freely and creosote buildup is minimized."},
-{name:"Heat shield",price:2999,description:"HeatShield sealant restores the flue's integrity; eliminates gaps, cracks, and spalling. Repair System or CeCure Sleeve."},
+{name:"Heat shield",price:2999,description:"Flue sealant system that restores the flue's integrity from the inside; fills gaps, cracks and spalled areas. Applied as a repair system or as a full sleeve."},
 {name:"Stainless liner installation",price:2999,description:"Measure, sweep flue, remove protruding joints, insert 30-ft stainless liner, connect to appliance, install B-vent cap. 3-year parts / 1-year labor."},
 {name:"Full clay tile flue replacement with stainless liner",price:7900,description:"Remove clay tile flue; install sized stainless liner with connectors and top-plate; insulate; rebuild/seal smoke chamber; new top-mount damper/cap; waterproof top; test draft."},
 {name:"Chimney Liner Replacement & Smoke Chamber Rebuild",price:8000,description:"Remove clay tiles bottom-to-top; install insulated 304/316 stainless liner to NFPA-211 with top-plate, storm collar, cap; rebuild smoke chamber with code-approved material."},
@@ -4981,6 +4981,11 @@ function estAiPrompt(chat, transcript) {
     + '- You explain the mechanism in a line or two so the price makes sense. This is how you actually write: "A liner here is not just the pipe. On each flue it is the liner run the full height, the smoke chamber sealed into it, and a new top-sealing damper cap at the top, which closes onto a gasket and is worked from inside at the fireplace with a cable. The three go together because the liner has to be sealed in at the bottom and terminated properly at the top."\n'
     + '- You always say what happens if it is left alone. This is how you write that: "Left as is, rust will continue to spread and water damage will get worse, leading to costly repairs inside the chase and chimney."\n'
     + '- When several items belong to one job, say why they go together. When a part can be done on its own, say that too.\n'
+    + 'WHAT YOU NEVER DO:\n'
+    + '- Never invent a price, a size, a length, a material or a brand. If the technician did not say what something is made of, do not name a material — write the work without it. "A new liner" is right when he only wrote liner; "a new stainless liner" is wrong unless he said stainless.\n'
+    + '- Never write a manufacturer or product brand name in anything the customer reads, even if the catalog wording contains one. For a top-sealing damper you write: a top-sealing damper cap that closes onto a gasket, opened and closed from inside at the fireplace with a cable.\n'
+    + '- Never lecture, never push work the technician did not raise, never add a recommendation of your own. Write only the work he said is needed.\n'
+    + '- Never put an internal measurement, an internal note or a placeholder number into the customer text on a line of its own.\n'
     + 'RULES:\n'
     + '- Choose catalog services by their number ("n"). The owner\'s price is applied automatically — never invent or change a price.\n'
     + '- An inspection visit is priced from the catalog: "Inspection — Level 1" or "Inspection — Level 2".\n'
@@ -4990,11 +4995,11 @@ function estAiPrompt(chat, transcript) {
     + '- Each option is complete on its own with its full price: if Option B is "everything in Option A, and ...", repeat Option A\'s items in it.\n'
     + '- Something the customer can take or leave (a vent cap, a second liner) is an optional add-on: put it in the option with "opt": true. It is not counted in the total.\n'
     + '- name: only when there is more than one option — 2 to 5 words saying what makes that option different, e.g. "Keep your stove", "New stove insert". Leave name empty for a single option.\n'
-    + '- lines: 4 to 8 scope lines per item, specific to THIS house, written in the order the work actually happens — what comes off or out first, what you check once it is open, what goes in (named by material and by the sizes from the visit), how it is finished and sealed, and a last line that the site is left clean and the finished work photographed for the customer. e.g. "Listed vent cap installed at the termination." Never a code section, never jargon, never sales filler.\n'
+    + '- lines: 4 to 8 scope lines per item, specific to THIS house, written in the order the work actually happens — what comes off or out first, what you check once it is open, what goes in, how it is finished and sealed, and a last line that the site is left clean and the finished work photographed for the customer. e.g. "Listed vent cap installed at the termination." Never a code section, never jargon, never sales filler.\n'
     + '- summary: 1 to 3 plain sentences per option. Say what this option is, and when its items belong to one job say why they go together, e.g. "Everything in Option A, and the stove is replaced with a new one." When there is more than one option, the summary is what makes THIS one different.\n'
     + '- title: 2 to 4 words naming the job, e.g. "Furnace vent", "Chimney liner", "Chimney leak repair".\n'
     + '- found: 3 to 5 plain sentences. What is there and exactly where, what is causing it, and what happens if it is left alone. Only what the visit and the photos support — if the technician did not see it, it does not go in.\n'
-    + '- notes: 3 to 6 short notes, one per line: what the material actually is, the 5 year workmanship warranty covering both labour and materials, that if hidden damage shows up once it is opened you stop and agree the difference with the customer before continuing, what is NOT included, and anything the customer has to prepare or move.\n'
+    + '- notes: 3 to 6 short notes, one per line: the warranty EXACTLY as the catalog states it for the services you chose, never a length the catalog does not give; that if hidden damage shows up once it is opened you stop and agree the difference with the customer before continuing; what is NOT included; that the price covers the work described and nothing is added without written approval; and anything the customer has to prepare or move.\n'
     + 'Return ONLY JSON, no markdown:\n'
     + '{"title":"","found":"","options":[{"name":"","summary":"","items":[{"n":0,"qty":1,"lines":["",""]},{"custom":"","qty":1,"lines":[""]}]}],"notes":[""]}\n\n'
     + 'CATALOG (n | name | owner price | standard scope):\n' + cat + '\n\n'
@@ -7277,7 +7282,10 @@ function fjBuildReport() {
     + 'The technician\'s note is the truth about that house: turn his shorthand into the customer\'s language without dropping a single thing he saw, and without adding anything he did not. '
     + 'Every size, material and location he wrote belongs in the text where it helps them picture it, never as a bare measurement on its own. '
     + 'For anything not in good shape you say what is there, what is causing it, and what happens if it is left alone — the way you write it yourself: "Left as is, rust will continue to spread and water damage will get worse, leading to costly repairs inside the chase and chimney." '
-    + 'When parts of a repair belong together you say why, e.g. "The three go together because the liner has to be sealed in at the bottom and terminated properly at the top."\n'
+    + 'When parts of a repair belong together you say why, e.g. "The three go together because the liner has to be sealed in at the bottom and terminated properly at the top." '
+    + 'Never invent a size, a material or a brand: if the technician did not say what something is made of, write the finding without naming a material. '
+    + 'Never write a manufacturer or product brand name — for a top-sealing damper write: a top-sealing damper cap that closes onto a gasket, opened and closed from inside at the fireplace with a cable. '
+    + 'Never lecture and never recommend work the technician did not raise.\n'
     + 'Return ONLY JSON, no markdown:\n'
     + '{"title":"","customer":{"name":"","address":"","cityStateZip":"","phone":"","email":"","preparedBy":""},'
     + '"property":{"stories":"","roof":"","systemLocation":"","roomLocation":""},'
