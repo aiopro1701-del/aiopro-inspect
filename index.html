@@ -2679,11 +2679,11 @@ function buildChatReport(data, images, settings, modeName, extra) {
     totalRow('Subtotal', subtotal, false);
     if (disc) totalRow('Discount', -disc, false);
     if (tax) totalRow('Tax', tax, false);
-    totalRow(/invoice/i.test(modeName) ? 'Total due' : 'Estimated total', total, true);
+    totalRow(/invoice/i.test(modeName) ? 'Total due' : (data.payStatus ? 'Total' : 'Estimated total'), total, true);
     if (Number(data.deposit || 0)) totalRow('Deposit to schedule', Number(data.deposit), false);
     y += 8;
     doc.setFont('helvetica', 'italic').setFontSize(8.5).setTextColor(MUTED[0], MUTED[1], MUTED[2]);
-    if (!/invoice/i.test(modeName || '')) y = wrapped(doc, 'Prices reflect the conditions visible at the time of inspection. Concealed damage found once work begins may change the final price and will be reviewed with you before proceeding.', M, y, CONTENT, 8.5, MUTED) + 8;
+    if (!/invoice/i.test(modeName || '') && data.payStatus !== 'paid') y = wrapped(doc, 'Prices reflect the conditions visible at the time of inspection. Concealed damage found once work begins may change the final price and will be reviewed with you before proceeding.', M, y, CONTENT, 8.5, MUTED) + 8;
   }
 
   var restIdx = [];
@@ -7099,18 +7099,28 @@ function fjAskCardHTML(f) {
    belong on the report itself, not in a separate invoice. */
 var FJ_PAY = [['paid', 'Paid'], ['partial', 'Part paid'], ['unpaid', 'Not paid']];
 var FJ_HOW = ['Cash', 'Check', 'Card', 'Zelle'];
-function fjFee(f) { return (f.fee = f.fee || { price: '', paid: '', amt: '', how: '' }); }
+function fjFee(f) {
+  var fe = (f.fee = f.fee || { price: '', paid: '', amt: '', how: '' });
+  /* The box starts filled with the catalog price for the level. A placeholder
+     looks filled but is empty, and an empty price kept the whole block off the
+     report. */
+  if (!fe.seeded) { fe.seeded = true; if (!String(fe.price || '').trim()) fe.price = String(fjFeeDefault(f) || ''); }
+  return fe;
+}
 function fjFeeDefault(f) {
   var want = 'Inspection ' + '\u2014' + ' Level ' + (f.level || '1');
   for (var i = 0; i < CATALOG.length; i++) if (CATALOG[i].name === want) return CATALOG[i].price || '';
   return '';
 }
 function fjFeeCardHTML(f) {
-  var fe = fjFee(f), def = fjFeeDefault(f);
+  var fe = fjFee(f), def = fjFeeDefault(f), fp = Number(String(fe.price || '').replace(/[^0-9.]/g, '')) || 0;
   return '<div class="eyebrow" style="margin:14px 2px 8px">What the inspection cost</div>' +
     '<div class="card">' +
       '<div style="color:var(--muted);font-size:13px;margin-bottom:9px;line-height:1.45">Goes on the report as a price line, so the customer sees what it was and whether it is already settled.</div>' +
       '<div class="field"><label>Inspection fee ($)</label><input class="fj-fee" data-k="price" inputmode="decimal" placeholder="' + esc(def === '' ? '0' : String(def)) + '" value="' + esc(fe.price) + '"></div>' +
+      (fp > 0
+        ? '<div style="background:var(--mortar-2,#f3efe8);border-radius:8px;padding:9px 11px;margin-bottom:10px;font-size:13px;line-height:1.5"><b>On the report:</b> Chimney inspection — Level ' + esc(f.level || '1') + ' \u2026 ' + esc(money(fp)) + (fe.paid === 'paid' ? ' \u00b7 <b>paid in full</b>' : fe.paid === 'partial' ? ' \u00b7 <b>part paid</b>' : fe.paid === 'unpaid' ? ' \u00b7 <b>not paid yet</b>' : '') + (fe.how ? ' by ' + esc(fe.how) : '') + '</div>'
+        : '<div style="color:var(--defect);font-size:13px;margin-bottom:10px">No fee typed in, so nothing about the price goes on the report.</div>') +
       '<div class="row" style="gap:6px;margin-bottom:9px">' + FJ_PAY.map(function (o) {
         var on = fe.paid === o[0];
         return '<button class="btn ' + (on ? 'btn-gold btn-primary' : 'btn-ghost') + '" data-act="fj-fee-paid" data-arg="' + o[0] + '" style="flex:1;min-height:42px;font-size:14px">' + o[1] + '</button>';
