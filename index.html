@@ -5008,7 +5008,7 @@ function estAiPrompt(chat, transcript) {
     + 'WHEN YOU ARE MISSING SOMETHING, ASK — NEVER GUESS:\n'
     + '- Anything you need and were not given goes into questions[] instead of into the estimate: a price for work you wrote yourself, a length, a size, a material, whether something is included. Never put a guess in the document and never leave the customer text vague to get around it.\n'
     + '- Each question: q is the question in your own plain words, why is one short line saying what it changes, opts is 2 to 4 concrete answers Refael can tap (for a price, realistic figures; for a material, the real choices). He can also type his own.\n'
-    + '- At most 4 questions, and only things the visit does not already answer. If you can write and price the whole job from what you have, return questions as an empty array.\n'
+    + '- Ask as many as you genuinely need, up to 12. Do not hold back to be brief: a missing detail is what makes an estimate read thin, and a thin estimate does not get signed. Ask for what you need to price it, and ask for what you need to make the customer WANT the work — how bad it looks from where she stands, what she told the technician was bothering her, what else she asked about, access and parking, how old the house or the appliance is, whether she has had water inside, how soon she needs it. Only skip what the visit already answers. If the visit really answers everything, return questions as an empty array.\n'
     + 'WHAT YOU NEVER DO:\n'
     + '- Never invent a price, a size, a length, a material or a brand. If the technician did not say what something is made of, do not name a material — write the work without it. "A new liner" is right when he only wrote liner; "a new stainless liner" is wrong unless he said stainless.\n'
     + '- Never write a manufacturer or product brand name in anything the customer reads, even if the catalog wording contains one. For a top-sealing damper you write: a top-sealing damper cap that closes onto a gasket, opened and closed from inside at the fireplace with a cable.\n'
@@ -5865,6 +5865,7 @@ function render() {
   else if (state.view === 'repedit') html = viewRepEdit();
   else if (state.view === 'fjsetup') html = viewFjSetup();
   else if (state.view === 'fjform') html = viewFjForm();
+  else if (state.view === 'fjask') html = viewFjAsk();
   else if (state.view === 'preview') html = viewPreview();
   else if (state.view === 'docs') html = viewDocs();
   else if (state.view === 'crewdoc') html = viewCrewDoc();
@@ -5881,7 +5882,7 @@ function render() {
   wireRepEdit();
   wireFj();
   wireDocAi();
-  if (state.fj && (state.view === 'fjform' || state.view === 'fjsetup')) fjDraftSave();
+  if (state.fj && (state.view === 'fjform' || state.view === 'fjsetup' || state.view === 'fjask')) fjDraftSave();
   wireAddr();
   var af = root.querySelector('[autofocus]');
   if (af) { try { af.focus(); } catch (e) {} }
@@ -6272,6 +6273,7 @@ root.addEventListener('click', function (e) {
       render();
       break;
     }
+    case 'fj-ask-back': if (state.fj) { state.fj.ask = null; state.fj.askPending = null; state.view = 'fjform'; render(); } break;
     case 'fj-ask-go': if (state.fj) fjWarrantySave(state.fj); fjBuildEstimate(); break;
     case 'fj-ask-skip': {
       var fs2 = state.fj; if (!fs2) break;
@@ -7038,11 +7040,22 @@ function fjAskAnswers(f) {
   });
   return L.length ? '\n\nYOU ASKED, REFAEL ANSWERED """ + D + """ treat these as facts from the visit:\n' + L.join('\n') : '';
 }
+function viewFjAsk() {
+  var f = state.fj; if (!f || !f.ask || !f.ask.q.length) { state.view = f ? 'fjform' : 'home'; return f ? viewFjForm() : viewHome(); }
+  var A = f.ask, answered = A.q.filter(function (x, i) { return String((A.a || {})[i] || '').trim(); }).length;
+  return '<div class="app">' +
+    '<div class="topbar"><button class="iconbtn" data-act="fj-ask-back">\u2039</button><div style="flex:1;min-width:0"><h1>A few things first</h1><div class="sub">' + answered + ' of ' + A.q.length + ' answered</div></div></div>' +
+    '<div class="screen">' +
+      (f.err ? '<div class="card" style="border-color:var(--defect);color:var(--defect);font-size:14px">' + esc(f.err) + '</div>' : '') +
+      fjAskCardHTML(f) +
+    '</div>' +
+  '</div>';
+}
 function fjAskCardHTML(f) {
   var A = f.ask; if (!A || !A.q.length) return '';
   return '<div class="card" style="border-color:var(--gold)">' +
-    '<div class="eyebrow">Before it can be written</div>' +
-    '<div style="color:var(--muted);font-size:13px;margin:2px 0 12px;line-height:1.45">It read the visit and the photos. These are the things it will not guess at.</div>' +
+    '<div class="eyebrow">Before it is written</div>' +
+    '<div style="color:var(--muted);font-size:13px;margin:2px 0 12px;line-height:1.45">It read the visit and the photos. These are the things it will not guess at \u2014 answer what you can, leave the rest.</div>' +
     A.q.map(function (x, i) {
       var val = String((A.a || {})[i] || '');
       return '<div style="margin-bottom:15px">' +
@@ -7178,7 +7191,7 @@ function viewFjForm() {
     '<div class="topbar"><button class="iconbtn" data-act="fj-back">‹</button><div style="flex:1;min-width:0"><h1 style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + esc(K.name) + (isInsp ? ' — Level ' + esc(f.level) : '') + '</h1><div class="sub">' + (isInsp ? esc(fjSysName(f.system)) + ' · ' : '') + p.n + ' of ' + p.all + ' done</div></div></div>' +
     '<div class="screen">' +
       (f.err ? '<div class="card" style="border-color:var(--defect);color:var(--defect);font-size:14px">' + esc(f.err) + '</div>' : '') +
-      fromI + fjAskCardHTML(f) + revBox + body +
+      fromI + revBox + body +
     '</div>' +
     '<div class="bottombar" style="gap:6px">' +
       (isInsp
@@ -7189,7 +7202,7 @@ function viewFjForm() {
   '</div>';
 }
 function wireFj() {
-  if ((state.view !== 'fjform' && state.view !== 'fjsetup') || !state.fj) return;
+  if ((state.view !== 'fjform' && state.view !== 'fjsetup' && state.view !== 'fjask') || !state.fj) return;
   var f = state.fj;
   root.querySelectorAll('.fj-note').forEach(function (el) {
     el.addEventListener('input', function () {
@@ -7331,12 +7344,12 @@ function fjBuildEstimate() {
   if (!fjDone(f).n) { f.err = 'Fill in at least one of the jobs above first.'; render(); return; }
   f.busy = 'build'; f.err = ''; render();
   var prompt = estAiPrompt(null, (f.fromInspection ? 'THE INSPECTION WE JUST DID (use it for the cause and for what to recommend):\n' + f.fromInspection.text + '\n\n' : '') + fjTranscript(f) + fjAskAnswers(f));
-  fjAiCall(prompt, 4096, true).then(function (d) {
+  fjAiCall(prompt, 8000, true).then(function (d) {
     /* It would rather ask than guess. Two rounds at most, then it writes what it has. */
     var qs = (d && Array.isArray(d.questions) ? d.questions : [])
       .filter(function (x) { return x && String(x.q || '').trim(); })
-      .map(function (x) { return { q: String(x.q).trim(), why: String(x.why || '').trim(), opts: (Array.isArray(x.opts) ? x.opts : []).map(function (o) { return String(o || '').trim(); }).filter(Boolean).slice(0, 4) }; })
-      .slice(0, 4);
+      .map(function (x) { return { q: String(x.q).trim(), why: String(x.why || '').trim(), opts: (Array.isArray(x.opts) ? x.opts : []).map(function (o) { return String(o || '').trim(); }).filter(Boolean).slice(0, 5) }; })
+      .slice(0, 12);
     f.askRounds = (f.askRounds || 0) + 1;
     var all = fjWarrantyQs().concat(qs);
     var prevByQ = {};
@@ -7349,11 +7362,14 @@ function fjBuildEstimate() {
       f.busy = false;
       f.askPending = d;
       f.ask = { q: all, a: ans };
-      if (state.view === 'fjform') { render(); try { window.scrollTo(0, 0); } catch (_) {} }
+      if (state.view === 'fjform' || state.view === 'fjask') { state.view = 'fjask'; render(); try { window.scrollTo(0, 0); } catch (_) {} }
       return;
     }
     fjApplyBuild(d);
-  }).catch(function (err) { f.busy = false; f.err = (err && err.message) || 'AI error'; if (state.view === 'fjform') render(); });
+  }).catch(function (err) {
+    f.busy = false; f.err = (err && err.message) || 'AI error';
+    if (state.view === 'fjform' || state.view === 'fjask') { render(); try { window.scrollTo(0, 0); } catch (_) {} }
+  });
 }
 function fjApplyBuild(d) {
   var f = state.fj; if (!f) return;
@@ -7401,7 +7417,8 @@ function fjApplyBuild(d) {
     state.view = 'estimate'; render(); try { window.scrollTo(0, 0); } catch (_) {}
   } catch (err) {
     f.busy = false; f.err = (err && err.message) || 'Could not build it.';
-    if (state.view === 'fjform') render();
+    if (state.view === 'fjask') state.view = 'fjform';
+    render();
   }
 }
 /* Inspection / invoice: build the customer document from the form. */
