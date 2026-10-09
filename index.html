@@ -4981,6 +4981,13 @@ function estAiPrompt(chat, transcript) {
     + '- You explain the mechanism in a line or two so the price makes sense. This is how you actually write: "A liner here is not just the pipe. On each flue it is the liner run the full height, the smoke chamber sealed into it, and a new top-sealing damper cap at the top, which closes onto a gasket and is worked from inside at the fireplace with a cable. The three go together because the liner has to be sealed in at the bottom and terminated properly at the top."\n'
     + '- You always say what happens if it is left alone. This is how you write that: "Left as is, rust will continue to spread and water damage will get worse, leading to costly repairs inside the chase and chimney."\n'
     + '- When several items belong to one job, say why they go together. When a part can be done on its own, say that too.\n'
+    + 'WORK IT OUT, DO NOT WAIT TO BE TOLD:\n'
+    + '- The technician writes two or three words and moves on. Read his words, his measurements and the photos TOGETHER and work out what the job actually is: what system it is, what is damaged, what is causing it and what it needs. "Crown cracked, no cap" is enough for you to see that rain has been going down the flue and to write the job properly.\n'
+    + '- Writing a service that is not in the catalog is normal and expected, not a fallback. When the right work has no catalog entry, write it as {"custom":"short customer-facing name"} and give it the same full scope lines as a catalog item. Do not force the job into a catalog line that does not fit it.\n'
+    + 'WHEN YOU ARE MISSING SOMETHING, ASK — NEVER GUESS:\n'
+    + '- Anything you need and were not given goes into questions[] instead of into the estimate: a price for work you wrote yourself, a length, a size, a material, whether something is included. Never put a guess in the document and never leave the customer text vague to get around it.\n'
+    + '- Each question: q is the question in your own plain words, why is one short line saying what it changes, opts is 2 to 4 concrete answers Refael can tap (for a price, realistic figures; for a material, the real choices). He can also type his own.\n'
+    + '- At most 4 questions, and only things the visit does not already answer. If you can write and price the whole job from what you have, return questions as an empty array.\n'
     + 'WHAT YOU NEVER DO:\n'
     + '- Never invent a price, a size, a length, a material or a brand. If the technician did not say what something is made of, do not name a material — write the work without it. "A new liner" is right when he only wrote liner; "a new stainless liner" is wrong unless he said stainless.\n'
     + '- Never write a manufacturer or product brand name in anything the customer reads, even if the catalog wording contains one. For a top-sealing damper you write: a top-sealing damper cap that closes onto a gasket, opened and closed from inside at the fireplace with a cable.\n'
@@ -5001,7 +5008,7 @@ function estAiPrompt(chat, transcript) {
     + '- found: 3 to 5 plain sentences. What is there and exactly where, what is causing it, and what happens if it is left alone. Only what the visit and the photos support — if the technician did not see it, it does not go in.\n'
     + '- notes: 3 to 6 short notes, one per line: the warranty EXACTLY as the catalog states it for the services you chose, never a length the catalog does not give; that if hidden damage shows up once it is opened you stop and agree the difference with the customer before continuing; what is NOT included; that the price covers the work described and nothing is added without written approval; and anything the customer has to prepare or move.\n'
     + 'Return ONLY JSON, no markdown:\n'
-    + '{"title":"","found":"","options":[{"name":"","summary":"","items":[{"n":0,"qty":1,"lines":["",""]},{"custom":"","qty":1,"lines":[""]}]}],"notes":[""]}\n\n'
+    + '{"title":"","found":"","options":[{"name":"","summary":"","items":[{"n":0,"qty":1,"lines":["",""]},{"custom":"","qty":1,"lines":[""]}]}],"notes":[""],"questions":[{"q":"","why":"","opts":["",""]}]}\n\n'
     + 'CATALOG (n | name | owner price | standard scope):\n' + cat + '\n\n'
     + (transcript ? 'The measurements below are ours: use them to size the work, but never put a raw measurement or an internal note in the customer text on its own line. A size belongs in a scope line only where it helps the customer picture the work.\n\nFIELD VISIT (what the technician filled in on site):\n' + transcript
                     : 'FIELD VISIT (technician and inspector chat):\n' + estTranscript(chat));
@@ -6236,6 +6243,22 @@ root.addEventListener('click', function (e) {
       if (na) { state.fj.areas.push(na.id); fjRow(state.fj, na.id).title = na.name; render(); }
       break;
     }
+    case 'fj-ask-opt': {
+      var fq = state.fj; if (!fq || !fq.ask) break;
+      var cut = String(arg).indexOf('|');
+      fq.ask.a = fq.ask.a || {};
+      fq.ask.a[Number(String(arg).slice(0, cut))] = String(arg).slice(cut + 1);
+      render();
+      break;
+    }
+    case 'fj-ask-go': fjBuildEstimate(); break;
+    case 'fj-ask-skip': {
+      var fs2 = state.fj; if (!fs2) break;
+      fs2.askDone = true;
+      var pend = fs2.askPending, usable = pend && Array.isArray(pend.options) && pend.options.some(function (o) { return o && Array.isArray(o.items) && o.items.length; });
+      if (usable) { fjApplyBuild(pend); } else { fs2.ask = null; fs2.askPending = null; fjBuildEstimate(); }
+      break;
+    }
     case 'fj-alt-add': if (state.fj) { fjRow(state.fj, arg).alts.push({ name: '', note: '' }); render(); } break;
     case 'fj-alt-del': {
       if (!state.fj) break;
@@ -6348,7 +6371,7 @@ root.addEventListener('click', function (e) {
     }
     case 'fj-to-estimate': fjFromInspection(); break;
     case 'fj-review': fjReview(); break;
-    case 'fj-build': fjBuildEstimate(); break;
+    case 'fj-build': if (state.fj) { state.fj.askRounds = 0; state.fj.askDone = false; } fjBuildEstimate(); break;
     case 'fj-report': fjBuildReport(); break;
     case 'pv-open': previewOpen(arg || 'estimate'); break;
     case 'pv-back':
@@ -6828,7 +6851,7 @@ function fjBeforeAfter(f) { return { before: (f.beforePhotos || []).slice(), aft
 function fjFormSave(docId, f) {
   if (!docId || !f) return;
   var copy = {};
-  Object.keys(f).forEach(function (k) { if (k !== 'busy' && k !== 'err' && k !== 'review' && k !== 'builtEst' && k !== 'builtRep') copy[k] = f[k]; });
+  Object.keys(f).forEach(function (k) { if (k !== 'busy' && k !== 'err' && k !== 'review' && k !== 'builtEst' && k !== 'builtRep' && k !== 'askPending') copy[k] = f[k]; });
   docSave({ id: 'form-' + docId, kind: 'fjform', at: Date.now(), form: copy });
 }
 /* A form in progress is kept after every keystroke, not only when the document
@@ -6842,7 +6865,7 @@ function fjDraftSave() {
     fjDraftTimer = null;
     var g = state.fj; if (!g) return;
     var copy = {};
-    Object.keys(g).forEach(function (k) { if (k !== 'busy' && k !== 'err' && k !== 'review' && k !== 'builtEst' && k !== 'builtRep') copy[k] = g[k]; });
+    Object.keys(g).forEach(function (k) { if (k !== 'busy' && k !== 'err' && k !== 'review' && k !== 'builtEst' && k !== 'builtRep' && k !== 'askPending') copy[k] = g[k]; });
     try { docSave({ id: 'fjdraft', kind: 'fjdraft', at: Date.now(), form: copy }); } catch (_) {}
   }, 700);
 }
@@ -6963,6 +6986,42 @@ function fjPhotoStrip(id, photos) {
 /* "I recommend a liner — but she could also do X instead." Each alternative the
    technician writes here becomes a real Option B on the estimate, so he decides
    what the customer gets to choose between, not the AI. */
+/* The AI is allowed to not know something. Rather than guess a price, a length
+   or a material into a document a customer will sign, it hands the gap back as a
+   question with real answers to tap. */
+function fjAskAnswers(f) {
+  var A = f.ask; if (!A || !A.q.length) return '';
+  var L = [];
+  A.q.forEach(function (x, i) {
+    var v = String((A.a || {})[i] || '').trim();
+    if (v) L.push('- ' + x.q + ' ' + v);
+  });
+  return L.length ? '\n\nYOU ASKED, REFAEL ANSWERED """ + D + """ treat these as facts from the visit:\n' + L.join('\n') : '';
+}
+function fjAskCardHTML(f) {
+  var A = f.ask; if (!A || !A.q.length) return '';
+  return '<div class="card" style="border-color:var(--gold)">' +
+    '<div class="eyebrow">Before it can be written</div>' +
+    '<div style="color:var(--muted);font-size:13px;margin:2px 0 12px;line-height:1.45">It read the visit and the photos. These are the things it will not guess at.</div>' +
+    A.q.map(function (x, i) {
+      var val = String((A.a || {})[i] || '');
+      return '<div style="margin-bottom:15px">' +
+        '<div style="font-weight:650;font-size:15px;line-height:1.4">' + esc(x.q) + '</div>' +
+        (x.why ? '<div style="color:var(--muted);font-size:13px;margin-top:3px;line-height:1.4">' + esc(x.why) + '</div>' : '') +
+        ((x.opts || []).length ? '<div class="row" style="gap:6px;flex-wrap:wrap;margin-top:8px">' + x.opts.map(function (o) {
+          var on = val === o;
+          return '<button class="btn ' + (on ? 'btn-gold btn-primary' : 'btn-ghost') + '" data-act="fj-ask-opt" data-arg="' + esc(i + '|' + o) + '" style="flex:1 1 46%;min-height:42px;padding:0 8px;font-size:13px">' + esc(o) + '</button>';
+        }).join('') + '</div>' : '') +
+        '<input class="fj-ask" data-ai="' + i + '" placeholder="or write it yourself\u2026" value="' + esc(val) + '" style="width:100%;box-sizing:border-box;margin-top:8px;padding:9px 11px;border:1px solid var(--rule);border-radius:8px;font-size:15px">' +
+      '</div>';
+    }).join('') +
+    '<div class="row" style="gap:8px">' +
+      '<button class="btn btn-gold btn-primary" data-act="fj-ask-go" style="flex:1.4"' + (f.busy ? ' disabled' : '') + '>' + (f.busy ? 'Writing it\u2026' : 'Write it with these') + '</button>' +
+      '<button class="btn btn-ghost" data-act="fj-ask-skip" style="flex:1"' + (f.busy ? ' disabled' : '') + '>Write it anyway</button>' +
+    '</div>' +
+    '<div style="color:var(--muted);font-size:12px;margin-top:8px">Anything you leave empty is left out of the estimate rather than guessed.</div>' +
+  '</div>';
+}
 function fjAltBlockHTML(id, r) {
   var alts = r.alts || [];
   return '<div style="margin-top:12px">' +
@@ -7079,7 +7138,7 @@ function viewFjForm() {
     '<div class="topbar"><button class="iconbtn" data-act="fj-back">‹</button><div style="flex:1;min-width:0"><h1 style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + esc(K.name) + (isInsp ? ' — Level ' + esc(f.level) : '') + '</h1><div class="sub">' + (isInsp ? esc(fjSysName(f.system)) + ' · ' : '') + p.n + ' of ' + p.all + ' done</div></div></div>' +
     '<div class="screen">' +
       (f.err ? '<div class="card" style="border-color:var(--defect);color:var(--defect);font-size:14px">' + esc(f.err) + '</div>' : '') +
-      fromI + revBox + body +
+      fromI + fjAskCardHTML(f) + revBox + body +
     '</div>' +
     '<div class="bottombar" style="gap:6px">' +
       (isInsp
@@ -7097,6 +7156,12 @@ function wireFj() {
       var id = el.getAttribute('data-fj');
       if (id === '_extra') f.extraNote = el.value; else fjRow(f, id).note = el.value;
       fjDraftSave();
+    });
+  });
+  root.querySelectorAll('.fj-ask').forEach(function (el) {
+    el.addEventListener('input', function () {
+      if (!f.ask) return; f.ask.a = f.ask.a || {};
+      f.ask.a[Number(el.getAttribute('data-ai'))] = el.value;
     });
   });
   root.querySelectorAll('.fj-title').forEach(function (el) {
@@ -7225,8 +7290,28 @@ function fjBuildEstimate() {
   var f = state.fj; if (!f || f.busy) return;
   if (!fjDone(f).n) { f.err = 'Fill in at least one of the jobs above first.'; render(); return; }
   f.busy = 'build'; f.err = ''; render();
-  var prompt = estAiPrompt(null, (f.fromInspection ? 'THE INSPECTION WE JUST DID (use it for the cause and for what to recommend):\n' + f.fromInspection.text + '\n\n' : '') + fjTranscript(f));
+  var prompt = estAiPrompt(null, (f.fromInspection ? 'THE INSPECTION WE JUST DID (use it for the cause and for what to recommend):\n' + f.fromInspection.text + '\n\n' : '') + fjTranscript(f) + fjAskAnswers(f));
   fjAiCall(prompt, 4096, true).then(function (d) {
+    /* It would rather ask than guess. Two rounds at most, then it writes what it has. */
+    var qs = (d && Array.isArray(d.questions) ? d.questions : [])
+      .filter(function (x) { return x && String(x.q || '').trim(); })
+      .map(function (x) { return { q: String(x.q).trim(), why: String(x.why || '').trim(), opts: (Array.isArray(x.opts) ? x.opts : []).map(function (o) { return String(o || '').trim(); }).filter(Boolean).slice(0, 4) }; })
+      .slice(0, 4);
+    f.askRounds = (f.askRounds || 0) + 1;
+    if (qs.length && !f.askDone && f.askRounds <= 2) {
+      f.busy = false;
+      f.askPending = d;
+      f.ask = { q: qs, a: (f.ask && f.ask.a) || {} };
+      if (state.view === 'fjform') { render(); try { window.scrollTo(0, 0); } catch (_) {} }
+      return;
+    }
+    fjApplyBuild(d);
+  }).catch(function (err) { f.busy = false; f.err = (err && err.message) || 'AI error'; if (state.view === 'fjform') render(); });
+}
+function fjApplyBuild(d) {
+  var f = state.fj; if (!f) return;
+  f.busy = 'build'; f.err = ''; f.ask = null; f.askPending = null; render();
+  try {
     var e = newEstimate();
     e.customer = { name: (f.customer && f.customer.name) || '', phone: (f.customer && f.customer.phone) || '', email: (f.customer && f.customer.email) || '', addr: (f.customer && f.customer.address) || '' };
     if (f.customer && f.customer.crmId) { e.crmId = f.customer.crmId; e.crmCloud = !!f.customer.crmCloud; }
@@ -7267,7 +7352,10 @@ function fjBuildEstimate() {
     state.estimate = e; state.estAi = { forId: e, done: 'Built from your visit. Check the prices and the scope lines' + (unpriced ? ' — ' + unpriced + ' item(s) need a price (red).' : '.') };
     f.busy = false; state.fjLast = f;
     state.view = 'estimate'; render(); try { window.scrollTo(0, 0); } catch (_) {}
-  }).catch(function (err) { f.busy = false; f.err = (err && err.message) || 'AI error'; if (state.view === 'fjform') render(); });
+  } catch (err) {
+    f.busy = false; f.err = (err && err.message) || 'Could not build it.';
+    if (state.view === 'fjform') render();
+  }
 }
 /* Inspection / invoice: build the customer document from the form. */
 function fjBuildReport() {
