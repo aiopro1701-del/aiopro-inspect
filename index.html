@@ -1142,6 +1142,8 @@ var M = 43, PW = 612, PH = 792, CONTENT = PW - M * 2;
 /* Where this copy of the app lives (so links work for the live app and the test copy). */
 var APP_DIR = (/^https?:$/.test(location.protocol) && location.hostname) ? location.origin + location.pathname.replace(/[^\/]*$/, '') : 'https://aiopro1701-del.github.io/aiopro-inspect/';
 var IS_BETA = /\/beta\/$/.test(APP_DIR);
+/* Bumped on every deploy, so a screenshot of Settings says which build is on the phone. */
+var APP_BUILD = '2026-10-09 05:42 UTC';
 /* Refael's field knowledge — the bot answers from this. Kept word-for-word stable so it is cached (cheap). */
 var AIO_KB = "AIO PRO CHIMNEY \u2014 FIELD KNOWLEDGE (from the owner, Refael Maman). Use this to answer the technician the way Refael would.\n\nWHO WE ARE\n- AIOPRO LLC, trading as AIO Pro Chimney. 1505 North and South Rd, St. Louis, MO 63130. Phone (314) 379-2871. Email Aiopro1701@gmail.com. aioprochimney.com.\n- Licensed general contractor, insured, CSIA member, NCSG member, BBB accredited. Greater St. Louis; east as far as Belleville and O'Fallon, IL. A Kansas City employee can take Kansas City jobs.\n- Owner: Refael Maman. The office = Refael.\n\nWHO USES THE APP\n- Owner (Refael): everything.\n- Technician: visits the house, finds the problem, prices it, presents it, closes it. Most of the work is technician and customer face to face. The technician is still learning and calls Refael on most jobs; that is fine and expected.\n- Installer: does the booked job. Needs to know when and where, what to bring, and what the technician found (photos + scope).\n\nWHAT THE TECHNICIAN MAY AND MAY NOT SAY\n- Prices: he may give prices and approximate (+/-) ranges, and he may adjust a price or give a discount (see Selling).\n- Dates: never promise a date. Scheduling always goes through the office: \"Refael will call you to book it.\"\n- Warranty: never promise warranty terms. \"The warranty is written on the estimate; Refael confirms it.\"\n- If he does not know something: say \"Let me confirm that with Refael\" and call him. Never guess about safety, code, or warranty.\n- Never run down another company. Never argue with the customer.\n\nMONEY RULES\n- Minimum service charge is usually $49. Sometimes the estimate visit is free, but not often.\n- Deposit: 20% to 40% of the job, depending on the size of the job. Balance on completion unless agreed otherwise.\n- Estimate prices hold for 30 days.\n- Price goes up with: roof pitch (steep = harder/slower, may need extra safety gear), job difficulty, how hard the chimney is to reach (height, stories, trees, lift or scaffold needed), and how much material is needed (liner length, size of the chimney top, number of flues).\n- Access equipment (boom lift, scaffold) is priced as its own line so the customer sees it.\n- Anything that may change once opened up: say so in the scope notes \u2014 \"if we find more once it is opened, we stop and agree the difference with you before continuing.\"\n\nHOW REFAEL WRITES AN ESTIMATE\n- One scope by default: the work he recommends. Add Option B (or C) ONLY when the customer has a real choice (keep the stove vs. new stove, stainless vs. galvanized, vent-free vs. vented gas). Each option has its own full total. \"Choose one \u2014 you do not need both.\"\n- Add-ons the customer can take or leave (a vent cap, a second liner) are listed separately as optional.\n- Each line: a clear name, 3-7 short scope lines specific to this house (sizes, lengths, where), and a price.\n- Explain the cause in plain words (\"a square damper cannot seal a round liner\"), then the fix. Safety items first and clearly: \"This one should not wait.\"\n- Scope notes say what is NOT included and what the customer prepares.\n- Tone: plain, confident, respectful. No jargon, no code numbers, no sales filler.\n\nSELLING (coach the technician)\n- Before the price: show the customer the photos, explain what is wrong, why it happened, and what happens if it waits.\n- Present the recommended scope first, with the total. If there is a real choice, present Option A and Option B side by side.\n- \"It's too expensive\": 1) Acknowledge (\"I understand, it's a real number.\"). 2) Ask (\"What matters most to you \u2014 the lowest price today, or fixing it so it doesn't come back?\" / \"What budget did you have in mind?\"). 3) Advise:\n  a) Split it: the safety / water-stopping part now, the rest later (becomes Option A / B).\n  b) Show the value: materials, labor, cleanup, photos, written warranty, licensed and insured, CSIA/NCSG.\n  c) Deposit 20-40% now, balance when done.\n  d) A discount is a closing tool, tied to a decision today or booking now. Give it once, clearly (\"If we book it today I can take $X off\").\n- \"I need to think about it\": ask what is holding them back; offer to email the estimate now with the Sign button; tell them Refael will follow up.\n- \"I'm getting other quotes\": that's fine; point to the written scope and warranty so they compare the same work. Never bash competitors.\n- Close: ask for the decision. \"Shall I send it to your email so you can sign it on your phone?\"\n\nSAFETY \u2014 STOP AND TELL THE CUSTOMER\n- Gas leak found (bubbles on leak test, smell): the appliance must not be used until repaired; if they smell gas, shut the supply and call the gas utility. Call Refael.\n- Blocked flue (debris, animal nest, collapsed tile) on a furnace or water heater: do not operate that appliance until cleared/lined. CO risk.\n- Unlined or badly cracked flue on a wood fireplace: do not use until repaired.\n- Disconnected or rusted-through vent connector: do not operate.\n- Creosote glaze or heavy buildup: no fires until swept.\n- Say it in one calm sentence, write it on the estimate, and call Refael.\n\nWHAT TO CHECK AND PHOTOGRAPH (standard order, bottom up)\n- First find out what system it is (wood fireplace, gas logs in a fireplace, direct-vent gas, vent-free gas, insert/stove, furnace or water heater flue) and check only the parts that system has. Vent-free gas has no flue: no damper, liner or roof checks.\n- Level 1: inside the home and from the ground only \u2014 no roof or attic. Level 2 adds the roof and the top when it is safe, and a camera scan of the flue. We do not go into attics, basements or crawl spaces.\n1. Front of the house (cover photo), then the appliance / fireplace.\n2. Firebox: cracks, gaps in joints, missing panels.\n3. Damper and throat: opens/closes and seals; damper type vs. flue shape.\n4. Smoke chamber: voids, rough/unparged brick, creosote.\n5. Flue and liner: camera scan if possible; clay tile cracks, offsets, missing mortar; liner size and material; debris.\n6. Appliance vents (furnace/water heater): connector condition, slope, clearance (single-wall 6\", B-vent 1\"), draft.\n8. Roof and exterior: flashing, cricket (chimney wider than 30\"), crown cracks, cap/spark arrestor, chase cover rust, brick and mortar, height (3-2-10 rule).\n9. Measurements that set the price: flue size (inside dimensions), liner length (roofline to appliance + above the top), chimney top size (for cap/chase cover), number of flues, stories, roof pitch, access.\n\nHOW TO MEASURE (short)\n- Liner length: from the appliance connection (or smoke chamber) to the top of the flue tile + about 1 ft; count stories (about 10 ft each) if you cannot measure directly.\n- Flue size: inside width x depth of the clay tile (or diameter for round); the liner is sized to the appliance outlet.\n- Chase cover / cap: outside length x width of the top (crown or chase), plus the flue tile height above the crown.\n- Chimney height above the roof: at least 3 ft above where it passes the roof and 2 ft higher than anything within 10 ft.\n\nWHEN TO CALL REFAEL\n- Any safety hazard, any job over a few thousand dollars, anything not in the price list, anything structural, any date/warranty question, any customer who is unhappy, and whenever unsure.";
 /* Photos keep their real shape: height/width of an image (0.75 if unknown). */
@@ -1587,7 +1589,7 @@ function viewSettings() {
           '<button class="btn btn-ghost" data-act="export-data">Export backup</button>' +
           '<button class="btn btn-ghost" data-act="import-data">Import</button>' +
         '</div></div>' +
-      '<div style="text-align:center;color:var(--muted);font-family:var(--mono);font-size:11px;margin-top:2px">AIO Pro Inspect · v1.1</div>' +
+      '<div style="text-align:center;color:var(--muted);font-family:var(--mono);font-size:11px;margin-top:2px">AIO Pro Inspect · build ' + APP_BUILD + '</div>' +
     '</div>' +
     '<div class="bottombar"><button class="btn btn-primary" data-act="save-settings">Save</button></div>' +
     '</div>';
@@ -5300,25 +5302,34 @@ function buildEstimatePdf(opts) {
   var epics = (estPhotos(e) || []).filter(function (x) { return /^data:image\/(jpeg|png);base64,/.test(x); }).slice(0, 12);
   if (epics.length) {
     var ecaps = e.fjCaps || [];
-    var cw = (W - 14) / 2, ch = Math.round(cw * 0.72);
-    sec('Photos from the visit', ch + 26);
-    for (var pi = 0; pi < epics.length; pi += 2) {
-      var pair = epics.slice(pi, pi + 2);
-      var capH = pair.some(function (_, k) { return String(ecaps[pi + k] || '').trim(); }) ? 13 : 0;
-      ens(ch + capH + 12);
-      pair.forEach(function (src, k) {
-        var x = M + k * (cw + 14);
-        var fmt = /^data:image\/png/.test(src) ? 'PNG' : 'JPEG';
-        try { doc.addImage(src, fmt, x, y, cw, ch); } catch (_) {}
-        draw(RULE, 0.5); doc.rect(x, y, cw, ch);
-        var cap = String(ecaps[pi + k] || '').trim();
-        if (cap) {
-          doc.setFont('helvetica', 'normal').setFontSize(8.5); ink(MUTED);
-          doc.text(doc.splitTextToSize(cap, cw)[0], x, y + ch + 10);
-        }
-      });
-      y += ch + capH + 12;
-    }
+    var cw = (W - 14) / 2;
+    /* Grouped under the subject they belong to, and never squashed into a fixed
+       box: the row is as tall as the tallest photo in it, each one scaled to fit. */
+    var groups = [], byCap = {};
+    epics.forEach(function (src, gi) {
+      var cap = String(ecaps[gi] || '').trim() || 'On site';
+      if (!byCap[cap]) { byCap[cap] = []; groups.push(cap); }
+      byCap[cap].push(src);
+    });
+    sec('Photos from the visit', 80);
+    groups.forEach(function (cap) {
+      var list = byCap[cap];
+      ens(26);
+      doc.setFont('helvetica', 'bold').setFontSize(10); ink(INK);
+      doc.text(cap, M, y + 2); y += 13;
+      for (var gi2 = 0; gi2 < list.length; gi2 += 2) {
+        var pair2 = list.slice(gi2, gi2 + 2);
+        var rowH = pdfRowH(doc, pair2, cw, 0.56, 1.34);
+        ens(rowH + 12);
+        pair2.forEach(function (src, k) {
+          var x = M + k * (cw + 14);
+          pdfImgFit(doc, src, x, y, cw, rowH, 'SLOW', { bg: PHOTO_BG });
+          draw(RULE, 0.5); doc.rect(x, y, cw, rowH);
+        });
+        y += rowH + 10;
+      }
+      y += 4;
+    });
   }
 
   /* Terms */
