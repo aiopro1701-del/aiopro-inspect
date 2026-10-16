@@ -1143,7 +1143,7 @@ var M = 43, PW = 612, PH = 792, CONTENT = PW - M * 2;
 var APP_DIR = (/^https?:$/.test(location.protocol) && location.hostname) ? location.origin + location.pathname.replace(/[^\/]*$/, '') : 'https://aiopro1701-del.github.io/aiopro-inspect/';
 var IS_BETA = /\/beta\/$/.test(APP_DIR);
 /* Bumped on every deploy, so a screenshot of Settings says which build is on the phone. */
-var APP_BUILD = '2026-10-16 06:02 UTC';
+var APP_BUILD = '2026-10-16 17:57 UTC';
 /* Refael's field knowledge — the bot answers from this. Kept word-for-word stable so it is cached (cheap). */
 var AIO_KB = "AIO PRO CHIMNEY \u2014 FIELD KNOWLEDGE (from the owner, Refael Maman). Use this to answer the technician the way Refael would.\n\nWHO WE ARE\n- AIOPRO LLC, trading as AIO Pro Chimney. 1505 North and South Rd, St. Louis, MO 63130. Phone (314) 379-2871. Email Aiopro1701@gmail.com. aioprochimney.com.\n- Licensed general contractor, insured, CSIA member, NCSG member, BBB accredited. Greater St. Louis; east as far as Belleville and O'Fallon, IL. A Kansas City employee can take Kansas City jobs.\n- Owner: Refael Maman. The office = Refael.\n\nWHO USES THE APP\n- Owner (Refael): everything.\n- Technician: visits the house, finds the problem, prices it, presents it, closes it. Most of the work is technician and customer face to face. The technician is still learning and calls Refael on most jobs; that is fine and expected.\n- Installer: does the booked job. Needs to know when and where, what to bring, and what the technician found (photos + scope).\n\nWHAT THE TECHNICIAN MAY AND MAY NOT SAY\n- Prices: he may give prices and approximate (+/-) ranges, and he may adjust a price or give a discount (see Selling).\n- Dates: never promise a date. Scheduling always goes through the office: \"Refael will call you to book it.\"\n- Warranty: never promise warranty terms. \"The warranty is written on the estimate; Refael confirms it.\"\n- If he does not know something: say \"Let me confirm that with Refael\" and call him. Never guess about safety, code, or warranty.\n- Never run down another company. Never argue with the customer.\n\nMONEY RULES\n- Minimum service charge is usually $49. Sometimes the estimate visit is free, but not often.\n- Deposit: 20% to 40% of the job, depending on the size of the job. Balance on completion unless agreed otherwise.\n- Estimate prices hold for 30 days.\n- Price goes up with: roof pitch (steep = harder/slower, may need extra safety gear), job difficulty, how hard the chimney is to reach (height, stories, trees, lift or scaffold needed), and how much material is needed (liner length, size of the chimney top, number of flues).\n- Access equipment (boom lift, scaffold) is priced as its own line so the customer sees it.\n- Anything that may change once opened up: say so in the scope notes \u2014 \"if we find more once it is opened, we stop and agree the difference with you before continuing.\"\n\nHOW REFAEL WRITES AN ESTIMATE\n- One scope by default: the work he recommends. Add Option B (or C) ONLY when the customer has a real choice (keep the stove vs. new stove, stainless vs. galvanized, vent-free vs. vented gas). Each option has its own full total. \"Choose one \u2014 you do not need both.\"\n- Add-ons the customer can take or leave (a vent cap, a second liner) are listed separately as optional.\n- Each line: a clear name, 3-7 short scope lines specific to this house (sizes, lengths, where), and a price.\n- Explain the cause in plain words (\"a square damper cannot seal a round liner\"), then the fix. Safety items first and clearly: \"This one should not wait.\"\n- Scope notes say what is NOT included and what the customer prepares.\n- Tone: plain, confident, respectful. No jargon, no code numbers, no sales filler.\n\nSELLING (coach the technician)\n- Before the price: show the customer the photos, explain what is wrong, why it happened, and what happens if it waits.\n- Present the recommended scope first, with the total. If there is a real choice, present Option A and Option B side by side.\n- \"It's too expensive\": 1) Acknowledge (\"I understand, it's a real number.\"). 2) Ask (\"What matters most to you \u2014 the lowest price today, or fixing it so it doesn't come back?\" / \"What budget did you have in mind?\"). 3) Advise:\n  a) Split it: the safety / water-stopping part now, the rest later (becomes Option A / B).\n  b) Show the value: materials, labor, cleanup, photos, written warranty, licensed and insured, CSIA/NCSG.\n  c) Deposit 20-40% now, balance when done.\n  d) A discount is a closing tool, tied to a decision today or booking now. Give it once, clearly (\"If we book it today I can take $X off\").\n- \"I need to think about it\": ask what is holding them back; offer to email the estimate now with the Sign button; tell them Refael will follow up.\n- \"I'm getting other quotes\": that's fine; point to the written scope and warranty so they compare the same work. Never bash competitors.\n- Close: ask for the decision. \"Shall I send it to your email so you can sign it on your phone?\"\n\nSAFETY \u2014 STOP AND TELL THE CUSTOMER\n- Gas leak found (bubbles on leak test, smell): the appliance must not be used until repaired; if they smell gas, shut the supply and call the gas utility. Call Refael.\n- Blocked flue (debris, animal nest, collapsed tile) on a furnace or water heater: do not operate that appliance until cleared/lined. CO risk.\n- Unlined or badly cracked flue on a wood fireplace: do not use until repaired.\n- Disconnected or rusted-through vent connector: do not operate.\n- Creosote glaze or heavy buildup: no fires until swept.\n- Say it in one calm sentence, write it on the estimate, and call Refael.\n\nWHAT TO CHECK AND PHOTOGRAPH (standard order, bottom up)\n- First find out what system it is (wood fireplace, gas logs in a fireplace, direct-vent gas, vent-free gas, insert/stove, furnace or water heater flue) and check only the parts that system has. Vent-free gas has no flue: no damper, liner or roof checks.\n- Level 1: inside the home and from the ground only \u2014 no roof or attic. Level 2 adds the roof and the top when it is safe, and a camera scan of the flue. We do not go into attics, basements or crawl spaces.\n1. Front of the house (cover photo), then the appliance / fireplace.\n2. Firebox: cracks, gaps in joints, missing panels.\n3. Damper and throat: opens/closes and seals; damper type vs. flue shape.\n4. Smoke chamber: voids, rough/unparged brick, creosote.\n5. Flue and liner: camera scan if possible; clay tile cracks, offsets, missing mortar; liner size and material; debris.\n6. Appliance vents (furnace/water heater): connector condition, slope, clearance (single-wall 6\", B-vent 1\"), draft.\n8. Roof and exterior: flashing, cricket (chimney wider than 30\"), crown cracks, cap/spark arrestor, chase cover rust, brick and mortar, height (3-2-10 rule).\n9. Measurements that set the price: flue size (inside dimensions), liner length (roofline to appliance + above the top), chimney top size (for cap/chase cover), number of flues, stories, roof pitch, access.\n\nHOW TO MEASURE (short)\n- Liner length: from the appliance connection (or smoke chamber) to the top of the flue tile + about 1 ft; count stories (about 10 ft each) if you cannot measure directly.\n- Flue size: inside width x depth of the clay tile (or diameter for round); the liner is sized to the appliance outlet.\n- Chase cover / cap: outside length x width of the top (crown or chase), plus the flue tile height above the crown.\n- Chimney height above the roof: at least 3 ft above where it passes the roof and 2 ft higher than anything within 10 ft.\n\nWHEN TO CALL REFAEL\n- Any safety hazard, any job over a few thousand dollars, anything not in the price list, anything structural, any date/warranty question, any customer who is unhappy, and whenever unsure.";
 /* Photos keep their real shape: height/width of an image (0.75 if unknown). */
@@ -6061,13 +6061,26 @@ function updApply() {
   Promise.all(jobs).then(done, done);
   setTimeout(done, 4000);
 }
-function updBannerHTML() {
-  if (!updStale()) return '';
-  return '<div id="upd_bar" style="position:sticky;top:0;z-index:60;background:var(--gold);color:#1a1205;' +
-    'padding:10px 14px;display:flex;align-items:center;gap:10px;font-size:13.5px;font-weight:650">' +
-    '<span style="flex:1">A newer version of the app is ready.</span>' +
-    '<button class="btn" data-act="upd-now" style="background:#1a1205;color:#fff;padding:6px 12px;' +
-    'min-height:34px;font-size:13px;border:none">Update now</button></div>';
+/* When the server is ahead, the app stops here. Nobody works on an old
+   build: the wrong prices, the wrong wording, and on a build from before the
+   crew sync the office never sees the job at all. Anything in progress is
+   already saved, so the reload costs nothing.
+   This gate only appears when the check SUCCEEDED and came back different.
+   A phone with no signal cannot check, so it is never locked out in the
+   field — it keeps working and updates the next time it has a connection. */
+function updGateHTML() {
+  return '<div id="upd_gate" style="position:fixed;inset:0;z-index:999;background:var(--mortar,#F3EEE4);color:var(--ink,#1A1614);' +
+    'display:flex;flex-direction:column;align-items:center;justify-content:center;padding:28px;text-align:center">' +
+    '<div style="font-size:40px;line-height:1;margin-bottom:16px">\u2193</div>' +
+    '<div style="font-weight:750;font-size:19px;margin-bottom:8px">A new version of the app is out</div>' +
+    '<div style="color:var(--muted);font-size:14px;line-height:1.5;max-width:300px;margin-bottom:4px">' +
+    'Update before you carry on, so you are working with the current prices and wording ' +
+    'and the office gets your paperwork.</div>' +
+    '<div style="color:var(--muted);font-size:12px;margin-bottom:22px">Whatever you were in the middle of is saved.</div>' +
+    '<button class="btn btn-gold btn-primary" data-act="upd-now" id="upd_go" ' +
+    'style="width:100%;max-width:280px;font-size:16px;min-height:50px">Update now</button>' +
+    '<div style="margin-top:18px;color:var(--muted);font-family:var(--mono);font-size:11px">' +
+    'on this phone ' + esc(APP_BUILD) + '<br>available ' + esc(updState.latest) + '</div></div>';
 }
 function updStatusHTML() {
   if (updStale()) {
@@ -6082,9 +6095,15 @@ function updStatusHTML() {
 
 function render() {
   var html;
+  /* Nothing else renders while a newer build is sitting on the server. */
+  if (updStale()) {
+    /* save whatever is half-typed before the screen goes */
+    try { if (state.fj && (state.view === 'fjform' || state.view === 'fjsetup' || state.view === 'fjask')) fjDraftSave(); } catch (_) {}
+    root.innerHTML = updGateHTML();
+    return;
+  }
   if (state.access && !state.access.ok) {
-    /* A phone that is locked out may still be on an old build; let it update. */
-    root.innerHTML = updBannerHTML() + (state.view === 'pair' ? viewPair() : viewLocked());
+    root.innerHTML = state.view === 'pair' ? viewPair() : viewLocked();
     wirePair();
     return;
   }
@@ -6114,7 +6133,7 @@ function render() {
   else if (state.view === 'docs') html = viewDocs();
   else if (state.view === 'crewdoc') html = viewCrewDoc();
   else html = viewHome();
-  root.innerHTML = updBannerHTML() + html;
+  root.innerHTML = html;
   wireInputs();
   wirePhotoMarks();
   chatWire();
