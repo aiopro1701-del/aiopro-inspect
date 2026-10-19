@@ -2049,11 +2049,12 @@ function viewCrew() {
   }).join('');
   return '<div class="app">' +
     '<div class="topbar"><button class="iconbtn" data-act="home">‹</button><div style="flex:1"><h1>My crew</h1>' +
-      '<div class="sub">' + crew.length + ' active</div></div>' +
+      '<div class="sub">' + (crew.length + 1) + ' active</div></div>' +
       '<button class="iconbtn" data-act="crew-refresh" aria-label="Refresh">⟳</button></div>' +
     '<div class="screen">' +
       (st.busy ? '<div class="empty" style="padding:14px">Loading the crew…</div>' : '') +
-      (cards || (st.loaded ? '<div class="empty" style="padding:14px">Nobody active. Settings, then The crew, to add somebody.</div>' : '')) +
+      escCard() +
+      (cards || (st.loaded ? '<div class="empty" style="padding:14px">No technician on the crew yet. Settings, then The crew, to add one.</div>' : '')) +
       (tjCrewAll().length > crew.length
         ? '<div style="font-size:12px;color:var(--muted);margin-top:10px">' + (tjCrewAll().length - crew.length) + ' switched-off entr' + ((tjCrewAll().length - crew.length) === 1 ? 'y is' : 'ies are') + ' hidden. Their history is kept; they cannot be given work.</div>'
         : '') +
@@ -2286,6 +2287,86 @@ function viewDay() {
     '</div>' +
     '<div class="bottombar"><button class="btn btn-gold btn-primary" data-act="day-new">+ New job on this day</button></div>' +
   '</div>';
+}
+
+/* ─────────────────────── Escobar belongs on the crew screen ──────────────
+   He is not in crew_keys — he works off the installer link, not a crew key —
+   so he has to be assembled by hand. His card is a different shape from a
+   technician's on purpose: he is not on commission and he files no closings.
+   What he has coming is the installer flag on the calendar; what he is owed
+   is the sub line on the closings of jobs he performed, off the price list. */
+
+function escJobs() {
+  return (state.gcalEvents || []).filter(function (e) { return !!e.worker; })
+    .sort(function (a, b) { return (a.date + (a.time || '')) < (b.date + (b.time || '')) ? -1 : 1; });
+}
+function escClosings() {
+  return (clStore().rows || []).filter(function (r) {
+    return String(r.performed_by || '').toLowerCase().indexOf('escobar') === 0;
+  });
+}
+function escPay() {
+  var rows = escClosings(), owed = 0;
+  rows.forEach(function (r) { owed += clPos(r.sub_amount); });
+  return { jobs: rows.length, owed: owed, rows: rows };
+}
+function escCard() {
+  var up = escJobs().filter(function (e) { return e.date >= isoToday(); }).length;
+  var pay = escPay();
+  return '<button class="card card-tap" style="display:block;width:100%;text-align:left" data-act="crew-member" data-arg="' + TJ_INSTALLER + '">' +
+    '<div style="font-weight:700;font-size:17px">' + tjDot(tjColorFor(TJ_INSTALLER)) + 'Escobar</div>' +
+    '<div style="color:var(--muted);font-size:12px;margin:2px 0 8px 15px">subcontractor · paid off the price list</div>' +
+    '<div class="row" style="gap:10px">' +
+      '<div class="stat"><div class="k">Coming up</div><div class="v" style="font-size:17px">' + up + '</div></div>' +
+      '<div class="stat"><div class="k">Jobs done</div><div class="v" style="font-size:17px">' + pay.jobs + '</div></div>' +
+      '<div class="stat"><div class="k">Owed</div><div class="v" style="font-size:17px">' + money(pay.owed) + '</div></div>' +
+    '</div></button>';
+}
+
+function viewEscobar() {
+  var tab = state.crewTab === 'report' ? 'report' : 'jobs';
+  var pay = escPay();
+  var body;
+  if (tab === 'jobs') {
+    var up = escJobs().filter(function (e) { return e.date >= isoToday(); });
+    body = up.length
+      ? up.map(function (e) {
+          return '<div class="card" style="border-left:4px solid ' + tjColorFor(TJ_INSTALLER) + '">' +
+            '<div style="font-weight:650">' + esc((e.time ? e.time + '  ' : '') + (e.title || 'Job')) + '</div>' +
+            '<div style="color:var(--muted);font-size:13px">' + esc(fmtDay(e.date) + (e.location ? ' · ' + e.location : '')) + '</div>' +
+            '<button class="btn btn-ghost" data-act="cal-open" data-arg="' + esc(e.acct + '|' + e.id) + '" style="width:100%;margin-top:8px">Open the job</button>' +
+          '</div>';
+        }).join('')
+      : '<div class="empty" style="padding:14px">Nothing coming up for him.</div>';
+  } else {
+    body = '<div class="card">' +
+      '<div class="eyebrow">What he is owed</div>' +
+      '<div style="font-size:26px;font-weight:700">' + money(pay.owed) + '</div>' +
+      '<div style="color:var(--muted);font-size:13px">across ' + pay.jobs + ' job' + (pay.jobs === 1 ? '' : 's') + ', off your price list</div>' +
+      '</div>' +
+      (pay.rows.length
+        ? pay.rows.sort(function (a, b) { return a.day < b.day ? -1 : 1; }).map(function (r) {
+            return '<div class="card" style="padding:10px 12px">' +
+              '<div class="row" style="align-items:baseline;gap:8px">' +
+                '<span style="color:var(--muted);font-size:12px;min-width:56px">' + esc(fmtDay(r.day)) + '</span>' +
+                '<span style="flex:1;font-weight:600">' + esc(r.customer || 'Job') + '</span>' +
+                '<span style="font-weight:650">' + money(clPos(r.sub_amount)) + '</span>' +
+              '</div>' +
+              '<div style="color:var(--muted);font-size:12px;margin-left:64px">' + esc([r.address, r.sold_by ? 'sold by ' + r.sold_by : ''].filter(Boolean).join(' · ')) + '</div>' +
+            '</div>';
+          }).join('')
+        : '<div class="empty" style="padding:14px">No finished jobs on file for him yet.</div>');
+  }
+  return '<div class="app">' +
+    '<div class="topbar"><button class="iconbtn" data-act="crew">‹</button><div style="flex:1"><h1>Escobar</h1>' +
+      '<div class="sub">' + money(pay.owed) + ' owed · subcontractor</div></div></div>' +
+    '<div class="screen">' +
+      '<div class="row" style="gap:6px;margin-bottom:12px">' +
+        '<button class="btn ' + (tab === 'jobs' ? 'btn-gold btn-primary' : 'btn-ghost') + '" data-act="crew-tab" data-arg="jobs" style="flex:1">Jobs</button>' +
+        '<button class="btn ' + (tab === 'report' ? 'btn-gold btn-primary' : 'btn-ghost') + '" data-act="crew-tab" data-arg="report" style="flex:1">What he is owed</button>' +
+      '</div>' + body +
+      '<div style="font-size:12px;color:var(--muted);margin-top:14px">He is not on commission and files no closings — the technician who sold the job closes it, and what Escobar is owed comes off that closing. He never sees a price.</div>' +
+    '</div></div>';
 }
 
 function viewHome() {
@@ -7170,7 +7251,7 @@ function render() {
   else if (state.view === 'openjobs') html = viewOpenJobs();
   else if (state.view === 'techjob') html = viewTechJob();
   else if (state.view === 'crew') html = viewCrew();
-  else if (state.view === 'crewone') html = viewCrewMember();
+  else if (state.view === 'crewone') html = (state.crewOne && state.crewOne.id === TJ_INSTALLER) ? viewEscobar() : viewCrewMember();
   else if (state.view === 'day') html = viewDay();
   else html = viewHome();
   root.innerHTML = html;
@@ -7509,7 +7590,7 @@ root.addEventListener('click', function (e) {
     case 'openjobs': state.view = 'openjobs'; render(); clLoad(true); break;
     case 'crew': if (isTech()) return; state.view = 'crew'; render(); crewKeysLoad(); clLoad(); tjLoad(); break;
     case 'crew-refresh': crewKeysLoad(true); clLoad(true); tjLoad(true); break;
-    case 'crew-member': { var cm = tjCrewAll().filter(function (x) { return x.id === arg; })[0]; if (cm) { state.crewOne = cm; state.crewTab = 'jobs'; state.view = 'crewone'; render(); } break; }
+    case 'crew-member': { var cm = arg === TJ_INSTALLER ? { id: TJ_INSTALLER, name: 'Escobar' } : tjCrewAll().filter(function (x) { return x.id === arg; })[0]; if (cm) { state.crewOne = cm; state.crewTab = 'jobs'; state.view = 'crewone'; render(); } break; }
     case 'crew-tab': state.crewTab = arg; render(); break;
     case 'crew-move': crewMove(arg); break;
     case 'gcal-connect': gcalConnect(arg || 'A'); break;
