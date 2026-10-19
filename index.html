@@ -1143,7 +1143,7 @@ var M = 43, PW = 612, PH = 792, CONTENT = PW - M * 2;
 var APP_DIR = (/^https?:$/.test(location.protocol) && location.hostname) ? location.origin + location.pathname.replace(/[^\/]*$/, '') : 'https://aiopro1701-del.github.io/aiopro-inspect/';
 var IS_BETA = /\/beta\/$/.test(APP_DIR);
 /* Bumped on every deploy, so a screenshot of Settings says which build is on the phone. */
-var APP_BUILD = '2026-10-19 09:38 UTC';
+var APP_BUILD = '2026-10-19 10:40 UTC';
 /* Refael's field knowledge — the bot answers from this. Kept word-for-word stable so it is cached (cheap). */
 var AIO_KB = "AIO PRO CHIMNEY \u2014 FIELD KNOWLEDGE (from the owner, Refael Maman). Use this to answer the technician the way Refael would.\n\nWHO WE ARE\n- AIOPRO LLC, trading as AIO Pro Chimney. 1505 North and South Rd, St. Louis, MO 63130. Phone (314) 379-2871. Email Aiopro1701@gmail.com. aioprochimney.com.\n- Licensed general contractor, insured, CSIA member, NCSG member, BBB accredited. Greater St. Louis; east as far as Belleville and O'Fallon, IL. A Kansas City employee can take Kansas City jobs.\n- Owner: Refael Maman. The office = Refael.\n\nWHO USES THE APP\n- Owner (Refael): everything.\n- Technician: visits the house, finds the problem, prices it, presents it, closes it. Most of the work is technician and customer face to face. The technician is still learning and calls Refael on most jobs; that is fine and expected.\n- Installer: does the booked job. Needs to know when and where, what to bring, and what the technician found (photos + scope).\n\nWHAT THE TECHNICIAN MAY AND MAY NOT SAY\n- Prices: he may give prices and approximate (+/-) ranges, and he may adjust a price or give a discount (see Selling).\n- Dates: never promise a date. Scheduling always goes through the office: \"Refael will call you to book it.\"\n- Warranty: never promise warranty terms. \"The warranty is written on the estimate; Refael confirms it.\"\n- If he does not know something: say \"Let me confirm that with Refael\" and call him. Never guess about safety, code, or warranty.\n- Never run down another company. Never argue with the customer.\n\nMONEY RULES\n- Minimum service charge is usually $49. Sometimes the estimate visit is free, but not often.\n- Deposit: 20% to 40% of the job, depending on the size of the job. Balance on completion unless agreed otherwise.\n- Estimate prices hold for 30 days.\n- Price goes up with: roof pitch (steep = harder/slower, may need extra safety gear), job difficulty, how hard the chimney is to reach (height, stories, trees, lift or scaffold needed), and how much material is needed (liner length, size of the chimney top, number of flues).\n- Access equipment (boom lift, scaffold) is priced as its own line so the customer sees it.\n- Anything that may change once opened up: say so in the scope notes \u2014 \"if we find more once it is opened, we stop and agree the difference with you before continuing.\"\n\nHOW REFAEL WRITES AN ESTIMATE\n- One scope by default: the work he recommends. Add Option B (or C) ONLY when the customer has a real choice (keep the stove vs. new stove, stainless vs. galvanized, vent-free vs. vented gas). Each option has its own full total. \"Choose one \u2014 you do not need both.\"\n- Add-ons the customer can take or leave (a vent cap, a second liner) are listed separately as optional.\n- Each line: a clear name, 3-7 short scope lines specific to this house (sizes, lengths, where), and a price.\n- Explain the cause in plain words (\"a square damper cannot seal a round liner\"), then the fix. Safety items first and clearly: \"This one should not wait.\"\n- Scope notes say what is NOT included and what the customer prepares.\n- Tone: plain, confident, respectful. No jargon, no code numbers, no sales filler.\n\nSELLING (coach the technician)\n- Before the price: show the customer the photos, explain what is wrong, why it happened, and what happens if it waits.\n- Present the recommended scope first, with the total. If there is a real choice, present Option A and Option B side by side.\n- \"It's too expensive\": 1) Acknowledge (\"I understand, it's a real number.\"). 2) Ask (\"What matters most to you \u2014 the lowest price today, or fixing it so it doesn't come back?\" / \"What budget did you have in mind?\"). 3) Advise:\n  a) Split it: the safety / water-stopping part now, the rest later (becomes Option A / B).\n  b) Show the value: materials, labor, cleanup, photos, written warranty, licensed and insured, CSIA/NCSG.\n  c) Deposit 20-40% now, balance when done.\n  d) A discount is a closing tool, tied to a decision today or booking now. Give it once, clearly (\"If we book it today I can take $X off\").\n- \"I need to think about it\": ask what is holding them back; offer to email the estimate now with the Sign button; tell them Refael will follow up.\n- \"I'm getting other quotes\": that's fine; point to the written scope and warranty so they compare the same work. Never bash competitors.\n- Close: ask for the decision. \"Shall I send it to your email so you can sign it on your phone?\"\n\nSAFETY \u2014 STOP AND TELL THE CUSTOMER\n- Gas leak found (bubbles on leak test, smell): the appliance must not be used until repaired; if they smell gas, shut the supply and call the gas utility. Call Refael.\n- Blocked flue (debris, animal nest, collapsed tile) on a furnace or water heater: do not operate that appliance until cleared/lined. CO risk.\n- Unlined or badly cracked flue on a wood fireplace: do not use until repaired.\n- Disconnected or rusted-through vent connector: do not operate.\n- Creosote glaze or heavy buildup: no fires until swept.\n- Say it in one calm sentence, write it on the estimate, and call Refael.\n\nWHAT TO CHECK AND PHOTOGRAPH (standard order, bottom up)\n- First find out what system it is (wood fireplace, gas logs in a fireplace, direct-vent gas, vent-free gas, insert/stove, furnace or water heater flue) and check only the parts that system has. Vent-free gas has no flue: no damper, liner or roof checks.\n- Level 1: inside the home and from the ground only \u2014 no roof or attic. Level 2 adds the roof and the top when it is safe, and a camera scan of the flue. We do not go into attics, basements or crawl spaces.\n1. Front of the house (cover photo), then the appliance / fireplace.\n2. Firebox: cracks, gaps in joints, missing panels.\n3. Damper and throat: opens/closes and seals; damper type vs. flue shape.\n4. Smoke chamber: voids, rough/unparged brick, creosote.\n5. Flue and liner: camera scan if possible; clay tile cracks, offsets, missing mortar; liner size and material; debris.\n6. Appliance vents (furnace/water heater): connector condition, slope, clearance (single-wall 6\", B-vent 1\"), draft.\n8. Roof and exterior: flashing, cricket (chimney wider than 30\"), crown cracks, cap/spark arrestor, chase cover rust, brick and mortar, height (3-2-10 rule).\n9. Measurements that set the price: flue size (inside dimensions), liner length (roofline to appliance + above the top), chimney top size (for cap/chase cover), number of flues, stories, roof pitch, access.\n\nHOW TO MEASURE (short)\n- Liner length: from the appliance connection (or smoke chamber) to the top of the flue tile + about 1 ft; count stories (about 10 ft each) if you cannot measure directly.\n- Flue size: inside width x depth of the clay tile (or diameter for round); the liner is sized to the appliance outlet.\n- Chase cover / cap: outside length x width of the top (crown or chase), plus the flue tile height above the crown.\n- Chimney height above the roof: at least 3 ft above where it passes the roof and 2 ft higher than anything within 10 ft.\n\nWHEN TO CALL REFAEL\n- Any safety hazard, any job over a few thousand dollars, anything not in the price list, anything structural, any date/warranty question, any customer who is unhappy, and whenever unsure.";
 /* Photos keep their real shape: height/width of an image (0.75 if unknown). */
@@ -1801,6 +1801,7 @@ function viewOpenJobs() {
     return '<div class="card">' +
       '<div style="font-weight:650">' + esc(r.customer || (ev && ev.title) || 'Job') + '</div>' +
       '<div style="color:var(--muted);font-size:13px">' + esc([r.address, fmtDay(r.day)].filter(Boolean).join(' · ')) + '</div>' +
+      '<div style="margin-top:8px">' + juStatChip(r.job_key) + '</div>' +
       '<div class="row" style="gap:10px;margin:10px 0">' +
         '<div class="stat"><div class="k">Job</div><div class="v" style="font-size:17px">' + money(clPos(r.job_total)) + '</div></div>' +
         '<div class="stat"><div class="k">Taken</div><div class="v" style="font-size:17px">' + money(clPos(r.collected)) + '</div></div>' +
@@ -1811,6 +1812,7 @@ function viewOpenJobs() {
         ? tjPickerHTML(ev, 'cl-assign', 'performer') + '<div style="height:10px"></div>' + tjPickerHTML(ev, 'cl-sell', 'seller')
         : '<div style="font-size:13px;color:var(--muted)">This job is not in the calendar window being shown, so there is nobody to send from here. Page the schedule to its month first.</div>') +
       '<button class="btn btn-ghost" data-act="cl-open" data-arg="' + esc(r.job_key) + '" style="width:100%;margin-top:8px">Edit the closing</button>' +
+      juStatBar(r.job_key) +
     '</div>' + juBlock(r.job_key, (ev && !ev.fromServer) ? ev : null);
   }).join('');
   return '<div class="app">' +
@@ -1885,16 +1887,44 @@ function clSourceJobs() {
 /* History filled in by hand carries the technician on the first line of the
    description, because the calendar API will not let us write the private
    field on an event we are backfilling. Read it as a fallback only. */
-function tjTechFromNotes(notes) {
-  var m = /(?:^|\n)\s*TECH:\s*([^\n]+)/i.exec(String(notes || ''));
-  if (!m) return '';
-  var name = m[1].trim().toLowerCase();
+/* He writes his calendar in Hebrew, in his own words — "מבצע: אומי",
+   "הוקצה Omi Odan". The app is the side that has to understand both;
+   his calendar is not going to be rewritten in English to suit it. So after
+   the explicit TECH: tag we read the line that actually hands the job over,
+   and take the crew name sitting on it. The line matters: Joan's note says
+   Omi SOLD that job, and selling it is not performing it. */
+var TJ_HE_ALIAS = { 'אומי': 'omi', 'עומי': 'omi', 'דן': 'dan', 'דייב': 'dave', 'אסקובר': 'escobar' };
+var TJ_ASSIGN_RE = /TECH|\u05de\u05d1\u05e6\u05e2|\u05de\u05d1\u05d5\u05e6\u05e2|\u05d4\u05d5\u05e7\u05e6\u05d4|assigned|performed\s+by/i;
+var TJ_ESC_RE = /\u05d0\u05e1\u05e7\u05d5\u05d1\u05e8|escobar/i;
+
+/* A name has to stand on its own. Without this, "dan" is found inside
+   "Odan" and the wrong man gets the job. Hebrew has no \b, so the boundary
+   is checked by hand on both sides and in both alphabets. */
+function tjWordIn(line, tok) {
+  if (!tok || tok.length < 2) return false;
+  var L = String(line).toLowerCase(), t = String(tok).toLowerCase(), i = 0, ltr = /[a-z0-9\u0590-\u05ff]/;
+  while ((i = L.indexOf(t, i)) >= 0) {
+    if (!ltr.test(L.charAt(i - 1)) && !ltr.test(L.charAt(i + t.length))) return true;
+    i += t.length;
+  }
+  return false;
+}
+/* Every way one man's name can be written: the crew entry itself, plus any
+   Hebrew spelling that points at it. */
+function tjNameTokens(c) {
+  var n = String((c && c.name) || '').trim().toLowerCase(), out = n ? [n] : [];
+  for (var he in TJ_HE_ALIAS) if (TJ_HE_ALIAS[he] === n) out.push(he);
+  return out;
+}
+/* One name can sit on more than one crew entry — a switched-off one from a
+   first attempt, and the live one. The live man has to win: answering with
+   the dead entry's id attaches the job to something nothing looks up, and
+   his list comes back empty with no error to show for it. */
+function tjMatchName(name) {
+  name = String(name || '').trim().toLowerCase();
   if (!name) return '';
+  if (TJ_HE_ALIAS[name]) name = TJ_HE_ALIAS[name];
   if (name === 'escobar') return TJ_INSTALLER;
-  /* One name can sit on more than one crew entry — a switched-off one from a
-     first attempt, and the live one. The live man has to win: answering with
-     the dead entry's id attaches the job to something nothing looks up, and
-     his list comes back empty with no error to show for it. */
   function pick(list) {
     for (var i = 0; i < list.length; i++) {
       if (String(list[i].name || '').trim().toLowerCase() === name) return list[i].id;
@@ -1902,6 +1932,26 @@ function tjTechFromNotes(notes) {
     return '';
   }
   return pick(tjCrewActive()) || pick(tjCrewAll());
+}
+function tjTechFromNotes(notes) {
+  var text = String(notes || '');
+  var m = /(?:^|\n)\s*TECH:\s*([^\n]+)/i.exec(text);
+  if (m) { var tag = tjMatchName(m[1]); if (tag) return tag; }
+
+  var lines = text.split('\n');
+  for (var i = 0; i < lines.length; i++) {
+    var line = lines[i];
+    if (!TJ_ASSIGN_RE.test(line)) continue;
+    if (TJ_ESC_RE.test(line)) return TJ_INSTALLER;
+    var crew = tjCrewActive().concat(tjCrewAll());
+    for (var j = 0; j < crew.length; j++) {
+      var toks = tjNameTokens(crew[j]);
+      for (var k = 0; k < toks.length; k++) {
+        if (tjWordIn(line, toks[k])) return crew[j].id;
+      }
+    }
+  }
+  return '';
 }
 
 function tjPerformerOf(ev) {
@@ -2457,6 +2507,32 @@ function viewFollowup() {
     '<div class="screen">' + head + act + jobCard + docCard + evCard + '</div></div>';
 }
 
+/* What actually reached their phones. The calendar is yours; this is the
+   only thing they can see, and the two drifting apart silently is the whole
+   reason a day's work can look handed out and land nowhere. */
+function crewSyncCard() {
+  var today = isoToday(), nobody = 0;
+  (state.gcalEvents || []).forEach(function (e) {
+    if (e.date && e.date >= today && tjPerformerOf(e) === TJ_ME) nobody++;
+  });
+  var sy = state.tjSync, out = '';
+  if (sy && sy.failed) {
+    out += '<div class="card" style="border-color:var(--defect)">' +
+      '<div style="font-weight:700;color:var(--defect)">' + sy.failed + ' job' + (sy.failed === 1 ? '' : 's') + ' did not reach a phone</div>' +
+      '<div style="color:var(--muted);font-size:13px;margin-top:2px">' + esc(sy.err || '') + '</div></div>';
+  }
+  if (nobody) {
+    out += '<div class="card" style="border-color:var(--gold)">' +
+      '<div style="font-weight:700;color:var(--gold)">' + nobody + ' coming job' + (nobody === 1 ? '' : 's') + ' with nobody on ' + (nobody === 1 ? 'it' : 'them') + '</div>' +
+      '<div style="color:var(--muted);font-size:13px;margin-top:2px">' +
+        'They sit on your calendar only. Write who performs it on the job \u2014 "\u05de\u05d1\u05e6\u05e2: \u05d0\u05d5\u05de\u05d9" is enough \u2014 or hand it out from the job itself.</div></div>';
+  }
+  if (!out && sy && sy.sent) {
+    out = '<div style="font-size:12px;color:var(--muted);margin-bottom:10px">' + sy.sent + ' job' + (sy.sent === 1 ? '' : 's') + ' on their phones.</div>';
+  }
+  return out;
+}
+
 function viewCrew() {
   var crew = tjCrewActive(), st = state.crewKeys || {};
   if (!st.loaded && !st.busy) crewKeysLoad();
@@ -2479,6 +2555,7 @@ function viewCrew() {
       '<button class="iconbtn" data-act="crew-refresh" aria-label="Refresh">⟳</button></div>' +
     '<div class="screen">' +
       (st.busy ? '<div class="empty" style="padding:14px">Loading the crew…</div>' : '') +
+      crewSyncCard() +
       escCard() +
       (cards || (st.loaded ? '<div class="empty" style="padding:14px">No technician on the crew yet. Settings, then The crew, to add one.</div>' : '')) +
       (tjCrewAll().length > crew.length
@@ -3042,6 +3119,59 @@ function juAsk(jobKey) {
     .catch(function (err) { s.saving = false; s.err = (err && err.message) || 'Could not send it.'; render(); });
 }
 
+/* Where an open job actually stands. He asked for one line he can read at a
+   glance: the day it is booked back in, or the honest reason there is no day
+   yet. It rides on its own row, so writing a plan never wipes it and setting
+   it never rewrites the plan. */
+function juStat(jobKey) {
+  var r = juLatest(jobKey, ['status']);
+  var b = String((r && r.body) || '').trim();
+  if (b.slice(0, 3) === 'on:' && b.length > 3) return { kind: 'on', day: b.slice(3), at: r.created_at };
+  if (b === 'parts') return { kind: 'parts', day: '', at: r.created_at };
+  return null;
+}
+function juStatText(st) {
+  if (st && st.kind === 'on') return 'Booked back in \u00b7 ' + fmtDay(st.day);
+  if (st && st.kind === 'parts') return 'Waiting for parts';
+  return 'Not scheduled yet';
+}
+function juStatColor(st) { return st && st.kind === 'on' ? 'var(--ok)' : 'var(--gold)'; }
+function juStatChip(jobKey) {
+  var st = juStat(jobKey);
+  return '<span style="display:inline-block;padding:3px 10px;border-radius:999px;font-size:12.5px;font-weight:650;' +
+    'color:' + juStatColor(st) + ';border:1px solid ' + juStatColor(st) + '">' + esc(juStatText(st)) + '</span>';
+}
+function juStatDraft(jobKey) {
+  var d = (state.juStatDraft || {})[jobKey];
+  if (d != null) return d;
+  var st = juStat(jobKey);
+  return st && st.kind === 'on' ? st.day : '';
+}
+function juSetStat(jobKey, body) {
+  var s = juStore(), key = sendKey();
+  if (!key) { s.err = 'This phone is not set up yet.'; render(); return; }
+  if (s.saving) return;
+  s.saving = true; s.err = ''; s.msg = ''; render();
+  cloudRpc('job_update_put', { p_key: key, p_payload: { job_key: jobKey, kind: 'status', body: body } })
+    .then(function () { s.saving = false; s.msg = 'Saved.'; return juLoad(true); })
+    .then(function () { render(); })
+    .catch(function (err) { s.saving = false; s.err = (err && err.message) || 'Could not save it.'; render(); });
+}
+/* The three controls under an open job. Only the owner sees them; a
+   technician reads the chip and nothing else. */
+function juStatBar(jobKey) {
+  if (!ownerKey()) return '';
+  var s = juStore(), st = juStat(jobKey), dis = s.saving ? ' disabled' : '';
+  return '<div class="row" style="gap:8px;margin-top:10px">' +
+      '<input type="date" data-model="justat.' + esc(jobKey) + '" value="' + esc(juStatDraft(jobKey)) + '" style="flex:1">' +
+      '<button class="btn btn-ghost" data-act="ju-stat-on" data-arg="' + esc(jobKey) + '"' + dis + ' style="flex:none">Book it back in</button>' +
+    '</div>' +
+    '<div class="row" style="gap:8px;margin-top:6px">' +
+      '<button class="btn ' + (st && st.kind === 'parts' ? 'btn-gold' : 'btn-ghost') + '" data-act="ju-stat" data-arg="' + esc(jobKey) + '|parts"' + dis + ' style="flex:1;font-size:13px;padding:9px">Waiting for parts</button>' +
+      '<button class="btn ' + (st ? 'btn-ghost' : 'btn-gold') + '" data-act="ju-stat" data-arg="' + esc(jobKey) + '|none"' + dis + ' style="flex:1;font-size:13px;padding:9px">Not scheduled yet</button>' +
+    '</div>';
+}
+
 /* The block that goes on an open job: who is on it, what the plan is, and
    either the owner writing an update or the technician asking for one. */
 function juBlock(jobKey, ev, myRole) {
@@ -3093,8 +3223,12 @@ function juBlock(jobKey, ev, myRole) {
       '<div style="color:var(--muted);font-size:12px;margin-top:4px">One ask every two days, and only when nothing new has come in.</div>';
   }
 
+  /* The technician reads the same line the owner set, so nobody has to ask
+     when a half-finished job is coming back. */
+  var statHTML = owner ? '' : '<div style="margin-bottom:8px">' + juStatChip(jobKey) + '</div>';
+
   return '<div class="card"><div class="eyebrow">Who is on it, and the plan</div>' +
-    who + planHTML + lastHTML +
+    who + statHTML + planHTML + lastHTML +
     (s.err ? '<div style="color:var(--defect);font-size:13px;margin-top:8px">' + esc(s.err) + '</div>' : '') +
     (s.msg ? '<div style="color:var(--ok);font-size:13px;margin-top:8px">' + esc(s.msg) + '</div>' : '') +
     tail + '</div>';
@@ -3144,9 +3278,15 @@ function crewSync(events) {
   }).join(';');
   if (mark === tjSyncMark) return;
   tjSyncMark = mark;
-  var i = 0;
+  var i = 0, sent = 0, failed = 0, lastErr = '';
   (function next() {
-    if (i >= jobs.length) { tjLoad(true); return; }
+    if (i >= jobs.length) {
+      /* A sweep that fails looks exactly like a sweep that works unless it
+         says so. That is how every one of these jobs sat on the calendar
+         looking fine while not one of them reached a phone. */
+      state.tjSync = { sent: sent, failed: failed, err: lastErr, at: Date.now() };
+      tjLoad(true); render(); return;
+    }
     var j = jobs[i++], ev = j.ev;
     cloudRpc('tech_jobs_assign', {
       p_owner: ownerKey(), p_id: (ev.acct || 'A') + '|' + ev.id,
@@ -3154,8 +3294,11 @@ function crewSync(events) {
       p_job: { acct: ev.acct || 'A', event_id: ev.id, title: ev.title || 'Job', day: ev.date,
         start_time: ev.time || '', end_time: ev.endTime || '',
         location: ev.location || '', notes: ev.notes || '', share_id: ev.share || '' }
-    }).then(function () { setTimeout(next, 200); })
-      .catch(function () { setTimeout(next, 200); });
+    }).then(function () { sent++; setTimeout(next, 200); })
+      .catch(function (err) {
+        failed++; lastErr = (err && err.message) || 'no connection';
+        setTimeout(next, 200);
+      });
   })();
 }
 
@@ -3360,58 +3503,48 @@ function tjDayCard(r, today) {
   '</div>';
 }
 
+/* He is sent a job the day before, never a week out. A seven-day strip was
+   only empty space to walk through, so the day he is standing in and the one
+   he is about to walk into are the whole screen. Anything older shows up only
+   when he left it unclosed \u2014 and then it shows up by name. */
 function viewTechDay() {
   var tj = tjStore(), cl = clStore();
   if (!tj.loaded && !tj.busy) tjLoad();
   if (!cl.loaded && !cl.busy) clLoad();
-  var today = isoToday();
-  var day = state.techDay || (state.techDay = today);
-  var rows = tjDayRows(day);
-  var toClose = tjToClose().filter(function (r) { return r.day !== day; });
+  var today = isoToday(), tom = isoAddDays(today, 1);
+  var rowsToday = tjDayRows(today), rowsTom = tjDayRows(tom);
+  var toClose = tjToClose().filter(function (r) { return r.day < today; });
 
-  /* Seven days around whichever one he is looking at, so he can walk in
-     either direction without ever losing his place. */
-  var strip = '<div class="row" style="gap:5px;margin-bottom:14px">' +
-    [-3, -2, -1, 0, 1, 2, 3].map(function (o) {
-      var d = isoAddDays(day, o), n = tjDayRows(d).length;
-      var dt = new Date(d + 'T00:00:00');
-      return '<button class="btn ' + (o === 0 ? 'btn-gold btn-primary' : 'btn-ghost') + '" data-act="tday" data-arg="' + d + '" ' +
-        'style="flex:1;min-width:0;padding:8px 2px;line-height:1.25' + (d === today && o !== 0 ? ';border-color:var(--gold)' : '') + '">' +
-        '<div style="font-size:10px;letter-spacing:.06em;opacity:.75">' + esc(dt.toLocaleDateString(undefined, { weekday: 'short' }).toUpperCase()) + '</div>' +
-        '<div style="font-size:16px;font-weight:700">' + dt.getDate() + '</div>' +
-        '<div style="font-size:10px;height:12px">' + (n ? n + (n === 1 ? ' job' : ' jobs') : '') + '</div>' +
-      '</button>';
-    }).join('') + '</div>';
+  function block(head, rows, empty) {
+    return '<div class="eyebrow">' + esc(head) + '</div>' +
+      (rows.length
+        ? rows.map(function (r) { return tjDayCard(r, today); }).join('')
+        : '<div class="empty" style="padding:14px">' + esc(empty) + '</div>');
+  }
 
-  var head = '<div class="row" style="align-items:center;gap:6px;margin-bottom:8px">' +
-      '<button class="iconbtn" data-act="tday-prev" style="color:var(--ink)">‹</button>' +
-      '<div style="flex:1;text-align:center">' +
-        '<div style="font-weight:700;font-size:16px">' + esc(day === today ? 'Today' : day === isoAddDays(today, 1) ? 'Tomorrow' : day === isoAddDays(today, -1) ? 'Yesterday' : fmtDay(day)) + '</div>' +
-        '<div style="color:var(--muted);font-size:12px">' + esc(fmtDay(day)) + ' · ' + rows.length + (rows.length === 1 ? ' job' : ' jobs') + '</div>' +
-      '</div>' +
-      '<button class="iconbtn" data-act="tday-next" style="color:var(--ink)">›</button>' +
-    '</div>';
-
+  /* Naming them beats counting them: a job he can see is a job he can close,
+     one tap from here. */
   var nag = toClose.length
-    ? '<button class="card card-tap" data-act="tday" data-arg="' + esc(toClose[0].day) + '" style="display:block;width:100%;text-align:left;border-color:var(--gold)">' +
+    ? '<div class="card" style="border-color:var(--gold)">' +
         '<div style="font-weight:700;color:var(--gold)">' + toClose.length + ' job' + (toClose.length === 1 ? '' : 's') + ' still to close</div>' +
-        '<div style="color:var(--muted);font-size:13px;margin-top:2px">A job you did not close is not in your pay. Oldest: ' + esc(fmtDay(toClose[0].day)) + ' · ' + esc(toClose[0].title || 'Job') + '</div>' +
-      '</button>'
+        '<div style="color:var(--muted);font-size:13px;margin:2px 0 4px">A job you did not close is not in your pay.</div>' +
+        toClose.slice(0, 5).map(function (r) {
+          return '<button class="btn btn-ghost" data-act="cl-open" data-arg="' + esc(r.id) + '" ' +
+            'style="width:100%;text-align:left;margin-top:6px;font-size:13px;padding:9px">' +
+            esc(fmtDay(r.day) + ' \u00b7 ' + (r.title || 'Job')) + '</button>';
+        }).join('') +
+      '</div>'
     : '';
 
-  var body = rows.length
-    ? rows.map(function (r) { return tjDayCard(r, today); }).join('')
-    : '<div class="empty" style="padding:14px">' + (tj.busy ? 'Loading your jobs…' : (day < today ? 'Nothing on this day.' : 'Nothing sent to you for this day yet.')) + '</div>';
-
   return '<div class="app">' +
-    '<div class="topbar"><button class="iconbtn" data-act="home">‹</button><div style="flex:1"><h1>My day</h1>' +
+    '<div class="topbar"><button class="iconbtn" data-act="home">\u2039</button><div style="flex:1"><h1>My day</h1>' +
       '<div class="sub">what you were sent</div></div>' +
-      '<button class="iconbtn" data-act="tday-refresh" aria-label="Refresh">⟳</button></div>' +
-    '<div class="screen">' + head + strip + nag +
+      '<button class="iconbtn" data-act="tday-refresh" aria-label="Refresh">\u27f3</button></div>' +
+    '<div class="screen">' + nag +
       (tj.err ? '<div class="card" style="border-color:var(--defect)"><div style="font-size:13px;color:var(--defect)">' + esc(tj.err) + '</div><button class="btn btn-ghost" data-act="tj-retry" style="width:100%;margin-top:8px">Try again</button></div>' : '') +
-      body +
+      block('Today \u00b7 ' + fmtDay(today), rowsToday, tj.busy ? 'Loading your jobs\u2026' : 'Nothing on today.') +
+      block('Tomorrow \u00b7 ' + fmtDay(tom), rowsTom, tj.busy ? 'Loading\u2026' : 'Nothing sent to you for tomorrow yet.') +
     '</div>' +
-    (day !== today ? '<div class="bottombar"><button class="btn btn-gold btn-primary" data-act="tday" data-arg="' + today + '">Back to today</button></div>' : '') +
   '</div>';
 }
 
@@ -8398,6 +8531,9 @@ function wireInputs() {
         if (state.closing) state.closing[path.slice(4)] = val;
       } else if (path.indexOf('clf.') === 0) {
         if (state.closing && state.closing.fu) state.closing.fu[path.slice(4)] = val;
+      } else if (path.indexOf('justat.') === 0) {
+        state.juStatDraft = state.juStatDraft || {};
+        state.juStatDraft[path.slice(7)] = val;
       } else if (path.indexOf('ju.') === 0) {
         state.juDraft = state.juDraft || {};
         state.juDraft[path.slice(3)] = val;
@@ -8708,10 +8844,7 @@ root.addEventListener('click', function (e) {
     case 'mypay': state.view = 'mypay'; state.payWeek = wkThis(); render(); clLoad(true); stLoad(true); break;
     case 'mypay-refresh': clLoad(true); stLoad(true); render(); break;
     case 'tech-guide': state.view = 'techguide'; render(); break;
-    case 'tech-day': state.techDay = isoToday(); state.view = 'techday'; render(); tjLoad(true); clLoad(true); break;
-    case 'tday': state.techDay = arg; render(); break;
-    case 'tday-prev': state.techDay = isoAddDays(state.techDay || isoToday(), -1); render(); break;
-    case 'tday-next': state.techDay = isoAddDays(state.techDay || isoToday(), 1); render(); break;
+    case 'tech-day': state.view = 'techday'; render(); tjLoad(true); clLoad(true); break;
     case 'tday-refresh': tjLoad(true); clLoad(true); render(); break;
     case 'fu-open': state.fuFrom = state.view; fuOpen(arg); break;
     case 'fu-back': state.view = state.fuFrom || 'crewone'; state.fuOne = null; render(); break;
@@ -8731,6 +8864,12 @@ root.addEventListener('click', function (e) {
     case 'ju-ask': juAsk(arg); break;
     case 'ju-post': juPost(arg, 'update'); break;
     case 'ju-plan': juPost(arg, 'plan'); break;
+    case 'ju-stat': (function () { var i = arg.lastIndexOf('|'); juSetStat(arg.slice(0, i), arg.slice(i + 1) === 'parts' ? 'parts' : ''); })(); break;
+    case 'ju-stat-on': (function () {
+      var d = String(juStatDraft(arg) || '').trim();
+      if (!d) { juStore().err = 'Pick the day first.'; render(); return; }
+      juSetStat(arg, 'on:' + d);
+    })(); break;
     case 'cal-who': state.calWho = (state.calWho === arg ? '' : arg); render(); break;
     case 'crew-move': crewMove(arg); break;
     case 'gcal-connect': gcalConnect(arg || 'A'); break;
