@@ -1500,7 +1500,7 @@ function clPaint() {
   var a = document.activeElement;
   if (a && /^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName || '')) return;
   var v = state.view;
-  if (!v || v === 'home' || v === 'openjobs' || v === 'day' || v === 'crew' || v === 'crewone' || v === 'techjob' || v === 'schedule') render();
+  if (!v || v === 'home' || v === 'openjobs' || v === 'day' || v === 'crew' || v === 'crewone' || v === 'techjob' || v === 'schedule' || v === 'mypay') render();
 }
 
 function clAwaiting() {
@@ -2102,6 +2102,9 @@ function crewJobs(c) {
 function crewPay(c, from, to) {
   var all = crewClosings(c);
   if (from) all = all.filter(function (r) { var d = String(r.day || '').slice(0, 10); return d >= from && d <= to; });
+  return payFromRows(all);
+}
+function payFromRows(all) {
   /* A deposit is money in hand on a job that is not finished yet. It waits for
      the final closing, so it earns no commission until then — it is only held. */
   var rows = all.filter(function (r) { return r.status === 'paid'; });
@@ -2401,7 +2404,7 @@ function viewCrewMember() {
   function tb(k, label, n) {
     return '<button class="btn ' + (tab === k ? 'btn-gold btn-primary' : 'btn-ghost') + '" data-act="crew-tab" data-arg="' + k + '" style="flex:1;min-width:24%">' + esc(label) + (n ? ' ' + n : '') + '</button>';
   }
-  var jobs = crewJobs(c), closings = crewClosings(c);
+  var jobs = crewUpcoming(c), closings = crewClosings(c);
   var open = closings.filter(function (r) { return r.status === 'deposit'; });
   var fus = crewFollowups(c).filter(function (f) { return f.state === 'open'; });
   var wkM = payWeek(), wkS = wkSunday(wkM), cid = crewIdOf(c);
@@ -2411,13 +2414,14 @@ function viewCrewMember() {
   var body = '';
 
   if (tab === 'jobs') {
-    var up = jobs.filter(function (r) { return r.day >= isoToday(); }).sort(function (a, b) { return (a.day + (a.start_time || '')) < (b.day + (b.start_time || '')) ? -1 : 1; });
+    var up = jobs;
     body = up.length
       ? up.map(function (r) {
           return '<div class="card">' +
             '<div style="font-weight:650">' + esc((r.start_time ? r.start_time + '  ' : '') + (r.title || 'Job')) + '</div>' +
             '<div style="color:var(--muted);font-size:13px">' + esc(fmtDay(r.day) + (r.location ? ' · ' + r.location : '')) + '</div>' +
-            '<div style="font-size:12px;color:var(--muted);margin-top:4px">' + (r.role === 'seller' ? 'his sale' : 'he performs it') + '</div>' +
+            '<div style="font-size:12px;color:var(--muted);margin-top:4px">' + (r.role === 'seller' ? 'his sale' : 'he performs it') +
+              (r.notSent ? ' \u00b7 <span style="color:var(--gold)">not on his phone yet</span>' : '') + '</div>' +
             '<button class="btn btn-ghost" data-act="crew-move" data-arg="' + esc(r.id) + '" style="width:100%;margin-top:8px">Move to someone else</button>' +
           '</div>';
         }).join('')
@@ -2492,7 +2496,7 @@ function viewCrewMember() {
       '<div class="sub">' + money(owed) + ' still owed</div></div></div>' +
     '<div class="screen">' +
       '<div class="row" style="gap:6px;flex-wrap:wrap;margin-bottom:12px">' +
-        tb('jobs', 'Jobs', jobs.filter(function (r) { return r.day >= isoToday(); }).length) +
+        tb('jobs', 'Jobs', jobs.length) +
         tb('open', 'Open', open.length) +
         tb('follow', 'Follow-ups', fus.length) +
         tb('report', 'Report', 0) +
@@ -3014,6 +3018,186 @@ function clWhoName(who) {
   return c ? c.name : '';
 }
 
+
+/* ── Getting a job onto a technician's phone ───────────────────────
+   His phone never reads the owner's calendar — it asks only for its own
+   rows. So a job the calendar marks for one of the crew has to be pushed
+   across, exactly the way Escobar's are. */
+var tjSyncMark = '';
+function crewSync(events) {
+  if (!ownerKey() || !tjCrewActive().length) return;
+  var today = isoToday(), jobs = [];
+  (events || []).forEach(function (e) {
+    if (!e.date || e.date < today) return;
+    var who = tjPerformerOf(e);
+    if (!who || who === TJ_ME || who === TJ_INSTALLER) return;
+    var c = tjCrewById(who);
+    if (c && c.key) jobs.push({ ev: e, crew: c });
+  });
+  if (!jobs.length) return;
+  /* Nothing moved since the last sweep means nothing to send. */
+  var mark = jobs.map(function (j) {
+    return j.crew.id + '|' + j.ev.acct + '|' + j.ev.id + '|' + j.ev.date + '|' + (j.ev.time || '');
+  }).join(';');
+  if (mark === tjSyncMark) return;
+  tjSyncMark = mark;
+  var i = 0;
+  (function next() {
+    if (i >= jobs.length) { tjLoad(true); return; }
+    var j = jobs[i++], ev = j.ev;
+    cloudRpc('tech_jobs_assign', {
+      p_owner: ownerKey(), p_id: (ev.acct || 'A') + '|' + ev.id,
+      p_tech_key: j.crew.key, p_role: 'performer',
+      p_job: { acct: ev.acct || 'A', event_id: ev.id, title: ev.title || 'Job', day: ev.date,
+        start_time: ev.time || '', end_time: ev.endTime || '',
+        location: ev.location || '', notes: ev.notes || '', share_id: ev.share || '' }
+    }).then(function () { setTimeout(next, 200); })
+      .catch(function () { setTimeout(next, 200); });
+  })();
+}
+
+/* What a man has coming. The calendar runs ahead of the sync, so the office
+   screen reads both and shows each job once. */
+function crewUpcoming(c) {
+  var today = isoToday(), seen = {}, out = [];
+  crewJobs(c).forEach(function (r) {
+    if (r.day < today || seen[r.id]) return;
+    seen[r.id] = 1; out.push(r);
+  });
+  (state.gcalEvents || []).forEach(function (e) {
+    if (!e.date || e.date < today || tjPerformerOf(e) !== c.id) return;
+    var id = (e.acct || 'A') + '|' + e.id;
+    if (seen[id]) return;
+    seen[id] = 1;
+    out.push({ id: id, acct: e.acct || 'A', event_id: e.id, title: e.title, day: e.date,
+      start_time: e.time || '', end_time: e.endTime || '', location: e.location || '',
+      notes: e.notes || '', share_id: e.share || '', role: 'performer', notSent: true });
+  });
+  return out.sort(function (a, b) {
+    return (a.day + (a.start_time || '')) < (b.day + (b.start_time || '')) ? -1 : 1;
+  });
+}
+
+/* ── A technician's own pay screen ─────────────────────────────────
+   The server already hands his phone nothing but his own closings, so the
+   same sums the office sees are worked out here from what he has. */
+function myTechId() { var k = techKey() || ownerKey(); return k ? clMd5(k) : ''; }
+function myPay(from, to) {
+  var all = (clStore().rows || []);
+  if (from) all = all.filter(function (r) { var d = String(r.day || '').slice(0, 10); return d >= from && d <= to; });
+  return payFromRows(all);
+}
+function myWeeks() { return weeksOf((clStore().rows || []).map(function (r) { return r.day; })); }
+
+function viewMyPay() {
+  var cl = clStore();
+  if (!cl.loaded && !cl.busy) clLoad();
+  if (!stStore().loaded && !stStore().busy) stLoad();
+  var wkM = payWeek(), wkS = wkSunday(wkM), id = myTechId();
+  state.payWeeks = myWeeks();
+  var pay = myPay(wkM, wkS), st = stFor(id, wkM);
+  var owed = 0;
+  myWeeks().forEach(function (m) { owed += weekLeft(id, m, myPay(m, wkSunday(m)).total); });
+  var done = (cl.rows || []).filter(function (r) {
+    var d = String(r.day || '').slice(0, 10);
+    return clMoneyStatus(r.status) && d >= wkM && d <= wkS;
+  }).sort(function (a, b) { return a.day < b.day ? -1 : 1; });
+
+  var body = payWeekBar() +
+    '<div class="card"><div class="eyebrow">What you are owed for this week</div>' +
+    '<table style="width:100%;font-size:14px;border-collapse:collapse">' +
+      '<tr><td style="padding:3px 0">Collected · ' + pay.jobs + ' job' + (pay.jobs === 1 ? '' : 's') + '</td><td style="text-align:right">' + money(pay.collected) + '</td></tr>' +
+      (pay.parts ? '<tr><td style="padding:3px 0">Less parts</td><td style="text-align:right">− ' + money(pay.parts) + '</td></tr>' : '') +
+      (pay.sub ? '<tr><td style="padding:3px 0">Less the sub</td><td style="text-align:right">− ' + money(pay.sub) + '</td></tr>' : '') +
+      (pay.baseSup
+        ? '<tr><td style="padding:3px 0">AIO Pro work · 40% of ' + money(pay.baseAio) + '</td><td style="text-align:right">' + money(pay.commAio) + '</td></tr>' +
+          '<tr><td style="padding:3px 0">Dispatcher work · 35% of ' + money(pay.baseSup) + '</td><td style="text-align:right">' + money(pay.commSup) + '</td></tr>'
+        : '<tr><td style="padding:3px 0">Commission 40%</td><td style="text-align:right">' + money(pay.commission) + '</td></tr>') +
+      (pay.tips ? '<tr><td style="padding:3px 0">Tips (all yours)</td><td style="text-align:right">+ ' + money(pay.tips) + '</td></tr>' : '') +
+      (pay.owedBack ? '<tr><td style="padding:3px 0">Parts you paid for</td><td style="text-align:right">+ ' + money(pay.owedBack) + '</td></tr>' : '') +
+      '<tr><td style="padding:7px 0;font-weight:700;border-top:2px solid var(--gold)">Total for the week</td><td style="text-align:right;font-weight:700;border-top:2px solid var(--gold)">' + money(pay.total) + '</td></tr>' +
+      (pay.held ? '<tr><td style="padding:3px 0;color:var(--muted);font-size:12px">Deposits on ' + pay.heldJobs + ' job' + (pay.heldJobs === 1 ? '' : 's') + ' still open — no commission until the job is finished</td><td style="text-align:right;color:var(--muted);font-size:12px">' + money(pay.held) + '</td></tr>' : '') +
+    '</table>' +
+    (st
+      ? '<div style="color:var(--ok);font-weight:650;margin-top:10px">Paid out ' + esc(fmtDay(String(st.settled_at).slice(0, 10))) + ' · ' + money(clPos(st.amount)) + '</div>'
+      : '<div style="color:var(--muted);font-size:13px;margin-top:10px">Not paid out yet.</div>') +
+    '</div>' +
+    (owed !== pay.total ? '<div class="card" style="padding:10px 12px"><div style="font-size:13px">Across every week not yet paid out: <b>' + money(owed) + '</b></div></div>' : '') +
+    payWeekList(id, function (m) { return myPay(m, wkSunday(m)).total; }) +
+    (done.length
+      ? done.map(function (r) {
+          return '<div class="card" style="padding:10px 12px">' +
+            '<div class="row" style="align-items:baseline;gap:8px">' +
+              '<span style="color:var(--muted);font-size:12px;min-width:56px">' + esc(fmtDay(r.day)) + '</span>' +
+              '<span style="flex:1;font-weight:600">' + esc(r.customer || 'Job') + '</span>' +
+              '<span style="font-weight:650">' + money(clPos(r.collected)) + '</span>' +
+            '</div>' +
+            '<div style="color:var(--muted);font-size:12px;margin-left:64px">' +
+              esc([r.method, clPos(r.parts_amount) ? 'parts ' + money(clPos(r.parts_amount)) : '', clPos(r.tip) ? 'tip ' + money(clPos(r.tip)) : '', r.status === 'paid' ? clRateLabel(r) : r.status].filter(Boolean).join(' · ')) +
+            '</div></div>';
+        }).join('')
+      : '<div class="empty" style="padding:14px">Nothing closed in this week.</div>') +
+    '<div class="card" style="color:var(--muted);font-size:13px;line-height:1.6">A week runs Monday to Sunday. Close every job the same day you finish it — what is not closed is not counted, and it is your own money that goes missing. If a number here looks wrong, tell Refael before the week is paid out.</div>';
+
+  return '<div class="app">' +
+    '<div class="topbar"><button class="iconbtn" data-act="home">‹</button><div style="flex:1"><h1>My pay</h1>' +
+      '<div class="sub">' + money(owed) + ' still owed to you</div></div>' +
+      '<button class="iconbtn" data-act="mypay-refresh" aria-label="Refresh">⟳</button></div>' +
+    '<div class="screen">' + body + '</div></div>';
+}
+
+/* ── The short guide ───────────────────────────────────────────────
+   Plain words, in the order a man actually meets them during a day. */
+function viewTechGuide() {
+  function step(n, title, lines) {
+    return '<div class="card">' +
+      '<div class="row" style="gap:10px;align-items:baseline">' +
+        '<span style="font-family:var(--serif);font-size:22px;color:var(--gold);min-width:24px">' + n + '</span>' +
+        '<div style="flex:1"><div style="font-weight:700;font-size:16px">' + esc(title) + '</div>' +
+        lines.map(function (l) { return '<div style="font-size:14px;line-height:1.6;margin-top:6px">' + l + '</div>'; }).join('') +
+        '</div></div></div>';
+  }
+  return '<div class="app">' +
+    '<div class="topbar"><button class="iconbtn" data-act="home">‹</button><div style="flex:1"><h1>How this works</h1>' +
+      '<div class="sub">five minutes, once</div></div></div>' +
+    '<div class="screen">' +
+      step(1, 'Your jobs are on the home screen', [
+        'Under <b>My jobs</b> you see only what Refael sent you. You do not see his calendar and you do not see anyone else’s work.',
+        'Tap a job to open it: the address with a Maps button, the phone number, and everything that was written on the job.'
+      ]) +
+      step(2, 'Close the job before you drive away', [
+        'Open the job and tap <b>Close this job</b>. Do it on site, not at the end of the week — what is not closed is not paid.',
+        'It asks four things: how the job ended, where it came from (<b>AIO Pro</b> or <b>a dispatcher</b> like GENESIS), what you collected and how, and parts.',
+        'Where it came from sets your rate, so get it right: AIO Pro work pays 40%, dispatcher work pays 35%.',
+        'If you paid for parts out of your own pocket, say <b>I did</b> — that money comes back to you on top.',
+        'A tip is yours in full. Put it in the tip box, not in the collected box.'
+      ]) +
+      step(3, 'A deposit is not a finished job', [
+        'Took money but the work is not done? Choose <b>Deposit taken</b> and put the full price of the job in as well.',
+        'A deposit earns no commission yet. It waits until you come back and close the job properly — then the whole thing counts.'
+      ]) +
+      step(4, 'Anything you quoted goes in the follow-up', [
+        'At the end of the closing it asks whether you quoted or offered anything that was not approved. Answer <b>Yes</b> and write what you offered and the price.',
+        'This matters even when the customer already paid you for the visit. An estimate nobody chased is money left on the table.'
+      ]) +
+      step(5, 'Where you check your own money', [
+        'Tap <b>My pay</b> on the home screen. It shows one week at a time, Monday to Sunday, Sunday included.',
+        'You see every job you closed that week, what you collected, your 40% or 35%, your tips, the parts coming back to you, and the total.',
+        'Use the arrows or the date box to look at an earlier week. A week Refael has paid out is marked <b>Paid out</b> with the date.',
+        '<b>Check it before the week is paid.</b> If a number looks wrong, say so then — not a month later.'
+      ]) +
+      step(6, 'Waiting on an answer?', [
+        'On an open job you can see who is on it and what the plan is.',
+        'If nothing has come back for two days, tap <b>Ask for an update</b>. One ask every two days — it goes straight to Refael.'
+      ]) +
+      '<div class="card" style="border-color:var(--gold)"><div style="font-size:14px;line-height:1.7">' +
+        '<b>The two that cost you money:</b><br>' +
+        'A job you did not close does not appear in your pay.<br>' +
+        'A job marked as the wrong source pays you the wrong rate.' +
+      '</div></div>' +
+    '</div></div>';
+}
+
 function viewHome() {
   var body;
   if (state.picking) {
@@ -3072,6 +3256,8 @@ function viewHome() {
       bigTile('invoice', 'Invoice', ICO.checklist) +
       tile('coach-start', 'Ask Refael', ICO.ask) +
       tile('docs', 'My work', ICO.checklist) +
+      (isTech() ? tile('mypay', 'My pay', ICO.estimate) : '') +
+      (isTech() ? tile('tech-guide', 'How this works', ICO.ask) : '') +
       (isTech() ? '' : tile('clients', 'Customers', ICO.clients)) +
       (isTech() ? '' : tile('crew', 'My crew', ICO.clients)) +
       tile('schedule', 'Schedule', ICO.schedule) +
@@ -5408,7 +5594,7 @@ function gcalFetch() {
     page('', 1)
       .then(function () { if (complete && gen === gcalGen[a.slot]) workerSync(a.slot, range, mine); })
       .catch(function () {})
-      .then(function () { all = all.concat(mine); done++; if (done === slots.length) { state.gcalEvents = all; state.gcalErr = null; clRemember(); clPaint(); if (state.view === 'schedule') render(); } });
+      .then(function () { all = all.concat(mine); done++; if (done === slots.length) { state.gcalEvents = all; state.gcalErr = null; clRemember(); crewSync(all); clPaint(); if (state.view === 'schedule') render(); } });
   });
 }
 function gcalEventBody(ev) {
@@ -7912,6 +8098,8 @@ function render() {
   else if (state.view === 'crew') html = viewCrew();
   else if (state.view === 'crewone') html = (state.crewOne && state.crewOne.id === TJ_INSTALLER) ? viewEscobar() : viewCrewMember();
   else if (state.view === 'followup') html = viewFollowup();
+  else if (state.view === 'mypay') html = viewMyPay();
+  else if (state.view === 'techguide') html = viewTechGuide();
   else if (state.view === 'day') html = viewDay();
   else html = viewHome();
   root.innerHTML = html;
@@ -8264,6 +8452,9 @@ root.addEventListener('click', function (e) {
     case 'crew-tab': state.crewTab = arg; render(); break;
     case 'pay-week': state.payWeek = arg === 'now' ? wkThis() : isoAddDays(payWeek(), Number(arg) * 7); render(); break;
     case 'pay-jump': state.payWeek = wkMonday(arg); render(); break;
+    case 'mypay': state.view = 'mypay'; state.payWeek = wkThis(); render(); clLoad(true); stLoad(true); break;
+    case 'mypay-refresh': clLoad(true); stLoad(true); render(); break;
+    case 'tech-guide': state.view = 'techguide'; render(); break;
     case 'fu-open': state.fuFrom = state.view; fuOpen(arg); break;
     case 'fu-back': state.view = state.fuFrom || 'crewone'; state.fuOne = null; render(); break;
     case 'fu-keep': { var fk = fuById(arg); if (fk) fuSetState(arg, fk.state || 'open'); break; }
