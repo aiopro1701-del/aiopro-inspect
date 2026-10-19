@@ -1395,6 +1395,23 @@ var CL_METHODS = ['cash', 'check', 'card', 'zelle', 'other'];
 var CL_SKIP_KEY = 'aio-cl-skip';
 
 function clMoneyStatus(k) { return k === 'paid' || k === 'deposit' || k === 'zero'; }
+
+/* Commission. Work AIO Pro brought in itself pays 40%. From Thursday
+   15 October 2026, work that came through a dispatcher — GENESIS and the
+   like — pays 35% instead. Anything performed before that date stays at 40%,
+   whoever it came from, so settled history is never rewritten. */
+var PAY_RATE = 0.40, PAY_RATE_SUPPLIER = 0.35, SUPPLIER_RATE_FROM = '2026-10-15';
+function clIsSupplier(r) {
+  return !!r && r.job_source === 'supplier' && String(r.day || '').slice(0, 10) >= SUPPLIER_RATE_FROM;
+}
+function clRate(r) { return clIsSupplier(r) ? PAY_RATE_SUPPLIER : PAY_RATE; }
+function clRateLabel(r) { return Math.round(clRate(r) * 100) + '%'; }
+/* Only a clear dispatcher marking is guessed. Anything else is left blank so
+   the man has to say, rather than quietly defaulting to the higher rate. */
+function clGuessSource(ev) {
+  var t = String((ev && ev.title) || '') + '\n' + String((ev && ev.notes) || '');
+  return /genesis|\(gen\)|master air duct|smith\s*(and|&|&amp;)\s*sons|bho chimney/i.test(t) ? 'supplier' : '';
+}
 function clKey(ev) { return (ev.acct || 'A') + '|' + ev.id; }
 function clStore() { return state.cl || (state.cl = { rows: [], byJob: {}, fuBy: {}, fuRows: [], seen: {}, loaded: false, busy: false, failed: false, err: '' }); }
 function clNum(v) { var n = parseFloat(String(v == null ? '' : v).replace(/[^0-9.\-]/g, '')); return isFinite(n) ? n : 0; }
@@ -1561,6 +1578,7 @@ function clOpenForm(jobKey) {
        starting point here, and the seller can correct it before saving. */
     sub_amount: (had && clPos(had.sub_amount)) ? m(had.sub_amount)
               : (scFor(jobKey) ? m(scFor(jobKey).amount) : ''),
+    job_source: (had && had.job_source) || clGuessSource(ev),
     performed_by: (had && had.performed_by) || (ev ? clWhoName(tjPerformerOf(ev)) : ''),
     /* No seller on the job means Refael sold it himself — it must not fall
        back to the performer, who would then be paid 40% on someone else's sale. */
@@ -1614,6 +1632,16 @@ function viewClosing() {
       '<div class="card"><div class="eyebrow">How did it end?</div>' + CL_STATUS.map(sBtn).join('') + '</div>' +
       (moneyOn
         ? '<div class="card"><div class="eyebrow">The money</div>' +
+            '<label style="color:var(--muted);font-size:13px">Where did this job come from?</label>' +
+            '<div class="row" style="gap:8px;margin:4px 0 6px">' +
+              '<button class="btn ' + (c.job_source === 'aio' ? 'btn-gold btn-primary' : 'btn-ghost') + '" data-act="cl-src" data-arg="aio" style="flex:1">AIO Pro</button>' +
+              '<button class="btn ' + (c.job_source === 'supplier' ? 'btn-gold btn-primary' : 'btn-ghost') + '" data-act="cl-src" data-arg="supplier" style="flex:1">A dispatcher</button>' +
+            '</div>' +
+            '<div style="font-size:12px;color:var(--muted);margin-bottom:12px">' +
+              (String(c.day || '') >= SUPPLIER_RATE_FROM
+                ? 'GENESIS and the like pay 35%. Work AIO Pro brought in itself pays 40%.'
+                : 'This job is before 15 October, so it pays 40% either way.') +
+            '</div>' +
             '<div class="row" style="gap:10px">' +
               '<div class="field" style="flex:1"><label>Full job price</label><input data-model="cls.job_total" inputmode="decimal" value="' + esc(c.job_total || '') + '"></div>' +
               '<div class="field" style="flex:1"><label>Collected today</label><input data-model="cls.collected" inputmode="decimal" value="' + esc(c.collected || '') + '"></div>' +
@@ -1668,6 +1696,7 @@ function clSave() {
   var key = sendKey();
   if (!key) { c.err = 'This phone is not set up yet.'; render(); return; }
   if (clPos(c.parts_amount) > 0 && !c.parts_paid_by) { c.err = 'Say who paid for the parts.'; render(); return; }
+  if (clMoneyStatus(c.status) && !c.job_source) { c.err = 'Say where this job came from \u2014 AIO Pro or a dispatcher. It sets the rate.'; render(); return; }
   var wantFu = c.fuOn && !c.fuHad;
   if (wantFu && !String(c.fu.what || '').trim()) { c.err = 'Write what you offered, or answer No.'; render(); return; }
   c.busy = true; c.err = ''; c.msg = ''; render();
@@ -1682,6 +1711,7 @@ function clSave() {
     parts_paid_by: moneyOn && clPos(c.parts_amount) > 0 ? (c.parts_paid_by || '') : '',
     tip: moneyOn ? String(clPos(c.tip)) : '0',
     sub_amount: moneyOn ? String(clPos(c.sub_amount)) : '0',
+    job_source: moneyOn ? (c.job_source || '') : '',
     performed_by: c.performed_by || '',
     sold_by: c.sold_by || '',
     note: c.note || ''
@@ -1698,6 +1728,7 @@ function clSave() {
       job_total: payload.job_total, collected: payload.collected, method: payload.method,
       parts_amount: payload.parts_amount, parts_paid_by: payload.parts_paid_by, tip: payload.tip,
       sub_amount: payload.sub_amount, performed_by: payload.performed_by, sold_by: payload.sold_by,
+      job_source: payload.job_source,
       note: payload.note
     };
     cl.rows = cl.rows.filter(function (r) { return r.job_key !== c.job_key; }).concat([cl.byJob[c.job_key]]);
@@ -2079,10 +2110,13 @@ function crewPay(c, from, to) {
     if (r.status === 'deposit') { held += clPos(r.collected); heldJobs++; }
   });
   var collected = 0, parts = 0, sub = 0, tips = 0, owedBack = 0;
+  var baseAio = 0, baseSup = 0;
   rows.forEach(function (r) {
-    collected += clPos(r.collected);
-    parts += clPos(r.parts_amount);
-    sub += clPos(r.sub_amount);
+    var c = clPos(r.collected), p = clPos(r.parts_amount), sb = clPos(r.sub_amount);
+    collected += c; parts += p; sub += sb;
+    /* Floored per job: one job cannot eat another job's commission. */
+    var b = c - p - sb; if (b < 0) b = 0;
+    if (clIsSupplier(r)) baseSup += b; else baseAio += b;
   });
   /* A tip is his and money he laid out is his back. Neither is commission,
      so neither waits for the job to collect: a warranty call that took
@@ -2092,26 +2126,15 @@ function crewPay(c, from, to) {
     tips += clPos(r.tip);
     if (r.parts_paid_by === 'tech') owedBack += clPos(r.parts_amount);
   });
-  var base = collected - parts - sub;
-  if (base < 0) base = 0;
-  var commission = base * 0.4;
+  var base = baseAio + baseSup;
+  var commAio = baseAio * PAY_RATE, commSup = baseSup * PAY_RATE_SUPPLIER;
+  var commission = commAio + commSup;
   return { jobs: rows.length, collected: collected, parts: parts, sub: sub, base: base,
+    baseAio: baseAio, baseSup: baseSup, commAio: commAio, commSup: commSup,
     commission: commission, tips: tips, owedBack: owedBack,
     held: held, heldJobs: heldJobs, total: commission + tips + owedBack };
 }
 
-function payWeekBar() {
-  var m = payWeek(), atNow = m >= wkThis();
-  return '<div class="row" style="align-items:center;gap:6px;margin-bottom:12px">' +
-    '<button class="iconbtn" data-act="pay-week" data-arg="-1" style="color:var(--ink)">\u2039</button>' +
-    '<div style="flex:1;text-align:center">' +
-      '<div style="font-weight:650;font-size:15px">' + esc(wkLabel(m)) + '</div>' +
-      '<div style="color:var(--muted);font-size:12px">Monday to Sunday' + (m === wkThis() ? ' \u00b7 this week' : '') + '</div>' +
-    '</div>' +
-    '<button class="iconbtn" data-act="pay-week" data-arg="1"' +
-      (atNow ? ' disabled style="opacity:.3"' : ' style="color:var(--ink)"') + '>\u203a</button>' +
-  '</div>';
-}
 function paySettleHTML(id, week, amount) {
   var st = stFor(id, week), s = stStore();
   if (!ownerKey()) {
@@ -2158,6 +2181,189 @@ function escOutstanding() {
   return t;
 }
 
+
+/* ── The week you are paying for, and the follow-up behind a customer ──
+   A week is picked by date, not only by stepping back one at a time, and
+   every week a man worked is listed with what it comes to and whether it
+   has been settled. */
+function payWeekList(id, weekTotal) {
+  var weeks = state.payWeeks || [];
+  if (!weeks.length) return '';
+  var cur = payWeek();
+  return '<div class="card" style="padding:10px 12px"><div class="eyebrow">His weeks</div>' +
+    weeks.slice(0, 12).map(function (m) {
+      var due = weekTotal(m), st = stFor(id, m), left = weekLeft(id, m, due);
+      var mark = !st ? '' : (left > 0.004 ? ' · part paid' : ' · paid');
+      return '<button class="card-tap" data-act="pay-jump" data-arg="' + esc(m) + '" ' +
+        'style="display:flex;width:100%;gap:8px;align-items:baseline;text-align:left;background:none;border:0;' +
+          'padding:7px 0;border-bottom:0.5px solid var(--rule);' + (m === cur ? 'font-weight:700' : '') + '">' +
+        '<span style="flex:1;font-size:14px">' + esc(wkLabel(m)) + esc(mark) + '</span>' +
+        '<span style="font-size:14px;' + (left > 0.004 ? 'color:var(--gold);font-weight:650' : 'color:var(--muted)') + '">' +
+          money(left > 0.004 ? left : due) + '</span>' +
+      '</button>';
+    }).join('') + '</div>';
+}
+function payWeekBar() {
+  var m = payWeek(), atNow = m >= wkThis();
+  return '<div class="row" style="align-items:center;gap:6px;margin-bottom:8px">' +
+    '<button class="iconbtn" data-act="pay-week" data-arg="-1" style="color:var(--ink)">‹</button>' +
+    '<div style="flex:1;text-align:center">' +
+      '<div style="font-weight:650;font-size:15px">' + esc(wkLabel(m)) + '</div>' +
+      '<div style="color:var(--muted);font-size:12px">Monday to Sunday' + (m === wkThis() ? ' · this week' : '') + '</div>' +
+    '</div>' +
+    '<button class="iconbtn" data-act="pay-week" data-arg="1"' +
+      (atNow ? ' disabled style="opacity:.3"' : ' style="color:var(--ink)"') + '>›</button>' +
+  '</div>' +
+  '<div class="row" style="gap:8px;align-items:center;margin-bottom:12px">' +
+    '<span style="color:var(--muted);font-size:13px;flex:none">Jump to a date</span>' +
+    '<input type="date" data-model="payjump" value="' + esc(m) + '" ' +
+      'style="flex:1;min-width:0;font-size:15px;padding:9px 10px;border:1px solid var(--rule);border-radius:10px;background:transparent;color:inherit">' +
+    '<button class="btn btn-ghost" data-act="pay-week" data-arg="now" style="flex:none;padding:9px 12px;font-size:13px">This week</button>' +
+  '</div>';
+}
+
+/* ── A follow-up is a customer, not a line. Opening one shows the job it
+      came from, what he was charged, and every paper we sent him. ── */
+function fuById(id) {
+  var l = (clStore().fuRows || []);
+  for (var i = 0; i < l.length; i++) if (l[i].id === id) return l[i];
+  return null;
+}
+/* Documents are filed under the customer's name and address, not the job
+   key, so a follow-up is matched back to them the same way. */
+function fuDocs(f) {
+  var name = String(f.customer || '').trim().toLowerCase();
+  var addr = String(f.address || '').trim().toLowerCase().replace(/[.,]/g, '');
+  var list = (state.crew && state.crew.list) || [];
+  return list.filter(function (d) {
+    var dn = String(d.customer || '').trim().toLowerCase();
+    var da = String(d.address || '').trim().toLowerCase().replace(/[.,]/g, '');
+    if (name && dn && (dn === name || dn.indexOf(name) === 0 || name.indexOf(dn) === 0)) return true;
+    return !!(addr && da && (da === addr || da.indexOf(addr) === 0 || addr.indexOf(da) === 0));
+  }).sort(function (a, b) {
+    var ad = String(a.created_at), bd = String(b.created_at);
+    if (ad !== bd) return ad < bd ? 1 : -1;
+    /* Made the same moment: the estimate is the one with the money on it. */
+    return (a.kind === 'estimate' ? 0 : 1) - (b.kind === 'estimate' ? 0 : 1);
+  });
+}
+function fuOpen(id) {
+  var f = fuById(id);
+  if (!f) return;
+  state.fuOne = f;
+  state.fuDue = f.due || '';
+  state.view = 'followup';
+  render();
+  /* The papers live in the office copy; pull them if this phone has not. */
+  if (!(state.crew && state.crew.list) && ownerKey()) crewLoad().then(function () { if (state.view === 'followup') render(); });
+}
+function fuSetState(id, st) {
+  var key = sendKey(), cl = clStore();
+  if (!key || cl.fuBusy) return;
+  cl.fuBusy = true; cl.fuErr = ''; render();
+  var f = fuById(id);
+  cloudRpc('followup_put', { p_key: key, p_payload: {
+    id: id, closing_id: f.closing_id || '', job_key: f.job_key || '',
+    customer: f.customer || '', address: f.address || '', phone: f.phone || '',
+    what: f.what || '', amount: String(clPos(f.amount)), reason: f.reason || '',
+    next_step: f.next_step || '', due: String(state.fuDue || f.due || '').trim(), state: st
+  } }).then(function () { return clLoad(true); })
+    .then(function () {
+      cl.fuBusy = false;
+      var again = fuById(id);
+      if (again) { state.fuOne = again; state.fuDue = again.due || ''; }
+      render();
+    })
+    .catch(function (err) { cl.fuBusy = false; cl.fuErr = (err && err.message) || 'Could not save it.'; render(); });
+}
+
+function viewFollowup() {
+  var f = state.fuOne;
+  if (!f) { state.view = 'crew'; return viewCrew(); }
+  var cl = clStore();
+  var job = cl.byJob[f.job_key] || null;
+  var ev = clEventByKey(f.job_key);
+  var docs = fuDocs(f);
+  var phone = String(f.phone || '').replace(/[^\d+]/g, '');
+  function line(k, v) {
+    return v ? '<div style="display:flex;gap:10px;padding:5px 0;border-bottom:0.5px solid var(--rule);font-size:14px">' +
+      '<span style="color:var(--muted);width:120px;flex:none">' + esc(k) + '</span><span style="flex:1">' + esc(v) + '</span></div>' : '';
+  }
+  var st = f.state || 'open';
+
+  var head = '<div class="card">' +
+    '<div style="font-size:19px;font-weight:700">' + esc(f.customer || 'Customer') + '</div>' +
+    (f.address ? '<div style="color:var(--muted);font-size:14px;margin-top:2px">' + esc(f.address) + '</div>' : '') +
+    (clPos(f.amount) ? '<div style="font-size:26px;font-weight:700;margin-top:8px">' + money(clPos(f.amount)) + '</div>' : '') +
+    '<div style="font-size:15px;margin-top:6px;line-height:1.5">' + esc(f.what || '') + '</div>' +
+    (f.reason ? '<div style="color:var(--muted);font-size:14px;margin-top:4px">' + esc(f.reason) + '</div>' : '') +
+    '<div class="row" style="gap:8px;margin-top:12px">' +
+      (phone ? '<a class="btn btn-gold" style="flex:1;text-align:center;text-decoration:none" href="tel:' + esc(phone) + '">Call</a>' +
+               '<a class="btn btn-ghost" style="flex:1;text-align:center;text-decoration:none" href="sms:' + esc(phone) + '">Text</a>' : '') +
+      (f.address ? '<a class="btn btn-ghost" style="flex:1;text-align:center;text-decoration:none" target="_blank" rel="noopener" href="https://maps.google.com/?q=' + encodeURIComponent(f.address) + '">Maps</a>' : '') +
+    '</div></div>';
+
+  var jobCard = job
+    ? '<div class="card"><div class="eyebrow">The visit it came from</div>' +
+        line('Day', fmtDay(job.day)) +
+        line('How it ended', job.status) +
+        line('Charged', clPos(job.collected) ? money(clPos(job.collected)) + (job.method ? ' by ' + job.method : '') : 'nothing') +
+        line('Full job price', clPos(job.job_total) ? money(clPos(job.job_total)) : '') +
+        line('Parts', clPos(job.parts_amount) ? money(clPos(job.parts_amount)) + (job.parts_paid_by === 'tech' ? ' — he paid' : ' — the office paid') : '') +
+        line('Escobar', clPos(job.sub_amount) ? money(clPos(job.sub_amount)) : '') +
+        line('Tip', clPos(job.tip) ? money(clPos(job.tip)) : '') +
+        line('Came from', job.job_source === 'supplier' ? 'A dispatcher · ' + clRateLabel(job) : (job.job_source === 'aio' ? 'AIO Pro · ' + clRateLabel(job) : '')) +
+        line('Closed by', job.sold_by || '') +
+        (job.note ? '<div style="font-size:14px;margin-top:8px;white-space:pre-wrap">' + esc(job.note) + '</div>' : '') +
+        '<button class="btn btn-ghost" data-act="cl-open" data-arg="' + esc(f.job_key) + '" style="width:100%;margin-top:10px">Open the closing</button>' +
+      '</div>'
+    : '<div class="card" style="color:var(--muted);font-size:14px">No closing on file for this job.</div>';
+
+  var evCard = (ev && ev.notes)
+    ? '<div class="card"><div class="eyebrow">What the job said</div>' +
+        '<div style="white-space:pre-wrap;font-size:14px">' + esc(ev.notes) + '</div></div>'
+    : '';
+
+  var docCard = '<div class="card"><div class="eyebrow">The inspection and the estimate</div>' +
+    (docs.length
+      ? docs.map(function (d) {
+          return '<div style="padding:8px 0;border-bottom:0.5px solid var(--rule)">' +
+            '<div class="row" style="gap:8px;align-items:baseline">' +
+              '<span style="flex:1;font-weight:650;font-size:14px">' + esc(crewKindName(d.kind)) +
+                (d.total ? ' · ' + money(Number(d.total)) : '') + '</span>' +
+              crewStatusPill(d) +
+            '</div>' +
+            '<div style="color:var(--muted);font-size:12px">' + esc(d.title || '') +
+              (d.created_at ? ' · ' + esc(fmtDay(String(d.created_at).slice(0, 10))) : '') + '</div>' +
+            '<div class="row" style="gap:8px;margin-top:6px">' +
+              '<button class="btn btn-ghost" data-act="crew-open" data-arg="' + esc(d.id) + '" style="flex:1;font-size:13px;padding:8px">Read it</button>' +
+              (d.share_id ? '<button class="btn btn-gold" data-act="crew-link" data-arg="' + esc(d.share_id) + '" style="flex:1;font-size:13px;padding:8px">What he was sent</button>' : '') +
+            '</div></div>';
+        }).join('')
+      : '<div style="color:var(--muted);font-size:14px">Nothing filed under this name yet. An inspection or estimate made in the app shows up here on its own.' +
+        (!ownerKey() ? '' : ((state.crew && state.crew.busy) ? ' Looking…' : ' <button class="btn btn-ghost" data-act="fu-docs" style="width:100%;margin-top:8px">Look again</button>')) + '</div>') +
+  '</div>';
+
+  var act = '<div class="card"><div class="eyebrow">When are you back on it?</div>' +
+    '<div class="row" style="gap:8px;align-items:center">' +
+      '<input type="date" data-model="fudue" value="' + esc(state.fuDue || '') + '" ' +
+        'style="flex:1;min-width:0;font-size:15px;padding:10px;border:1px solid var(--rule);border-radius:10px;background:transparent;color:inherit">' +
+      '<button class="btn btn-gold" data-act="fu-keep" data-arg="' + esc(f.id) + '"' + (cl.fuBusy ? ' disabled' : '') + ' style="flex:none;padding:10px 14px">Save</button>' +
+    '</div>' +
+    '<div class="row" style="gap:8px;margin-top:12px">' +
+      '<button class="btn ' + (st === 'won' ? 'btn-gold btn-primary' : 'btn-ghost') + '" data-act="fu-won" data-arg="' + esc(f.id) + '"' + (cl.fuBusy ? ' disabled' : '') + ' style="flex:1">He bought it</button>' +
+      '<button class="btn ' + (st === 'lost' ? 'btn-gold btn-primary' : 'btn-ghost') + '" data-act="fu-lost" data-arg="' + esc(f.id) + '"' + (cl.fuBusy ? ' disabled' : '') + ' style="flex:1">Dead</button>' +
+    '</div>' +
+    (f.next_step ? '<div style="color:var(--muted);font-size:13px;margin-top:10px">' + esc(f.next_step) + '</div>' : '') +
+    (cl.fuErr ? '<div style="color:var(--defect);font-size:13px;margin-top:8px">' + esc(cl.fuErr) + '</div>' : '') +
+  '</div>';
+
+  return '<div class="app">' +
+    '<div class="topbar"><button class="iconbtn" data-act="fu-back">‹</button><div style="flex:1"><h1>Follow-up</h1>' +
+      '<div class="sub">' + esc(st === 'open' ? (f.due ? 'call back ' + fmtDay(f.due) : 'no date yet') : st) + '</div></div></div>' +
+    '<div class="screen">' + head + act + jobCard + docCard + evCard + '</div></div>';
+}
+
 function viewCrew() {
   var crew = tjCrewActive(), st = state.crewKeys || {};
   if (!st.loaded && !st.busy) crewKeysLoad();
@@ -2199,6 +2405,7 @@ function viewCrewMember() {
   var open = closings.filter(function (r) { return r.status === 'deposit'; });
   var fus = crewFollowups(c).filter(function (f) { return f.state === 'open'; });
   var wkM = payWeek(), wkS = wkSunday(wkM), cid = crewIdOf(c);
+  state.payWeeks = crewWeeks(c);
   var pay = crewPay(c, wkM, wkS);
   var owed = crewOutstanding(c);
   var body = '';
@@ -2231,12 +2438,13 @@ function viewCrewMember() {
   } else if (tab === 'follow') {
     body = fus.length
       ? fus.map(function (f) {
-          return '<div class="card">' +
-            '<div style="font-weight:650">' + esc(f.customer || 'Customer') + ' · ' + money(clPos(f.amount)) + '</div>' +
+          return '<button class="card card-tap" data-act="fu-open" data-arg="' + esc(f.id) + '" style="display:block;width:100%;text-align:left">' +
+            '<div style="font-weight:650">' + esc(f.customer || 'Customer') + (clPos(f.amount) ? ' · ' + money(clPos(f.amount)) : '') + '</div>' +
             '<div style="font-size:13px;margin-top:2px">' + esc(f.what || '') + '</div>' +
             (f.reason ? '<div style="color:var(--muted);font-size:13px">' + esc(f.reason) + '</div>' : '') +
-            (f.due ? '<div style="color:var(--gold);font-size:13px;margin-top:4px">call back ' + esc(fmtDay(f.due)) + '</div>' : '') +
-          '</div>';
+            '<div style="font-size:13px;margin-top:4px;color:' + (f.due ? 'var(--gold)' : 'var(--muted)') + '">' +
+              (f.due ? 'call back ' + esc(fmtDay(f.due)) : 'no date yet — tap to set it') + '</div>' +
+          '</button>';
         }).join('')
       : '<div class="empty" style="padding:14px">Nothing waiting on an answer.</div>';
   } else {
@@ -2252,7 +2460,10 @@ function viewCrewMember() {
         (pay.parts ? '<tr><td style="padding:3px 0">Less parts</td><td style="text-align:right">− ' + money(pay.parts) + '</td></tr>' : '') +
         (pay.sub ? '<tr><td style="padding:3px 0">Less the sub</td><td style="text-align:right">− ' + money(pay.sub) + '</td></tr>' : '') +
         '<tr><td style="padding:3px 0;border-top:1px solid var(--line)">Commission base</td><td style="text-align:right;border-top:1px solid var(--line)">' + money(pay.base) + '</td></tr>' +
-        '<tr><td style="padding:3px 0">Commission 40%</td><td style="text-align:right">' + money(pay.commission) + '</td></tr>' +
+        (pay.baseSup
+          ? '<tr><td style="padding:3px 0">AIO Pro work \u00b7 40% of ' + money(pay.baseAio) + '</td><td style="text-align:right">' + money(pay.commAio) + '</td></tr>' +
+            '<tr><td style="padding:3px 0">Dispatcher work \u00b7 35% of ' + money(pay.baseSup) + '</td><td style="text-align:right">' + money(pay.commSup) + '</td></tr>'
+          : '<tr><td style="padding:3px 0">Commission 40%</td><td style="text-align:right">' + money(pay.commission) + '</td></tr>') +
         (pay.tips ? '<tr><td style="padding:3px 0">Tips (all his)</td><td style="text-align:right">+ ' + money(pay.tips) + '</td></tr>' : '') +
         (pay.owedBack ? '<tr><td style="padding:3px 0">Parts he paid for</td><td style="text-align:right">+ ' + money(pay.owedBack) + '</td></tr>' : '') +
         '<tr><td style="padding:7px 0;font-weight:700;border-top:2px solid var(--gold)">Total due</td><td style="text-align:right;font-weight:700;border-top:2px solid var(--gold)">' + money(pay.total) + '</td></tr>' +
@@ -2261,6 +2472,7 @@ function viewCrewMember() {
       (owed !== pay.total
         ? '<div class="card" style="padding:10px 12px"><div style="font-size:13px">Across every week not yet settled: <b>' + money(owed) + '</b></div></div>'
         : '') +
+      payWeekList(cid, function (m) { return crewPay(c, m, wkSunday(m)).total; }) +
       (done.length
         ? done.map(function (r) {
             return '<div class="card" style="padding:10px 12px">' +
@@ -2269,7 +2481,7 @@ function viewCrewMember() {
                 '<span style="flex:1;font-weight:600">' + esc(r.customer || 'Job') + '</span>' +
                 '<span style="font-weight:650">' + money(clPos(r.collected)) + '</span>' +
               '</div>' +
-              '<div style="color:var(--muted);font-size:12px;margin-left:64px">' + esc([r.address, r.method, clPos(r.parts_amount) ? 'parts ' + money(clPos(r.parts_amount)) : '', clPos(r.sub_amount) ? 'sub ' + money(clPos(r.sub_amount)) : '', clPos(r.tip) ? 'tip ' + money(clPos(r.tip)) : ''].filter(Boolean).join(' · ')) + '</div>' +
+              '<div style="color:var(--muted);font-size:12px;margin-left:64px">' + esc([r.address, r.method, clPos(r.parts_amount) ? 'parts ' + money(clPos(r.parts_amount)) : '', clPos(r.sub_amount) ? 'sub ' + money(clPos(r.sub_amount)) : '', clPos(r.tip) ? 'tip ' + money(clPos(r.tip)) : '', r.status === 'paid' ? clRateLabel(r) : ''].filter(Boolean).join(' · ')) + '</div>' +
             '</div>';
           }).join('')
         : '<div class="empty" style="padding:14px">Nothing on file for him in this week.</div>');
@@ -2495,6 +2707,7 @@ function escCard() {
 function viewEscobar() {
   var tab = state.crewTab === 'report' ? 'report' : 'jobs';
   var wkM = payWeek(), wkS = wkSunday(wkM);
+  state.payWeeks = escWeeks();
   var pay = escPay(wkM, wkS), owed = escOutstanding();
   var body;
   if (tab === 'jobs') {
@@ -2519,6 +2732,7 @@ function viewEscobar() {
       (owed !== pay.owed
         ? '<div class="card" style="padding:10px 12px"><div style="font-size:13px">Across every week not yet settled: <b>' + money(owed) + '</b></div></div>'
         : '') +
+      payWeekList(TJ_INSTALLER, function (m) { return escPay(m, wkSunday(m)).owed; }) +
       (pay.rows.length
         ? pay.rows.map(function (r) {
             return '<div class="card" style="padding:10px 12px">' +
@@ -7697,6 +7911,7 @@ function render() {
   else if (state.view === 'techjob') html = viewTechJob();
   else if (state.view === 'crew') html = viewCrew();
   else if (state.view === 'crewone') html = (state.crewOne && state.crewOne.id === TJ_INSTALLER) ? viewEscobar() : viewCrewMember();
+  else if (state.view === 'followup') html = viewFollowup();
   else if (state.view === 'day') html = viewDay();
   else html = viewHome();
   root.innerHTML = html;
@@ -7780,6 +7995,12 @@ function wireInputs() {
       } else if (path.indexOf('ju.') === 0) {
         state.juDraft = state.juDraft || {};
         state.juDraft[path.slice(3)] = val;
+      } else if (path === 'fudue') {
+        state.fuDue = val;
+      } else if (path === 'payjump') {
+        /* Only once a whole date has been picked, or the screen would jump
+           about while the wheel is still turning. */
+        if (/^\d{4}-\d{2}-\d{2}$/.test(val)) { state.payWeek = wkMonday(val); render(); }
       }
     };
     el.addEventListener('input', modelHandler);
@@ -8027,6 +8248,7 @@ root.addEventListener('click', function (e) {
     case 'cl-status': if (state.closing) { state.closing.status = arg; state.closing.err = ''; render(); } break;
     case 'cl-method': if (state.closing) { state.closing.method = state.closing.method === arg ? '' : arg; render(); } break;
     case 'cl-parts': if (state.closing) { state.closing.parts_paid_by = state.closing.parts_paid_by === arg ? '' : arg; render(); } break;
+    case 'cl-src': if (state.closing) { state.closing.job_source = arg; state.closing.err = ''; render(); } break;
     case 'cl-fu': if (state.closing) { state.closing.fuOn = arg === '1'; state.closing.err = ''; render(); } break;
     case 'cl-save': clSave(); break;
     case 'cl-assign': tjAssignFromArg(arg, 'performer'); break;
@@ -8040,7 +8262,14 @@ root.addEventListener('click', function (e) {
     case 'crew-refresh': crewKeysLoad(true); clLoad(true); tjLoad(true); stLoad(true); scLoad(true); juLoad(true); break;
     case 'crew-member': { var cm = arg === TJ_INSTALLER ? { id: TJ_INSTALLER, name: 'Escobar' } : tjCrewAll().filter(function (x) { return x.id === arg; })[0]; if (cm) { state.crewOne = cm; state.crewTab = 'jobs'; state.view = 'crewone'; render(); } break; }
     case 'crew-tab': state.crewTab = arg; render(); break;
-    case 'pay-week': state.payWeek = isoAddDays(payWeek(), Number(arg) * 7); render(); break;
+    case 'pay-week': state.payWeek = arg === 'now' ? wkThis() : isoAddDays(payWeek(), Number(arg) * 7); render(); break;
+    case 'pay-jump': state.payWeek = wkMonday(arg); render(); break;
+    case 'fu-open': state.fuFrom = state.view; fuOpen(arg); break;
+    case 'fu-back': state.view = state.fuFrom || 'crewone'; state.fuOne = null; render(); break;
+    case 'fu-keep': { var fk = fuById(arg); if (fk) fuSetState(arg, fk.state || 'open'); break; }
+    case 'fu-won': fuSetState(arg, 'won'); break;
+    case 'fu-lost': fuSetState(arg, 'lost'); break;
+    case 'fu-docs': crewLoad().then(function () { if (state.view === 'followup') render(); }); render(); break;
     case 'pay-settle': {
       var pc = state.crewOne, pw = payWeek();
       if (pc) {
