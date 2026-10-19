@@ -1369,6 +1369,572 @@ function update(patch, opts) {
 function refresh() { return listJobs().then(function (j) { state.jobs = j; state.loading = false; render(); }); }
 
 /* ── Views ─────────────────────────────────────────────────── */
+/* ───────────────── Closings, open jobs and follow-ups ─────────────────
+   Every job whose time has passed asks to be closed, and keeps asking until
+   it is. The closing is what the weekly pay report is built from, so it
+   carries the full agreed price AND what actually came in: the gap between
+   the two is the money still open in the field. A deposit job lands on Open
+   jobs, where the office decides who performs it. Anything quoted and not
+   approved becomes a follow-up.
+
+   Two things worth knowing about the job list. The calendar feed holds both
+   accounts, work and personal alike, so an event only counts as a job if it
+   has a place to go to — and anything that slips through can be dismissed
+   per phone, once, for good. And the feed only ever holds the month being
+   browsed, so finished jobs are kept in their own map that is added to and
+   never replaced; otherwise paging the calendar would make the badge vanish. */
+
+var CL_STATUS = [
+  { k: 'paid', t: 'Paid in full' },
+  { k: 'deposit', t: 'Deposit taken — job still open' },
+  { k: 'zero', t: 'Nothing collected' },
+  { k: 'cancelled', t: 'Cancelled' },
+  { k: 'noshow', t: 'Nobody home' }
+];
+var CL_METHODS = ['cash', 'check', 'card', 'zelle', 'other'];
+var CL_SKIP_KEY = 'aio-cl-skip';
+
+function clMoneyStatus(k) { return k === 'paid' || k === 'deposit' || k === 'zero'; }
+function clKey(ev) { return (ev.acct || 'A') + '|' + ev.id; }
+function clStore() { return state.cl || (state.cl = { rows: [], byJob: {}, fuBy: {}, seen: {}, loaded: false, busy: false, failed: false, err: '' }); }
+function clNum(v) { var n = parseFloat(String(v == null ? '' : v).replace(/[^0-9.\-]/g, '')); return isFinite(n) ? n : 0; }
+function clPos(v) { var n = clNum(v); return n > 0 ? n : 0; }
+function clBalance(r) { var b = clPos(r.job_total) - clPos(r.collected); return b > 0 ? b : 0; }
+function clSkipped() { try { return JSON.parse(localStorage.getItem(CL_SKIP_KEY)) || {}; } catch (e) { return {}; } }
+function clSkip(jobKey) { var m = clSkipped(); m[jobKey] = 1; try { localStorage.setItem(CL_SKIP_KEY, JSON.stringify(m)); } catch (e) {} }
+
+/* When did this job finish? An all-day entry counts as done at the end of its
+   day; one with no end time gets the 90 minutes the app books by default. */
+function clEndedAt(ev) {
+  if (!ev || !ev.date) return 0;
+  if (!ev.time) { var ad = new Date(ev.date + 'T23:59'); return isNaN(ad.getTime()) ? 0 : ad.getTime(); }
+  var s = new Date(ev.date + 'T' + ev.time);
+  if (isNaN(s.getTime())) return 0;
+  if (ev.endTime) {
+    var e = new Date(ev.date + 'T' + ev.endTime);
+    if (!isNaN(e.getTime()) && e.getTime() > s.getTime()) return e.getTime();
+  }
+  return s.getTime() + 90 * 60000;
+}
+/* A job is somewhere you drive to, or something the app already knows is work.
+   Without that test every birthday on the personal calendar asks to be closed. */
+function clIsJob(ev) {
+  if (!ev) return false;
+  if (ev.worker || ev.share) return true;
+  return !!String(ev.location || '').trim();
+}
+
+/* Finished jobs are remembered here as the calendar feed moves around.
+   Two weeks back only: older than that is history, not a badge. */
+function clRemember() {
+  var cl = clStore(), now = Date.now(), floor = now - 14 * 86400000, changed = false;
+  clSourceJobs().forEach(function (ev) {
+    var t = clEndedAt(ev);
+    /* A job handed to a technician is a job by definition — the address test
+       is only there to keep the owner's own calendar out of the list. */
+    if (!t || t >= now || t < floor || (!ev.fromServer && !clIsJob(ev))) return;
+    var k = clKey(ev);
+    if (!cl.seen[k]) changed = true;
+    cl.seen[k] = ev;
+  });
+  Object.keys(cl.seen).forEach(function (k) {
+    if (clEndedAt(cl.seen[k]) < floor) { delete cl.seen[k]; changed = true; }
+  });
+  return changed;
+}
+function clEventByKey(k) {
+  var l = clSourceJobs();
+  for (var i = 0; i < l.length; i++) if (clKey(l[i]) === k) return l[i];
+  var tj = tjStore().byId[k];
+  if (tj) return tjAsEvent(tj);
+  return clStore().seen[k] || null;
+}
+
+function clLoad(force) {
+  var cl = clStore(), key = sendKey();
+  if (!key) { cl.loaded = true; cl.failed = true; cl.err = 'This phone is not set up yet — Settings, then "Set up this phone".'; return Promise.resolve([]); }
+  if ((cl.loaded && !force) || cl.busy) return Promise.resolve(cl.rows);
+  cl.busy = true;
+  return Promise.all([
+    cloudRpc('closings_list', { p_key: key, p_from: null, p_to: null }),
+    cloudRpc('followups_list', { p_key: key, p_state: '' })
+  ]).then(function (res) {
+    var rows = res[0], fus = res[1];
+    if (!Array.isArray(rows)) throw new Error('The closings came back in a shape I did not expect.');
+    cl.rows = rows; cl.byJob = {}; cl.fuBy = {};
+    rows.forEach(function (r) { cl.byJob[r.job_key] = r; });
+    (Array.isArray(fus) ? fus : []).forEach(function (f) { if (f.closing_id) cl.fuBy[f.closing_id] = f; });
+    cl.busy = false; cl.loaded = true; cl.failed = false; cl.err = ''; clPaint();
+    return cl.rows;
+  }).catch(function (err) {
+    /* A failed load must not make every finished job look unclosed — that
+       would nag about jobs already closed and invite a second closing. */
+    cl.rows = []; cl.byJob = {}; cl.fuBy = {};
+    cl.busy = false; cl.loaded = true; cl.failed = true;
+    cl.err = (err && err.message) || 'Could not reach the closings list.';
+    clPaint(); return [];
+  });
+}
+/* Never repaint the closing form: it would wipe what is being typed. */
+function clPaint() { var v = state.view; if (!v || v === 'home' || v === 'openjobs') render(); }
+
+function clAwaiting() {
+  var cl = clStore();
+  if (cl.failed) return [];
+  clRemember();
+  var skip = clSkipped();
+  return Object.keys(cl.seen).map(function (k) { return cl.seen[k]; }).filter(function (ev) {
+    var k = clKey(ev);
+    return !cl.byJob[k] && !skip[k];
+  }).sort(function (a, b) { return clEndedAt(b) - clEndedAt(a); });
+}
+function clDeposits() { var cl = clStore(); return (Array.isArray(cl.rows) ? cl.rows : []).filter(function (r) { return r.status === 'deposit'; }); }
+
+function clJobLine(ev) {
+  var when = fmtDay(ev.date) + (ev.time ? ' · ' + ev.time : '');
+  return '<div class="card joblist-item">' +
+    '<button class="meta" style="text-align:left" data-act="cl-open" data-arg="' + esc(clKey(ev)) + '">' +
+      '<div class="name">' + esc(ev.title || 'Job') + '</div>' +
+      '<div class="sub">' + esc(when + (ev.location ? ' · ' + ev.location : '')) + '</div>' +
+    '</button>' +
+    '<button class="iconbtn" style="color:var(--muted)" data-act="cl-skip" data-arg="' + esc(clKey(ev)) + '" aria-label="Not a job">NOT A JOB</button>' +
+  '</div>';
+}
+
+/* Home: the red count that does not clear until the job is closed. */
+function clDueCard() {
+  var cl = clStore();
+  if (!cl.loaded && !cl.busy) clLoad();
+  var due = clAwaiting(), dep = clDeposits(), out = '';
+  if (due.length) {
+    out += '<button class="card card-tap" data-act="cl-due" style="display:block;width:100%;text-align:left;border-color:var(--defect)">' +
+      '<div class="row" style="align-items:center;gap:10px">' +
+        '<span class="pill defect">' + due.length + '</span>' +
+        '<span style="flex:1">' +
+          '<span style="font-weight:700;display:block">' + (due.length === 1 ? 'A job is waiting to be closed' : due.length + ' jobs are waiting to be closed') + '</span>' +
+          '<span style="color:var(--muted);font-size:13px">' + esc(due[0].title || 'Job') + (due.length > 1 ? ' and ' + (due.length - 1) + ' more' : '') + '</span>' +
+        '</span>' +
+        '<span style="color:var(--muted)">' + (state.clOpen ? '▾' : '▸') + '</span>' +
+      '</div></button>' +
+      (state.clOpen ? due.map(clJobLine).join('') : '');
+  }
+  if (cl.err) out += '<div class="card" style="border-color:var(--defect)"><div style="font-size:13px;color:var(--defect)">' + esc(cl.err) + '</div><button class="btn btn-ghost" data-act="cl-retry" style="width:100%;margin-top:8px">Try again</button></div>';
+  if (!isTech() && dep.length) {
+    var open = dep.reduce(function (t, r) { return t + clBalance(r); }, 0);
+    out += '<button class="card card-tap" data-act="openjobs" style="display:block;width:100%;text-align:left;border-color:var(--gold)">' +
+      '<div style="font-weight:650">' + dep.length + ' open job' + (dep.length === 1 ? '' : 's') + ' with a deposit</div>' +
+      '<div style="color:var(--muted);font-size:13px">' + money(open) + ' still to collect — tap to decide who does the work</div></button>';
+  }
+  return out;
+}
+
+/* ── the closing form ── */
+
+function clOpenForm(jobKey) {
+  var ev = clEventByKey(jobKey), cl = clStore(), had = cl.byJob[jobKey];
+  if (!ev && !had) { alert('That job is no longer on the calendar.'); return; }
+  function m(v) { var n = clPos(v); return n ? String(n) : ''; }
+  state.closing = {
+    job_key: jobKey,
+    acct: (had && had.acct) || (ev && ev.acct) || 'A',
+    event_id: (had && had.event_id) || (ev && ev.id) || '',
+    share_id: (had && had.share_id) || (ev && ev.share) || '',
+    title: (ev && ev.title) || (had && had.customer) || 'Job',
+    customer: (had && had.customer) || clNameFrom(ev),
+    address: (had && had.address) || (ev && ev.location) || '',
+    day: (ev && ev.date) || (had && had.day) || isoToday(),
+    status: (had && had.status) || '',
+    job_total: had ? m(had.job_total) : '',
+    collected: had ? m(had.collected) : '',
+    method: (had && had.method) || '',
+    parts_amount: had ? m(had.parts_amount) : '',
+    parts_paid_by: (had && had.parts_paid_by) || '',
+    tip: had ? m(had.tip) : '',
+    note: (had && had.note) || '',
+    id: (had && had.id) || '',
+    /* A follow-up already filed is shown, not offered again — asking twice
+       would file it twice, and there is no way to take one back from here. */
+    fuHad: !!(had && had.id && cl.fuBy[had.id]),
+    fuOn: false, fu: { what: '', amount: '', reason: '', due: '' },
+    busy: false, err: '', msg: ''
+  };
+  state.view = 'closing';
+  render();
+}
+/* "Inspection — John Smith" gives up the name; a title with no separator is
+   used as it stands. The field is editable either way. */
+function clNameFrom(ev) {
+  var t = String((ev && ev.title) || '').trim();
+  var m = t.split(/\s[—–-]\s|:\s/);
+  return (m.length > 1 ? m[m.length - 1] : t).trim();
+}
+
+function viewClosing() {
+  var c = state.closing;
+  if (!c) { state.view = 'home'; return viewHome(); }
+  var moneyOn = clMoneyStatus(c.status);
+  function sBtn(s) {
+    return '<button class="btn ' + (c.status === s.k ? 'btn-gold btn-primary' : 'btn-ghost') + '" data-act="cl-status" data-arg="' + s.k + '" style="width:100%;margin-bottom:6px;text-align:left">' + esc(s.t) + '</button>';
+  }
+  function mBtn(m) {
+    return '<button class="btn ' + (c.method === m ? 'btn-gold btn-primary' : 'btn-ghost') + '" data-act="cl-method" data-arg="' + m + '" style="flex:1;text-transform:capitalize">' + m + '</button>';
+  }
+  var bal = clPos(c.job_total) - clPos(c.collected);
+  return '<div class="app">' +
+    '<div class="topbar"><button class="iconbtn" data-act="cl-back"' + (c.busy ? ' disabled' : '') + '>‹</button>' +
+      '<div style="flex:1"><h1>Close this job</h1><div class="sub">' + esc(c.title || '') + '</div></div></div>' +
+    '<div class="screen">' +
+      '<div class="card">' +
+        '<div class="eyebrow">' + esc(fmtDay(c.day)) + (c.address ? ' · ' + esc(c.address) : '') + '</div>' +
+        '<div class="field"><label>Customer</label><input data-model="cls.customer" value="' + esc(c.customer || '') + '"></div>' +
+      '</div>' +
+      '<div class="card"><div class="eyebrow">How did it end?</div>' + CL_STATUS.map(sBtn).join('') + '</div>' +
+      (moneyOn
+        ? '<div class="card"><div class="eyebrow">The money</div>' +
+            '<div class="row" style="gap:10px">' +
+              '<div class="field" style="flex:1"><label>Full job price</label><input data-model="cls.job_total" inputmode="decimal" value="' + esc(c.job_total || '') + '"></div>' +
+              '<div class="field" style="flex:1"><label>Collected today</label><input data-model="cls.collected" inputmode="decimal" value="' + esc(c.collected || '') + '"></div>' +
+            '</div>' +
+            (c.status === 'deposit' && bal > 0 ? '<div style="font-size:13px;color:var(--gold);margin:-4px 0 10px">Still open on this job: ' + money(bal) + '</div>' : '') +
+            '<label style="color:var(--muted);font-size:13px">Paid by</label><div class="row" style="gap:6px;margin:4px 0 12px">' + CL_METHODS.map(mBtn).join('') + '</div>' +
+            '<div class="row" style="gap:10px">' +
+              '<div class="field" style="flex:1"><label>Parts spent</label><input data-model="cls.parts_amount" inputmode="decimal" value="' + esc(c.parts_amount || '') + '"></div>' +
+              '<div class="field" style="flex:1"><label>Tip (yours)</label><input data-model="cls.tip" inputmode="decimal" value="' + esc(c.tip || '') + '"></div>' +
+            '</div>' +
+            '<label style="color:var(--muted);font-size:13px">If there were parts, who paid for them?</label><div class="row" style="gap:8px;margin-top:4px">' +
+              '<button class="btn ' + (c.parts_paid_by === 'tech' ? 'btn-gold btn-primary' : 'btn-ghost') + '" data-act="cl-parts" data-arg="tech" style="flex:1">I did</button>' +
+              '<button class="btn ' + (c.parts_paid_by === 'office' ? 'btn-gold btn-primary' : 'btn-ghost') + '" data-act="cl-parts" data-arg="office" style="flex:1">The office</button>' +
+            '</div>' +
+          '</div>'
+        : '') +
+      '<div class="card"><div class="field"><label>Anything worth writing down?</label><textarea data-model="cls.note" rows="3">' + esc(c.note || '') + '</textarea></div></div>' +
+      (c.fuHad
+        ? '<div class="card"><div class="eyebrow">Follow-up</div><div style="font-size:13px;color:var(--muted)">A follow-up is already on file for this job.</div></div>'
+        : '<div class="card">' +
+            '<div class="eyebrow">Did you quote or sell anything that was not approved?</div>' +
+            '<div class="row" style="gap:8px">' +
+              '<button class="btn ' + (c.fuOn ? 'btn-gold btn-primary' : 'btn-ghost') + '" data-act="cl-fu" data-arg="1" style="flex:1">Yes</button>' +
+              '<button class="btn ' + (!c.fuOn ? 'btn-gold btn-primary' : 'btn-ghost') + '" data-act="cl-fu" data-arg="0" style="flex:1">No</button>' +
+            '</div>' +
+            (c.fuOn
+              ? '<div style="margin-top:12px">' +
+                  '<div class="field"><label>What did you offer?</label><input data-model="clf.what" value="' + esc(c.fu.what || '') + '"></div>' +
+                  '<div class="row" style="gap:10px">' +
+                    '<div class="field" style="flex:1"><label>Price you gave</label><input data-model="clf.amount" inputmode="decimal" value="' + esc(c.fu.amount || '') + '"></div>' +
+                    '<div class="field" style="flex:1"><label>Call back on</label><input data-model="clf.due" type="date" value="' + esc(c.fu.due || '') + '"></div>' +
+                  '</div>' +
+                  '<div class="field"><label>Why not now?</label><input data-model="clf.reason" value="' + esc(c.fu.reason || '') + '"></div>' +
+                '</div>'
+              : '') +
+          '</div>') +
+      (c.msg ? '<div class="card" style="border-color:var(--gold)"><div style="color:var(--gold);font-size:13px">' + esc(c.msg) + '</div></div>' : '') +
+      (c.err ? '<div class="card" style="border-color:var(--defect)"><div style="color:var(--defect);font-size:13px">' + esc(c.err) + '</div></div>' : '') +
+      '<button class="btn btn-gold btn-wide" data-act="cl-save"' + (c.busy ? ' disabled' : '') + '>' + (c.busy ? 'Saving…' : 'Save the closing') + '</button>' +
+      '<button class="btn btn-ghost btn-wide" data-act="cl-back"' + (c.busy ? ' disabled' : '') + '>Not now</button>' +
+    '</div></div>';
+}
+
+function clSave() {
+  var c = state.closing; if (!c || c.busy) return;
+  if (!c.status) { c.err = 'Pick how the job ended first.'; render(); return; }
+  var key = sendKey();
+  if (!key) { c.err = 'This phone is not set up yet.'; render(); return; }
+  if (clPos(c.parts_amount) > 0 && !c.parts_paid_by) { c.err = 'Say who paid for the parts.'; render(); return; }
+  var wantFu = c.fuOn && !c.fuHad;
+  if (wantFu && !String(c.fu.what || '').trim()) { c.err = 'Write what you offered, or answer No.'; render(); return; }
+  c.busy = true; c.err = ''; c.msg = ''; render();
+  var moneyOn = clMoneyStatus(c.status);
+  var payload = {
+    id: c.id || '', job_key: c.job_key, acct: c.acct, event_id: c.event_id, share_id: c.share_id || '',
+    customer: c.customer || '', address: c.address || '', day: c.day, status: c.status,
+    job_total: moneyOn ? String(clPos(c.job_total)) : '0',
+    collected: moneyOn ? String(clPos(c.collected)) : '0',
+    method: moneyOn ? (c.method || '') : '',
+    parts_amount: moneyOn ? String(clPos(c.parts_amount)) : '0',
+    parts_paid_by: moneyOn && clPos(c.parts_amount) > 0 ? (c.parts_paid_by || '') : '',
+    tip: moneyOn ? String(clPos(c.tip)) : '0',
+    note: c.note || ''
+  };
+  cloudRpc('closing_put', { p_key: key, p_payload: payload }).then(function (id) {
+    /* Hold on to the id and put the row in the map straight away: without
+       this the job still shows as unclosed until the refetch lands, and a
+       second tap would file a second closing for the same job. */
+    c.id = id || c.id;
+    var cl = clStore();
+    cl.byJob[c.job_key] = {
+      id: c.id, job_key: c.job_key, acct: c.acct, event_id: c.event_id, share_id: c.share_id,
+      customer: payload.customer, address: payload.address, day: payload.day, status: payload.status,
+      job_total: payload.job_total, collected: payload.collected, method: payload.method,
+      parts_amount: payload.parts_amount, parts_paid_by: payload.parts_paid_by, tip: payload.tip, note: payload.note
+    };
+    cl.rows = cl.rows.filter(function (r) { return r.job_key !== c.job_key; }).concat([cl.byJob[c.job_key]]);
+    if (!wantFu) return null;
+    /* The closing is already saved at this point, so a follow-up that fails
+       must say exactly that instead of reading as a lost closing. */
+    return cloudRpc('followup_put', {
+      p_key: key,
+      p_payload: {
+        closing_id: c.id, job_key: c.job_key, customer: payload.customer, address: payload.address,
+        what: c.fu.what, amount: String(clPos(c.fu.amount)), reason: c.fu.reason || '', due: String(c.fu.due || '').trim()
+      }
+    }).catch(function (err) {
+      c.busy = false; c.fuHad = false;
+      c.msg = 'The closing is saved.';
+      c.err = 'The follow-up did not save: ' + ((err && err.message) || 'no connection') + '. Fix it and press Save again — the closing will not be filed twice.';
+      render();
+      throw { handled: true };
+    }).then(function () { clStore().fuBy[c.id] = { closing_id: c.id }; return null; });
+  }).then(function (stop) {
+    if (stop && stop.handled) return;
+    state.closing = null; state.view = 'home'; render(); clLoad(true);
+  }).catch(function (err) {
+    if (err && err.handled) return;
+    c.busy = false;
+    c.err = (err && err.message) || 'Could not save it. Check the internet and try again.';
+    render();
+  });
+}
+
+/* ── open jobs: deposit taken, work still to do, and who performs it ── */
+
+function viewOpenJobs() {
+  var dep = clDeposits();
+  var open = dep.reduce(function (t, r) { return t + clBalance(r); }, 0);
+  var rows = dep.map(function (r) {
+    var ev = clEventByKey(r.job_key);
+    return '<div class="card">' +
+      '<div style="font-weight:650">' + esc(r.customer || (ev && ev.title) || 'Job') + '</div>' +
+      '<div style="color:var(--muted);font-size:13px">' + esc([r.address, fmtDay(r.day)].filter(Boolean).join(' · ')) + '</div>' +
+      '<div class="row" style="gap:10px;margin:10px 0">' +
+        '<div class="stat"><div class="k">Job</div><div class="v" style="font-size:17px">' + money(clPos(r.job_total)) + '</div></div>' +
+        '<div class="stat"><div class="k">Taken</div><div class="v" style="font-size:17px">' + money(clPos(r.collected)) + '</div></div>' +
+        '<div class="stat"><div class="k">Open</div><div class="v" style="font-size:17px">' + money(clBalance(r)) + '</div></div>' +
+      '</div>' +
+      (r.note ? '<div style="font-size:13px;color:var(--muted);margin-bottom:8px">' + esc(r.note) + '</div>' : '') +
+      (ev
+        ? tjPickerHTML(ev, 'cl-assign', 'performer') + '<div style="height:10px"></div>' + tjPickerHTML(ev, 'cl-sell', 'seller')
+        : '<div style="font-size:13px;color:var(--muted)">This job is not in the calendar window being shown, so there is nobody to send from here.</div>') +
+      '<button class="btn btn-ghost" data-act="cl-open" data-arg="' + esc(r.job_key) + '" style="width:100%;margin-top:8px">Edit the closing</button>' +
+    '</div>';
+  }).join('');
+  return '<div class="app">' +
+    '<div class="topbar"><button class="iconbtn" data-act="home">‹</button><div style="flex:1"><h1>Open jobs</h1>' +
+      '<div class="sub">deposit taken, work still to finish</div></div></div>' +
+    '<div class="screen">' +
+      '<div class="card"><div class="eyebrow">Money out in the field</div><div style="font-size:26px;font-weight:700">' + money(open) + '</div>' +
+        '<div style="color:var(--muted);font-size:13px">across ' + dep.length + ' job' + (dep.length === 1 ? '' : 's') + '</div></div>' +
+      (rows || '<div class="empty" style="padding:14px">Nothing open with a deposit.</div>') +
+    '</div></div>';
+}
+
+/* ───────────────── Who performs a job, and the technician's own list ─────
+   A technician's phone never reads the owner's calendar. The owner hands a
+   job to one of the crew; the server keeps that row stamped with md5 of that
+   technician's key, and his phone asks for nothing else. Escobar is the one
+   exception: he is on the installer app, so he still travels the old road —
+   the aioWorker flag and worker_jobs. */
+
+var TJ_ME = '', TJ_INSTALLER = 'installer';
+
+function tjStore() { return state.tj || (state.tj = { rows: [], byId: {}, loaded: false, busy: false, err: '' }); }
+function tjCrew() { return (state.crewKeys && state.crewKeys.list) || []; }
+function tjCrewById(id) { var l = tjCrew(); for (var i = 0; i < l.length; i++) if (l[i].id === id) return l[i]; return null; }
+
+/* One shape for a job, whoever it came from, so everything downstream — the
+   closing list, the badge, the forms — does not care about the source. */
+function tjAsEvent(r) {
+  return {
+    id: r.event_id, acct: r.acct, title: r.title || 'Job', date: r.day,
+    time: r.start_time || '', endTime: r.end_time || '', location: r.location || '',
+    notes: r.notes || '', share: r.share_id || '', worker: false, workerAuto: false, fromServer: true
+  };
+}
+function tjLoad(force) {
+  var tj = tjStore(), key = sendKey();
+  if (!key) { tj.loaded = true; return Promise.resolve([]); }
+  if ((tj.loaded && !force) || tj.busy) return Promise.resolve(tj.rows);
+  tj.busy = true;
+  var call = isTech()
+    ? cloudRpc('tech_jobs_list', { p_key: key })
+    : cloudRpc('tech_jobs_all', { p_owner: key, p_from: null, p_to: null });
+  return call.then(function (rows) {
+    tj.rows = Array.isArray(rows) ? rows : [];
+    tj.byId = {};
+    tj.rows.forEach(function (r) { tj.byId[r.id] = r; });
+    tj.busy = false; tj.loaded = true; tj.err = '';
+    clPaint();
+    return tj.rows;
+  }).catch(function (err) {
+    tj.rows = []; tj.byId = {};
+    tj.busy = false; tj.loaded = true;
+    tj.err = (err && err.message) || 'Could not load your jobs.';
+    clPaint();
+    return [];
+  });
+}
+
+/* Which jobs this phone is allowed to close. A technician: only what he was
+   given. The owner: his calendar, as before. */
+function clSourceJobs() {
+  if (!isTech()) return state.gcalEvents || [];
+  var tj = tjStore();
+  if (!tj.loaded && !tj.busy) tjLoad();
+  /* He closes what he sold. A job he only performed belongs in someone
+     else's pay report, so it must not sit on his list asking for money. */
+  return tj.rows.filter(function (r) { return r.role === 'seller'; }).map(tjAsEvent);
+}
+
+/* Who is this job's performer right now: '' for the owner himself,
+   'installer' for Escobar, or a crew id. */
+function tjPerformerOf(ev) {
+  if (!ev) return TJ_ME;
+  if (ev.tech) return ev.tech;
+  if (ev.worker) return TJ_INSTALLER;
+  return TJ_ME;
+}
+function tjPerformerName(who) {
+  if (who === TJ_INSTALLER) return 'Escobar';
+  if (!who) return 'Me';
+  var c = tjCrewById(who);
+  return c ? c.name : 'a technician';
+}
+
+/* Hand the job over (or take it back). The calendar event carries the choice
+   so it survives and shows up on any phone; the server row is what the
+   technician's app actually reads. */
+function tjAssign(ev, who, role, cb) {
+  var key = ownerKey();
+  if (!key) { alert('Only the office phone can hand out jobs.'); return; }
+  if (!ev || !ev.id) { alert('Save the job first, then choose who performs it.'); return; }
+  var slot = ev.acct || 'A', tok = gcalTok(slot);
+  if (!tok) { alert('Connect the ' + gcalAcct(slot).label + ' calendar first.'); gcalConnect(slot); return; }
+  var isInst = who === TJ_INSTALLER;
+  var crew = (!isInst && who) ? tjCrewById(who) : null;
+  if (!isInst && who && !crew) { alert('I do not have a key for that technician. Open Settings and add him again.'); return; }
+  var jobId = (ev.acct || 'A') + '|' + ev.id;
+
+  fetch(gcalApi() + '/' + encodeURIComponent(ev.id), {
+    method: 'PATCH',
+    headers: { Authorization: 'Bearer ' + tok, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ extendedProperties: { private: (role === 'seller'
+      ? { aioSeller: crew ? crew.id : '', aioShare: ev.share || '' }
+      : { aioWorker: isInst ? '1' : '0', aioTech: crew ? crew.id : '', aioShare: ev.share || '' }) } })
+  }).then(function (r) { if (!r.ok) throw new Error('calendar HTTP ' + r.status); return r.json(); })
+    .then(function () {
+      return cloudRpc('tech_jobs_assign', {
+        p_owner: key, p_id: jobId, p_tech_key: crew ? crew.key : '',
+        p_role: role === 'seller' ? 'seller' : 'performer',
+        p_job: {
+          acct: ev.acct || 'A', event_id: ev.id, title: ev.title || 'Job', day: ev.date,
+          start_time: ev.time || '', end_time: ev.endTime || '',
+          location: ev.location || '', notes: wkNote(ev.notes), share_id: ev.share || ''
+        }
+      });
+    })
+    .then(function () {
+      if (role === 'seller') { ev.seller = crew ? crew.id : ''; }
+      else { ev.worker = isInst; ev.workerAuto = false; ev.tech = crew ? crew.id : ''; }
+      tjStore().loaded = false;
+      if (cb) cb();
+      render();
+      tjLoad(true);
+      gcalFetch();
+    })
+    .catch(function (e) { alert('Could not hand it over: ' + ((e && e.message) || e)); });
+}
+
+/* The picker. Replaces the old installer yes/no switch so there is one
+   control for one decision. A job that has not been saved yet has no id for
+   the server to hang a row on, so the crew buttons wait for the save; Me and
+   Escobar ride along on the event itself and work straight away. */
+function tjPickerHTML(ev, actName, role) {
+  var seller = role === 'seller';
+  var who = seller ? (ev.seller || '') : tjPerformerOf(ev), crew = tjCrew(), saved = !!ev.id;
+  function b(val, label, off) {
+    return '<button class="btn ' + (who === val ? 'btn-gold btn-primary' : 'btn-ghost') + '"' +
+      (off ? ' disabled style="flex:1;min-width:30%;opacity:.45"' : ' style="flex:1;min-width:30%"') +
+      ' data-act="' + actName + '" data-arg="' + esc(((ev.acct || 'A') + '|' + (ev.id || '')) + '::' + val) + '">' + esc(label) + '</button>';
+  }
+  if (!crew.length && !(state.crewKeys && state.crewKeys.loaded)) crewKeysLoad();
+  return '<label style="color:var(--muted);font-size:13px">' + (seller ? 'Who sold this job' : 'Who performs this job') + '</label>' +
+    '<div class="row" style="gap:6px;margin-top:4px;flex-wrap:wrap">' +
+      b(TJ_ME, 'Me', false) +
+      (seller ? '' : b(TJ_INSTALLER, 'Escobar', false)) +
+      crew.map(function (c) { return b(c.id, c.name, !saved); }).join('') +
+    '</div>' +
+    '<div style="font-size:12px;color:var(--muted);margin-top:6px">' +
+      (!saved && crew.length ? 'Save the job first and the crew becomes pickable. ' : '') +
+      (seller
+        ? (who ? esc(tjPerformerName(who)) + ' closes this job and the commission is his.' : 'Your own sale — no commission on it.')
+        : (who === TJ_ME ? 'Nobody else sees this job.'
+          : who === TJ_INSTALLER ? 'Escobar sees it in the installer app — only what is under the INSTALLER: line, never a price.'
+          : esc(tjPerformerName(who)) + ' sees it on his phone.')) +
+    '</div>';
+}
+/* data-arg is "<acct>|<eventId>::<who>" — the job id can hold a | of its own,
+   so the performer is split off at the last ::, never the first | */
+function tjAssignFromArg(arg, role) {
+  var raw = String(arg), cut = raw.lastIndexOf('::');
+  if (cut < 1) return;
+  var jobKey = raw.slice(0, cut), who = raw.slice(cut + 2);
+  var ed = state.editEvent;
+  var onEdit = ed && ((ed.acct || 'A') + '|' + (ed.id || '')) === jobKey;
+  if (onEdit && !ed.id) {
+    /* Not saved yet: only what travels with the event itself can be set. */
+    if (role === 'seller') { ed.seller = who === TJ_ME ? '' : who; }
+    else if (who === TJ_INSTALLER) { ed.worker = true; ed.tech = ''; ed.workerAuto = false; }
+    else if (who === TJ_ME) { ed.worker = false; ed.tech = ''; ed.workerAuto = false; }
+    render();
+    return;
+  }
+  var ev = onEdit ? ed : clEventByKey(jobKey);
+  if (!ev) { alert('That job is no longer on the calendar.'); return; }
+  tjAssign(ev, who, role, function () {
+    if (onEdit) { ed.worker = ev.worker; ed.tech = ev.tech || ''; ed.seller = ev.seller || ''; }
+  });
+}
+
+/* The technician's own list, for his home screen. */
+function tjMineBlock() {
+  if (!isTech()) return '';
+  var tj = tjStore();
+  if (!tj.loaded && !tj.busy) tjLoad();
+  var today = isoToday(), tom = isoAddDays(today, 1);
+  var seen = {};
+  var rows = tj.rows.filter(function (r) { if (r.day < today || seen[r.id]) return false; seen[r.id] = 1; return true; });
+  var out = '';
+  if (tj.err) out += '<div class="card" style="border-color:var(--defect)"><div style="font-size:13px;color:var(--defect)">' + esc(tj.err) + '</div><button class="btn btn-ghost" data-act="tj-retry" style="width:100%;margin-top:8px">Try again</button></div>';
+  if (!rows.length) {
+    return out + '<div class="eyebrow">My jobs</div><div class="empty" style="padding:14px">' + (tj.busy ? 'Loading your jobs…' : 'Nothing assigned to you yet.') + '</div>';
+  }
+  function line(r) {
+    var tag = r.day === today ? 'Today' : r.day === tom ? 'Tomorrow' : fmtDay(r.day);
+    return '<button class="card card-tap" style="display:block;width:100%;text-align:left" data-act="tj-open" data-arg="' + esc(r.id) + '">' +
+      '<div style="font-weight:650">' + esc((r.start_time ? r.start_time + '  ' : '') + (r.title || 'Job')) + '</div>' +
+      '<div style="color:var(--muted);font-size:13px">' + esc(tag + (r.location ? ' · ' + r.location : '')) + '</div>' +
+      '</button>';
+  }
+  return out + '<div class="eyebrow">My jobs</div>' + rows.slice(0, 12).map(line).join('');
+}
+/* A technician tapping one of his jobs sees what he was sent, and can close it. */
+function viewTechJob() {
+  var r = state.techJob;
+  if (!r) { state.view = 'home'; return viewHome(); }
+  var closed = clStore().byJob[r.id];
+  return '<div class="app">' +
+    '<div class="topbar"><button class="iconbtn" data-act="home">‹</button><div style="flex:1"><h1>' + esc(r.title || 'Job') + '</h1>' +
+      '<div class="sub">' + esc(fmtDay(r.day) + (r.start_time ? ' · ' + r.start_time : '')) + '</div></div></div>' +
+    '<div class="screen">' +
+      (r.location ? '<div class="card"><div class="eyebrow">Where</div><div style="font-weight:650">' + esc(r.location) + '</div>' +
+        '<a class="btn btn-ghost" style="display:block;width:100%;margin-top:8px;text-align:center;text-decoration:none" href="https://maps.google.com/?q=' + encodeURIComponent(r.location) + '" target="_blank" rel="noopener">Open in Maps</a></div>' : '') +
+      (r.notes ? '<div class="card"><div class="eyebrow">What you were sent</div><div style="white-space:pre-wrap;font-size:14px">' + esc(r.notes) + '</div></div>' : '') +
+      (closed
+        ? '<div class="card" style="border-color:var(--ok)"><div style="font-weight:650">Closed</div><div style="color:var(--muted);font-size:13px">' + esc(closed.status) + ' · ' + money(clPos(closed.collected)) + ' collected</div></div>' +
+          '<button class="btn btn-ghost btn-wide" data-act="cl-open" data-arg="' + esc(r.id) + '">Fix the closing</button>'
+        : '<button class="btn btn-gold btn-wide" data-act="cl-open" data-arg="' + esc(r.id) + '">Close this job</button>') +
+    '</div></div>';
+}
+
 function viewHome() {
   var body;
   if (state.picking) {
@@ -1448,7 +2014,7 @@ function viewHome() {
     if (crmOn()) dueBlk = '';
     if (crmOn() && state.crmStats && state.crmStats.due) dueBlk = '<button class="card card-tap" data-act="crm-due" style="display:block;width:100%;text-align:left;border-color:var(--gold)"><div style="font-weight:650">' + state.crmStats.due + ' customer(s) due for service</div><div style="color:var(--muted);font-size:13px">Tap to see who to call this month</div></button>';
     var recentBlk = recent ? ('<div class="eyebrow">Recent inspections</div>' + recent) : '';
-    body = hero + fjDraftCard() + todayBlk + tomBlk + dueBlk + recentBlk;
+    body = hero + fjDraftCard() + clDueCard() + tjMineBlock() + todayBlk + tomBlk + dueBlk + recentBlk;
   }
 
   return '<div class="app">' +
@@ -3753,7 +4319,7 @@ function gcalFetch() {
             var et = ev.end && ev.end.dateTime ? new Date(ev.end.dateTime).toTimeString().slice(0, 5) : '';
             var xp = (ev.extendedProperties && ev.extendedProperties.private) || {};
             var dday = ev.start && ev.start.dateTime ? gcalDay(ev.start.dateTime) : String(sd).slice(0, 10);
-            mine.push({ id: ev.id, acct: a.slot, color: a.color, title: ev.summary || '(no title)', date: dday, time: tm, endTime: et, location: ev.location || '', notes: ev.description || '', worker: xp.aioWorker === '1' || (xp.aioWorker !== '0' && wkAuto(ev.summary, ev.description)), workerAuto: xp.aioWorker !== '1' && xp.aioWorker !== '0' && wkAuto(ev.summary, ev.description), share: /^[a-z0-9]{6,40}$/.test(xp.aioShare || '') ? xp.aioShare : wkShare(ev.description) });
+            mine.push({ id: ev.id, acct: a.slot, color: a.color, title: ev.summary || '(no title)', date: dday, time: tm, endTime: et, location: ev.location || '', notes: ev.description || '', tech: xp.aioTech || '', seller: xp.aioSeller || '', worker: xp.aioWorker === '1' || (xp.aioWorker !== '0' && wkAuto(ev.summary, ev.description)), workerAuto: xp.aioWorker !== '1' && xp.aioWorker !== '0' && wkAuto(ev.summary, ev.description), share: /^[a-z0-9]{6,40}$/.test(xp.aioShare || '') ? xp.aioShare : wkShare(ev.description) });
           });
           if (data.nextPageToken && n < 8) return page(data.nextPageToken, n + 1);
           complete = !data.nextPageToken;
@@ -3762,11 +4328,11 @@ function gcalFetch() {
     page('', 1)
       .then(function () { if (complete && gen === gcalGen[a.slot]) workerSync(a.slot, range, mine); })
       .catch(function () {})
-      .then(function () { all = all.concat(mine); done++; if (done === slots.length) { state.gcalEvents = all; state.gcalErr = null; if (state.view === 'schedule') render(); } });
+      .then(function () { all = all.concat(mine); done++; if (done === slots.length) { state.gcalEvents = all; state.gcalErr = null; clRemember(); clPaint(); if (state.view === 'schedule') render(); } });
   });
 }
 function gcalEventBody(ev) {
-  var body = { summary: ev.title || 'Job', location: ev.location || '', description: ev.notes || '', extendedProperties: { private: { aioWorker: ev.worker ? '1' : '0', aioShare: ev.share || '' } } };
+  var body = { summary: ev.title || 'Job', location: ev.location || '', description: ev.notes || '', extendedProperties: { private: { aioWorker: ev.worker ? '1' : '0', aioTech: ev.tech || '', aioSeller: ev.seller || '', aioShare: ev.share || '' } } };
   var tz = 'America/Chicago'; try { tz = Intl.DateTimeFormat().resolvedOptions().timeZone || tz; } catch (e) {}
   if (ev.time) {
     var s = new Date(ev.date + 'T' + ev.time); var e2 = new Date(s.getTime() + 90 * 60000);
@@ -3815,7 +4381,7 @@ function wkShare(notes) {
 }
 /* An event the calendar itself marks as the installer's: writing INSTALLER JOB
    in the title or the note is enough, so a job does not have to be ticked by
-   hand in the app. Ticking "No, only me" still wins over this. */
+   hand in the app. Picking a performer in the app still wins over this. */
 function wkAuto(title, notes) { return /installer\s*job/i.test(String(title || '') + '\n' + String(notes || '')); }
 /* What the installer is allowed to read. Everything above an "INSTALLER:" line
    is Refael's own note — prices, payment terms, whatever he keeps there — and
@@ -4191,11 +4757,10 @@ function viewCalEvent() {
       '<div class="field"><label>Location</label><input data-model="cev.location" value="' + esc(e.location || '') + '"></div>' +
       '<div class="field"><label>Notes</label><textarea data-model="cev.notes">' + esc(e.notes || '') + '</textarea></div>' +
       (e.share ? '<div style="font-size:13px;margin:-4px 0 10px;color:var(--ok)">Linked to ' + esc(e.shareLabel || 'the estimate') + ' — the installer sees its scope, photos and prep list.</div>' : '') +
-      '<label style="color:var(--muted);font-size:13px">Installer can see this job?</label><div class="row" style="gap:8px;margin-top:4px">' +
-        '<button class="btn ' + (e.worker ? 'btn-gold btn-primary' : 'btn-ghost') + '" data-act="cev-worker" data-arg="1" style="flex:1">Yes, installer sees</button>' +
-        '<button class="btn ' + (!e.worker ? 'btn-gold btn-primary' : 'btn-ghost') + '" data-act="cev-worker" data-arg="0" style="flex:1">No, only me</button>' +
-      '</div>' +
-      (e.workerAuto ? '<div style="font-size:13px;margin-top:8px;color:var(--ok)">The note says INSTALLER JOB, so this one goes to the installer on its own. Tap "No, only me" to keep it off his list.</div>' : '') +
+      tjPickerHTML(e, 'cev-perf', 'performer') +
+      '<div style="height:12px"></div>' +
+      tjPickerHTML(e, 'cev-sell', 'seller') +
+      (e.workerAuto ? '<div style="font-size:13px;margin-top:8px;color:var(--ok)">The note says INSTALLER JOB, so Escobar was picked on his own. Tap Me, or a technician, to change it.</div>' : '') +
       (e.worker ? (/^[^\S\n]*INSTALLER[^\S\n]*:/im.test(e.notes || '')
         ? '<div style="font-size:13px;margin-top:6px;color:var(--muted)">He reads only what is under the <b>INSTALLER:</b> line. Everything above it stays with you.</div>'
         : '<div style="font-size:13px;margin-top:6px;color:var(--muted)">He reads the whole note. Put a line saying <b>INSTALLER:</b> in it and he sees only what is below that line.</div>') : '') +
@@ -6243,6 +6808,9 @@ function render() {
   else if (state.view === 'preview') html = viewPreview();
   else if (state.view === 'docs') html = viewDocs();
   else if (state.view === 'crewdoc') html = viewCrewDoc();
+  else if (state.view === 'closing') html = viewClosing();
+  else if (state.view === 'openjobs') html = viewOpenJobs();
+  else if (state.view === 'techjob') html = viewTechJob();
   else html = viewHome();
   root.innerHTML = html;
   wireInputs();
@@ -6318,6 +6886,10 @@ function wireInputs() {
       } else if (path.indexOf('cev.') === 0) {
         var evk = path.slice(4);
         state.editEvent = Object.assign({}, state.editEvent || {}, defObj(evk, val));
+      } else if (path.indexOf('cls.') === 0) {
+        if (state.closing) state.closing[path.slice(4)] = val;
+      } else if (path.indexOf('clf.') === 0) {
+        if (state.closing && state.closing.fu) state.closing.fu[path.slice(4)] = val;
       }
     };
     el.addEventListener('input', modelHandler);
@@ -6557,6 +7129,23 @@ root.addEventListener('click', function (e) {
     case 'sig-done': sigDone(); break;
     case 'message-start': state.msg = { channel: 'whatsapp', text: '', off: {}, busy: false, err: null }; state.view = 'message'; render(); break;
     case 'schedule': state.view = 'schedule'; render(); if (gcalConnectedSlots().length) gcalFetch(); break;
+    case 'cl-due': state.clOpen = !state.clOpen; render(); break;
+    case 'cl-open': clOpenForm(arg); break;
+    case 'cl-skip': clSkip(arg); render(); break;
+    case 'cl-retry': clLoad(true); break;
+    case 'cl-back': if (!state.closing || !state.closing.busy) { state.closing = null; state.view = 'home'; render(); } break;
+    case 'cl-status': if (state.closing) { state.closing.status = arg; state.closing.err = ''; render(); } break;
+    case 'cl-method': if (state.closing) { state.closing.method = state.closing.method === arg ? '' : arg; render(); } break;
+    case 'cl-parts': if (state.closing) { state.closing.parts_paid_by = state.closing.parts_paid_by === arg ? '' : arg; render(); } break;
+    case 'cl-fu': if (state.closing) { state.closing.fuOn = arg === '1'; state.closing.err = ''; render(); } break;
+    case 'cl-save': clSave(); break;
+    case 'cl-assign': tjAssignFromArg(arg, 'performer'); break;
+    case 'cl-sell': tjAssignFromArg(arg, 'seller'); break;
+    case 'cev-perf': tjAssignFromArg(arg, 'performer'); break;
+    case 'cev-sell': tjAssignFromArg(arg, 'seller'); break;
+    case 'tj-retry': tjLoad(true); break;
+    case 'tj-open': { var tjr = tjStore().byId[arg]; if (tjr) { state.techJob = tjr; state.view = 'techjob'; render(); } break; }
+    case 'openjobs': state.view = 'openjobs'; render(); clLoad(true); break;
     case 'gcal-connect': gcalConnect(arg || 'A'); break;
     case 'gcal-refresh': gcalFetch(); break;
     case 'cal-prev': { var cp = state.calMonth; cp.m--; if (cp.m < 0) { cp.m = 11; cp.y--; } render(); gcalFetch(); break; }
@@ -6564,7 +7153,6 @@ root.addEventListener('click', function (e) {
     case 'cal-day': state.editEvent = { title: '', date: arg, time: '09:00', location: '', notes: '', acct: 'A' }; state.view = 'calevent'; render(); break;
     case 'cal-new': state.editEvent = { title: '', date: isoToday(), time: '09:00', location: '', notes: '', acct: 'A' }; state.view = 'calevent'; render(); break;
     case 'cev-acct': if (state.editEvent) { state.editEvent.acct = arg; render(); } break;
-    case 'cev-worker': if (state.editEvent) { state.editEvent.worker = arg === '1'; state.editEvent.workerAuto = false; render(); } break;
     case 'worker-link': workerLink(false); break;
     case 'estmail-open': estMailOpen('estimate'); break;
     case 'report-mail': estMailOpen('report'); break;
@@ -6794,7 +7382,7 @@ root.addEventListener('click', function (e) {
     case 'rep-li-del': if (state.repEdit) { state.repEdit.d.lineItems.splice(Number(arg), 1); state.repEdit.dirty = true; render(); } break;
     case 'tech-reset': techLink(true); break;
     case 'worker-reset': workerLink(true); break;
-    case 'cal-open': { var op = String(arg).split('|'), oSlot = op[0], oId = op[1]; var ce = (state.gcalEvents || []).filter(function (x) { return x.id === oId && x.acct === oSlot; })[0] || (state.gcalEvents || []).filter(function (x) { return x.id === oId; })[0]; if (ce) { state.editEvent = { id: ce.id, acct: ce.acct || 'A', title: ce.title, date: ce.date, time: ce.time, location: ce.location, notes: ce.notes, worker: !!ce.worker, workerAuto: !!ce.workerAuto, share: ce.share || '', shareLabel: ce.share ? 'a linked estimate' : '' }; state.view = 'calevent'; render(); } break; }
+    case 'cal-open': { var op = String(arg).split('|'), oSlot = op[0], oId = op[1]; var ce = (state.gcalEvents || []).filter(function (x) { return x.id === oId && x.acct === oSlot; })[0] || (state.gcalEvents || []).filter(function (x) { return x.id === oId; })[0]; if (ce) { state.editEvent = { id: ce.id, acct: ce.acct || 'A', title: ce.title, date: ce.date, time: ce.time, endTime: ce.endTime || '', location: ce.location, notes: ce.notes, worker: !!ce.worker, workerAuto: !!ce.workerAuto, tech: ce.tech || '', seller: ce.seller || '', share: ce.share || '', shareLabel: ce.share ? 'a linked estimate' : '' }; state.view = 'calevent'; render(); } break; }
     case 'cal-save': gcalSaveEvent(state.editEvent, function () { state.view = 'schedule'; render(); }); break;
     case 'cal-del': if (confirm('Delete this job from the calendar?')) { var dp = String(arg).split('|'); gcalDeleteEvent(dp[1] || dp[0], dp[1] ? dp[0] : (state.editEvent && state.editEvent.acct) || 'A'); state.view = 'schedule'; render(); } break;
     case 'appt-new': state.editAppt = newAppt(); state.view = 'appt'; render(); break;
@@ -8017,6 +8605,9 @@ accessCheck().then(function (a) {
   brandPull();
   crewBackfill();
   updCheck(true);
+  if (gcalConnectedSlots().length) gcalFetch();
+  clLoad();
+  tjLoad();
   return refresh().then(function () { return crmLoadStats(); }).then(function () { if (state.view === 'home') render(); });
 }).catch(function () { render(); });
 
