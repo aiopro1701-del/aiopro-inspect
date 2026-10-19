@@ -1500,7 +1500,7 @@ function clPaint() {
   var a = document.activeElement;
   if (a && /^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName || '')) return;
   var v = state.view;
-  if (!v || v === 'home' || v === 'openjobs' || v === 'day' || v === 'crew' || v === 'crewone' || v === 'techjob' || v === 'schedule' || v === 'mypay') render();
+  if (!v || v === 'home' || v === 'openjobs' || v === 'day' || v === 'crew' || v === 'crewone' || v === 'techjob' || v === 'schedule' || v === 'mypay' || v === 'techday') render();
 }
 
 function clAwaiting() {
@@ -1557,6 +1557,7 @@ function clDueCard() {
 
 function clOpenForm(jobKey) {
   var ev = clEventByKey(jobKey), cl = clStore(), had = cl.byJob[jobKey];
+  state.clFrom = state.view;
   if (!ev && !had) { alert('That job is no longer on the calendar.'); return; }
   function m(v) { var n = clPos(v); return n ? String(n) : ''; }
   state.closing = {
@@ -1750,7 +1751,9 @@ function clSave() {
     }).then(function () { clStore().fuBy[c.id] = { closing_id: c.id }; return null; });
   }).then(function (stop) {
     if (stop && stop.handled) return;
-    state.closing = null; state.view = 'home'; render(); clLoad(true);
+    state.closing = null;
+    state.view = (state.clFrom === 'techday' || state.clFrom === 'openjobs' || state.clFrom === 'followup') ? state.clFrom : 'home';
+    render(); clLoad(true);
   }).catch(function (err) {
     if (err && err.handled) return;
     c.busy = false;
@@ -2000,7 +2003,9 @@ function tjMineBlock() {
       '<div style="color:var(--muted);font-size:13px">' + esc(tag + (r.location ? ' · ' + r.location : '')) + '</div>' +
       '</button>';
   }
-  return out + '<div class="eyebrow">My jobs</div>' + rows.slice(0, 12).map(line).join('');
+  var head = '<div class="row" style="align-items:baseline;gap:8px"><div class="eyebrow" style="flex:1">My jobs</div>' +
+    '<button class="btn btn-ghost" data-act="tech-day" style="flex:none;padding:6px 12px;font-size:12px;margin-bottom:8px">Open my day</button></div>';
+  return out + head + rows.slice(0, 6).map(line).join('');
 }
 /* A technician tapping one of his jobs sees what he was sent, and can close it. */
 function viewTechJob() {
@@ -3198,6 +3203,120 @@ function viewTechGuide() {
     '</div></div>';
 }
 
+
+/* ── The technician's own day ──────────────────────────────────────
+   He runs his day off this screen: the jobs he was sent, in order, with
+   the phone, the address and the closing all one tap away. It is built
+   from his own rows — the office calendar never reaches his phone. */
+function tjPhone(text) {
+  var m = /(\+?1?[\s.\-]?\(?\d{3}\)?[\s.\-]?\d{3}[\s.\-]?\d{4})/.exec(String(text || ''));
+  return m ? m[1].replace(/[^\d+]/g, '') : '';
+}
+/* A job with no set hour belongs at the end of the day, not the start.
+   localeCompare puts punctuation before digits, so the sentinel is 99:99
+   and the comparison is a plain one. */
+function tjTimeKey(r) { return r.start_time || '99:99'; }
+function tjDayRows(iso) {
+  var seen = {};
+  return (tjStore().rows || []).filter(function (r) {
+    if (r.day !== iso || seen[r.id]) return false;
+    seen[r.id] = 1; return true;
+  }).sort(function (a, b) {
+    var x = tjTimeKey(a), y = tjTimeKey(b);
+    return x < y ? -1 : x > y ? 1 : 0;
+  });
+}
+/* A job that is done but never closed is his own money sitting unclaimed. */
+function tjToClose() {
+  var today = isoToday(), cl = clStore(), seen = {};
+  if (cl.failed || !cl.loaded) return [];
+  return (tjStore().rows || []).filter(function (r) {
+    if (r.day > today || seen[r.id] || cl.byJob[r.id]) return false;
+    seen[r.id] = 1; return true;
+  }).sort(function (a, b) {
+    /* Oldest first: the one most likely to be forgotten is the one named. */
+    if (a.day !== b.day) return a.day < b.day ? -1 : 1;
+    var x = tjTimeKey(a), y = tjTimeKey(b);
+    return x < y ? -1 : x > y ? 1 : 0;
+  });
+}
+function tjDayCard(r, today) {
+  var closed = clStore().byJob[r.id];
+  var phone = tjPhone(r.notes) || tjPhone(r.title);
+  var when = r.start_time ? (r.start_time + (r.end_time ? ' – ' + r.end_time : '')) : 'No set time';
+  return '<div class="card" style="border-left:4px solid ' + (closed ? 'var(--ok)' : 'var(--gold)') + '">' +
+    '<div class="row" style="gap:8px;align-items:baseline">' +
+      '<span style="font-weight:700;font-size:15px;min-width:92px;flex:none">' + esc(when) + '</span>' +
+      '<span style="flex:1;font-weight:650;font-size:15px">' + esc(r.title || 'Job') + '</span>' +
+    '</div>' +
+    (r.location ? '<div style="color:var(--muted);font-size:13px;margin-top:4px">' + esc(r.location) + '</div>' : '') +
+    '<div class="row" style="gap:8px;margin-top:10px">' +
+      (r.location ? '<a class="btn btn-ghost" style="flex:1;text-align:center;text-decoration:none;font-size:13px;padding:9px" target="_blank" rel="noopener" href="https://maps.google.com/?q=' + encodeURIComponent(r.location) + '">Maps</a>' : '') +
+      (phone ? '<a class="btn btn-ghost" style="flex:1;text-align:center;text-decoration:none;font-size:13px;padding:9px" href="tel:' + esc(phone) + '">Call</a>' +
+               '<a class="btn btn-ghost" style="flex:1;text-align:center;text-decoration:none;font-size:13px;padding:9px" href="sms:' + esc(phone) + '">Text</a>' : '') +
+    '</div>' +
+    '<button class="btn btn-ghost" data-act="tj-open" data-arg="' + esc(r.id) + '" style="width:100%;margin-top:8px;font-size:13px;padding:9px">What you were sent</button>' +
+    (closed
+      ? '<div style="color:var(--ok);font-size:13px;margin-top:8px;font-weight:650">Closed · ' + esc(closed.status) + (clPos(closed.collected) ? ' · ' + money(clPos(closed.collected)) : '') + '</div>'
+      : '<button class="btn btn-gold" data-act="cl-open" data-arg="' + esc(r.id) + '" style="width:100%;margin-top:8px">Close this job</button>') +
+  '</div>';
+}
+
+function viewTechDay() {
+  var tj = tjStore(), cl = clStore();
+  if (!tj.loaded && !tj.busy) tjLoad();
+  if (!cl.loaded && !cl.busy) clLoad();
+  var today = isoToday();
+  var day = state.techDay || (state.techDay = today);
+  var rows = tjDayRows(day);
+  var toClose = tjToClose().filter(function (r) { return r.day !== day; });
+
+  /* Seven days around whichever one he is looking at, so he can walk in
+     either direction without ever losing his place. */
+  var strip = '<div class="row" style="gap:5px;margin-bottom:14px">' +
+    [-3, -2, -1, 0, 1, 2, 3].map(function (o) {
+      var d = isoAddDays(day, o), n = tjDayRows(d).length;
+      var dt = new Date(d + 'T00:00:00');
+      return '<button class="btn ' + (o === 0 ? 'btn-gold btn-primary' : 'btn-ghost') + '" data-act="tday" data-arg="' + d + '" ' +
+        'style="flex:1;min-width:0;padding:8px 2px;line-height:1.25' + (d === today && o !== 0 ? ';border-color:var(--gold)' : '') + '">' +
+        '<div style="font-size:10px;letter-spacing:.06em;opacity:.75">' + esc(dt.toLocaleDateString(undefined, { weekday: 'short' }).toUpperCase()) + '</div>' +
+        '<div style="font-size:16px;font-weight:700">' + dt.getDate() + '</div>' +
+        '<div style="font-size:10px;height:12px">' + (n ? n + (n === 1 ? ' job' : ' jobs') : '') + '</div>' +
+      '</button>';
+    }).join('') + '</div>';
+
+  var head = '<div class="row" style="align-items:center;gap:6px;margin-bottom:8px">' +
+      '<button class="iconbtn" data-act="tday-prev" style="color:var(--ink)">‹</button>' +
+      '<div style="flex:1;text-align:center">' +
+        '<div style="font-weight:700;font-size:16px">' + esc(day === today ? 'Today' : day === isoAddDays(today, 1) ? 'Tomorrow' : day === isoAddDays(today, -1) ? 'Yesterday' : fmtDay(day)) + '</div>' +
+        '<div style="color:var(--muted);font-size:12px">' + esc(fmtDay(day)) + ' · ' + rows.length + (rows.length === 1 ? ' job' : ' jobs') + '</div>' +
+      '</div>' +
+      '<button class="iconbtn" data-act="tday-next" style="color:var(--ink)">›</button>' +
+    '</div>';
+
+  var nag = toClose.length
+    ? '<button class="card card-tap" data-act="tday" data-arg="' + esc(toClose[0].day) + '" style="display:block;width:100%;text-align:left;border-color:var(--gold)">' +
+        '<div style="font-weight:700;color:var(--gold)">' + toClose.length + ' job' + (toClose.length === 1 ? '' : 's') + ' still to close</div>' +
+        '<div style="color:var(--muted);font-size:13px;margin-top:2px">A job you did not close is not in your pay. Oldest: ' + esc(fmtDay(toClose[0].day)) + ' · ' + esc(toClose[0].title || 'Job') + '</div>' +
+      '</button>'
+    : '';
+
+  var body = rows.length
+    ? rows.map(function (r) { return tjDayCard(r, today); }).join('')
+    : '<div class="empty" style="padding:14px">' + (tj.busy ? 'Loading your jobs…' : (day < today ? 'Nothing on this day.' : 'Nothing sent to you for this day yet.')) + '</div>';
+
+  return '<div class="app">' +
+    '<div class="topbar"><button class="iconbtn" data-act="home">‹</button><div style="flex:1"><h1>My day</h1>' +
+      '<div class="sub">what you were sent</div></div>' +
+      '<button class="iconbtn" data-act="tday-refresh" aria-label="Refresh">⟳</button></div>' +
+    '<div class="screen">' + head + strip + nag +
+      (tj.err ? '<div class="card" style="border-color:var(--defect)"><div style="font-size:13px;color:var(--defect)">' + esc(tj.err) + '</div><button class="btn btn-ghost" data-act="tj-retry" style="width:100%;margin-top:8px">Try again</button></div>' : '') +
+      body +
+    '</div>' +
+    (day !== today ? '<div class="bottombar"><button class="btn btn-gold btn-primary" data-act="tday" data-arg="' + today + '">Back to today</button></div>' : '') +
+  '</div>';
+}
+
 function viewHome() {
   var body;
   if (state.picking) {
@@ -3260,7 +3379,7 @@ function viewHome() {
       (isTech() ? tile('tech-guide', 'How this works', ICO.ask) : '') +
       (isTech() ? '' : tile('clients', 'Customers', ICO.clients)) +
       (isTech() ? '' : tile('crew', 'My crew', ICO.clients)) +
-      tile('schedule', 'Schedule', ICO.schedule) +
+      (isTech() ? tile('tech-day', 'My day', ICO.schedule) : tile('schedule', 'Schedule', ICO.schedule)) +
       tile('message-start', 'Messages', ICO.message) +
       tile('settings', 'Settings', ICO.settings) +
       '</div>';
@@ -8100,6 +8219,7 @@ function render() {
   else if (state.view === 'followup') html = viewFollowup();
   else if (state.view === 'mypay') html = viewMyPay();
   else if (state.view === 'techguide') html = viewTechGuide();
+  else if (state.view === 'techday') html = viewTechDay();
   else if (state.view === 'day') html = viewDay();
   else html = viewHome();
   root.innerHTML = html;
@@ -8432,7 +8552,11 @@ root.addEventListener('click', function (e) {
     case 'cl-open': clOpenForm(arg); break;
     case 'cl-skip': clSkip(arg); render(); break;
     case 'cl-retry': clLoad(true); break;
-    case 'cl-back': if (!state.closing || !state.closing.busy) { state.closing = null; state.view = 'home'; render(); } break;
+    case 'cl-back': if (!state.closing || !state.closing.busy) {
+      state.closing = null;
+      state.view = (state.clFrom === 'techday' || state.clFrom === 'openjobs' || state.clFrom === 'followup') ? state.clFrom : 'home';
+      render();
+    } break;
     case 'cl-status': if (state.closing) { state.closing.status = arg; state.closing.err = ''; render(); } break;
     case 'cl-method': if (state.closing) { state.closing.method = state.closing.method === arg ? '' : arg; render(); } break;
     case 'cl-parts': if (state.closing) { state.closing.parts_paid_by = state.closing.parts_paid_by === arg ? '' : arg; render(); } break;
@@ -8455,6 +8579,11 @@ root.addEventListener('click', function (e) {
     case 'mypay': state.view = 'mypay'; state.payWeek = wkThis(); render(); clLoad(true); stLoad(true); break;
     case 'mypay-refresh': clLoad(true); stLoad(true); render(); break;
     case 'tech-guide': state.view = 'techguide'; render(); break;
+    case 'tech-day': state.techDay = isoToday(); state.view = 'techday'; render(); tjLoad(true); clLoad(true); break;
+    case 'tday': state.techDay = arg; render(); break;
+    case 'tday-prev': state.techDay = isoAddDays(state.techDay || isoToday(), -1); render(); break;
+    case 'tday-next': state.techDay = isoAddDays(state.techDay || isoToday(), 1); render(); break;
+    case 'tday-refresh': tjLoad(true); clLoad(true); render(); break;
     case 'fu-open': state.fuFrom = state.view; fuOpen(arg); break;
     case 'fu-back': state.view = state.fuFrom || 'crewone'; state.fuOne = null; render(); break;
     case 'fu-keep': { var fk = fuById(arg); if (fk) fuSetState(arg, fk.state || 'open'); break; }
