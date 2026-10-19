@@ -1396,7 +1396,7 @@ var CL_SKIP_KEY = 'aio-cl-skip';
 
 function clMoneyStatus(k) { return k === 'paid' || k === 'deposit' || k === 'zero'; }
 function clKey(ev) { return (ev.acct || 'A') + '|' + ev.id; }
-function clStore() { return state.cl || (state.cl = { rows: [], byJob: {}, fuBy: {}, seen: {}, loaded: false, busy: false, failed: false, err: '' }); }
+function clStore() { return state.cl || (state.cl = { rows: [], byJob: {}, fuBy: {}, fuRows: [], seen: {}, loaded: false, busy: false, failed: false, err: '' }); }
 function clNum(v) { var n = parseFloat(String(v == null ? '' : v).replace(/[^0-9.\-]/g, '')); return isFinite(n) ? n : 0; }
 function clPos(v) { var n = clNum(v); return n > 0 ? n : 0; }
 function clBalance(r) { var b = clPos(r.job_total) - clPos(r.collected); return b > 0 ? b : 0; }
@@ -1462,21 +1462,22 @@ function clLoad(force) {
     var rows = res[0], fus = res[1];
     if (!Array.isArray(rows)) throw new Error('The closings came back in a shape I did not expect.');
     cl.rows = rows; cl.byJob = {}; cl.fuBy = {};
+    cl.fuRows = Array.isArray(fus) ? fus : [];
     rows.forEach(function (r) { cl.byJob[r.job_key] = r; });
-    (Array.isArray(fus) ? fus : []).forEach(function (f) { if (f.closing_id) cl.fuBy[f.closing_id] = f; });
+    cl.fuRows.forEach(function (f) { if (f.closing_id) cl.fuBy[f.closing_id] = f; });
     cl.busy = false; cl.loaded = true; cl.failed = false; cl.err = ''; clPaint();
     return cl.rows;
   }).catch(function (err) {
     /* A failed load must not make every finished job look unclosed — that
        would nag about jobs already closed and invite a second closing. */
-    cl.rows = []; cl.byJob = {}; cl.fuBy = {};
+    cl.rows = []; cl.byJob = {}; cl.fuBy = {}; cl.fuRows = [];
     cl.busy = false; cl.loaded = true; cl.failed = true;
     cl.err = (err && err.message) || 'Could not reach the closings list.';
     clPaint(); return [];
   });
 }
 /* Never repaint the closing form: it would wipe what is being typed. */
-function clPaint() { var v = state.view; if (!v || v === 'home' || v === 'openjobs') render(); }
+function clPaint() { var v = state.view; if (!v || v === 'home' || v === 'openjobs' || v === 'day' || v === 'crew' || v === 'crewone') render(); }
 
 function clAwaiting() {
   var cl = clStore();
@@ -1737,7 +1738,7 @@ function viewOpenJobs() {
 var TJ_ME = '', TJ_INSTALLER = 'installer';
 
 function tjStore() { return state.tj || (state.tj = { rows: [], byId: {}, loaded: false, busy: false, err: '' }); }
-function tjCrew() { return (state.crewKeys && state.crewKeys.list) || []; }
+function tjCrew() { return tjCrewActive(); }
 function tjCrewById(id) { var l = tjCrew(); for (var i = 0; i < l.length; i++) if (l[i].id === id) return l[i]; return null; }
 
 /* One shape for a job, whoever it came from, so everything downstream — the
@@ -1816,9 +1817,10 @@ function tjAssign(ev, who, role, cb) {
   fetch(gcalApi() + '/' + encodeURIComponent(ev.id), {
     method: 'PATCH',
     headers: { Authorization: 'Bearer ' + tok, 'Content-Type': 'application/json' },
-    body: JSON.stringify({ extendedProperties: { private: (role === 'seller'
-      ? { aioSeller: crew ? crew.id : '', aioShare: ev.share || '' }
-      : { aioWorker: isInst ? '1' : '0', aioTech: crew ? crew.id : '', aioShare: ev.share || '' }) } })
+    body: JSON.stringify(role === 'seller'
+      ? { extendedProperties: { private: { aioSeller: crew ? crew.id : '', aioShare: ev.share || '' } } }
+      : { colorId: TJ_GCOLOR[tjColorFor(isInst ? TJ_INSTALLER : (crew ? crew.id : TJ_ME))] || undefined,
+          extendedProperties: { private: { aioWorker: isInst ? '1' : '0', aioTech: crew ? crew.id : '', aioShare: ev.share || '' } } })
   }).then(function (r) { if (!r.ok) throw new Error('calendar HTTP ' + r.status); return r.json(); })
     .then(function () {
       return cloudRpc('tech_jobs_assign', {
@@ -1935,6 +1937,357 @@ function viewTechJob() {
     '</div></div>';
 }
 
+/* ───────────────────── The crew: one screen per technician ─────────────
+   Pick a man and everything about him is in one place: what he has coming,
+   what he left open, what he still has to chase, and what he is owed.
+
+   Jobs and closings are stamped with md5 of a technician's key, never with
+   his name — a name can be edited, a key cannot be faked. The office holds
+   every key (crew_list returns them), so it can work out whose row is whose
+   without asking the server for anything extra. That is what clMd5 is for. */
+
+function clMd5(str) {
+  function rl(n, c) { return (n << c) | (n >>> (32 - c)); }
+  function au(x, y) { var l = (x & 0xFFFF) + (y & 0xFFFF), m = (x >> 16) + (y >> 16) + (l >> 16); return (m << 16) | (l & 0xFFFF); }
+  function cmn(q, a, b, x, s, t) { return au(rl(au(au(a, q), au(x, t)), s), b); }
+  function ff(a, b, c, d, x, s, t) { return cmn((b & c) | (~b & d), a, b, x, s, t); }
+  function gg(a, b, c, d, x, s, t) { return cmn((b & d) | (c & ~d), a, b, x, s, t); }
+  function hh(a, b, c, d, x, s, t) { return cmn(b ^ c ^ d, a, b, x, s, t); }
+  function ii(a, b, c, d, x, s, t) { return cmn(c ^ (b | ~d), a, b, x, s, t); }
+  function sb(s) {
+    var n = ((s.length + 8) >> 6) + 1, b = new Array(n * 16), i;
+    for (i = 0; i < n * 16; i++) b[i] = 0;
+    for (i = 0; i < s.length; i++) b[i >> 2] |= (s.charCodeAt(i) & 0xFF) << ((i % 4) * 8);
+    b[i >> 2] |= 0x80 << ((i % 4) * 8);
+    b[n * 16 - 2] = s.length * 8;
+    return b;
+  }
+  function hex(n) { var s = '', j; for (j = 0; j < 4; j++) s += ('0' + ((n >> (j * 8 + 4)) & 0x0F).toString(16)).slice(-1) + ((n >> (j * 8)) & 0x0F).toString(16); return s; }
+  var x = sb(unescape(encodeURIComponent(String(str)))), a = 1732584193, b = -271733879, c = -1732584194, d = 271733878, i, oa, ob, oc, od;
+  for (i = 0; i < x.length; i += 16) {
+    oa = a; ob = b; oc = c; od = d;
+    a = ff(a, b, c, d, x[i], 7, -680876936); d = ff(d, a, b, c, x[i + 1], 12, -389564586); c = ff(c, d, a, b, x[i + 2], 17, 606105819); b = ff(b, c, d, a, x[i + 3], 22, -1044525330);
+    a = ff(a, b, c, d, x[i + 4], 7, -176418897); d = ff(d, a, b, c, x[i + 5], 12, 1200080426); c = ff(c, d, a, b, x[i + 6], 17, -1473231341); b = ff(b, c, d, a, x[i + 7], 22, -45705983);
+    a = ff(a, b, c, d, x[i + 8], 7, 1770035416); d = ff(d, a, b, c, x[i + 9], 12, -1958414417); c = ff(c, d, a, b, x[i + 10], 17, -42063); b = ff(b, c, d, a, x[i + 11], 22, -1990404162);
+    a = ff(a, b, c, d, x[i + 12], 7, 1804603682); d = ff(d, a, b, c, x[i + 13], 12, -40341101); c = ff(c, d, a, b, x[i + 14], 17, -1502002290); b = ff(b, c, d, a, x[i + 15], 22, 1236535329);
+    a = gg(a, b, c, d, x[i + 1], 5, -165796510); d = gg(d, a, b, c, x[i + 6], 9, -1069501632); c = gg(c, d, a, b, x[i + 11], 14, 643717713); b = gg(b, c, d, a, x[i], 20, -373897302);
+    a = gg(a, b, c, d, x[i + 5], 5, -701558691); d = gg(d, a, b, c, x[i + 10], 9, 38016083); c = gg(c, d, a, b, x[i + 15], 14, -660478335); b = gg(b, c, d, a, x[i + 4], 20, -405537848);
+    a = gg(a, b, c, d, x[i + 9], 5, 568446438); d = gg(d, a, b, c, x[i + 14], 9, -1019803690); c = gg(c, d, a, b, x[i + 3], 14, -187363961); b = gg(b, c, d, a, x[i + 8], 20, 1163531501);
+    a = gg(a, b, c, d, x[i + 13], 5, -1444681467); d = gg(d, a, b, c, x[i + 2], 9, -51403784); c = gg(c, d, a, b, x[i + 7], 14, 1735328473); b = gg(b, c, d, a, x[i + 12], 20, -1926607734);
+    a = hh(a, b, c, d, x[i + 5], 4, -378558); d = hh(d, a, b, c, x[i + 8], 11, -2022574463); c = hh(c, d, a, b, x[i + 11], 16, 1839030562); b = hh(b, c, d, a, x[i + 14], 23, -35309556);
+    a = hh(a, b, c, d, x[i + 1], 4, -1530992060); d = hh(d, a, b, c, x[i + 4], 11, 1272893353); c = hh(c, d, a, b, x[i + 7], 16, -155497632); b = hh(b, c, d, a, x[i + 10], 23, -1094730640);
+    a = hh(a, b, c, d, x[i + 13], 4, 681279174); d = hh(d, a, b, c, x[i], 11, -358537222); c = hh(c, d, a, b, x[i + 3], 16, -722521979); b = hh(b, c, d, a, x[i + 6], 23, 76029189);
+    a = hh(a, b, c, d, x[i + 9], 4, -640364487); d = hh(d, a, b, c, x[i + 12], 11, -421815835); c = hh(c, d, a, b, x[i + 15], 16, 530742520); b = hh(b, c, d, a, x[i + 2], 23, -995338651);
+    a = ii(a, b, c, d, x[i], 6, -198630844); d = ii(d, a, b, c, x[i + 7], 10, 1126891415); c = ii(c, d, a, b, x[i + 14], 15, -1416354905); b = ii(b, c, d, a, x[i + 5], 21, -57434055);
+    a = ii(a, b, c, d, x[i + 12], 6, 1700485571); d = ii(d, a, b, c, x[i + 3], 10, -1894986606); c = ii(c, d, a, b, x[i + 10], 15, -1051523); b = ii(b, c, d, a, x[i + 1], 21, -2054922799);
+    a = ii(a, b, c, d, x[i + 8], 6, 1873313359); d = ii(d, a, b, c, x[i + 15], 10, -30611744); c = ii(c, d, a, b, x[i + 6], 15, -1560198380); b = ii(b, c, d, a, x[i + 13], 21, 1309151649);
+    a = ii(a, b, c, d, x[i + 4], 6, -145523070); d = ii(d, a, b, c, x[i + 11], 10, -1120210379); c = ii(c, d, a, b, x[i + 2], 15, 718787259); b = ii(b, c, d, a, x[i + 9], 21, -343485551);
+    a = au(a, oa); b = au(b, ob); c = au(c, oc); d = au(d, od);
+  }
+  return hex(a) + hex(b) + hex(c) + hex(d);
+}
+
+/* Only men who are still on the crew get offered anywhere. A revoked or
+   half-finished entry stays in the list for the history it carries, but it
+   must never appear as somebody you can hand a job to. */
+function tjCrewAll() { return (state.crewKeys && state.crewKeys.list) || []; }
+function tjCrewActive() { return tjCrewAll().filter(function (c) { return c.active !== false; }); }
+function crewIdOf(c) { return c && c.key ? clMd5(c.key) : ''; }
+
+function crewClosings(c) {
+  var id = crewIdOf(c), name = String(c.name || '').toLowerCase();
+  return (clStore().rows || []).filter(function (r) {
+    if (r.tech_id === id) return true;
+    /* history filled in by hand carries a name, not a key */
+    return !!r.sold_by && String(r.sold_by).toLowerCase() === name;
+  });
+}
+function crewFollowups(c) {
+  var id = crewIdOf(c);
+  return (clStore().fuRows || []).filter(function (f) { return f.tech_id === id; });
+}
+function crewJobs(c) {
+  var id = crewIdOf(c);
+  return (tjStore().rows || []).filter(function (r) { return r.tech_id === id; });
+}
+
+/* The pay maths, in one place, exactly as the office works it out:
+   what came in, less the parts and less the sub, 40% of what is left,
+   then his tips and whatever he paid for out of his own pocket. */
+function crewPay(c) {
+  var rows = crewClosings(c).filter(function (r) { return r.status === 'paid' || r.status === 'deposit'; });
+  var collected = 0, parts = 0, sub = 0, tips = 0, owedBack = 0;
+  rows.forEach(function (r) {
+    collected += clPos(r.collected);
+    parts += clPos(r.parts_amount);
+    sub += clPos(r.sub_amount);
+    tips += clPos(r.tip);
+    if (r.parts_paid_by === 'tech') owedBack += clPos(r.parts_amount);
+  });
+  var base = collected - parts - sub;
+  if (base < 0) base = 0;
+  var commission = base * 0.4;
+  return { jobs: rows.length, collected: collected, parts: parts, sub: sub, base: base,
+    commission: commission, tips: tips, owedBack: owedBack, total: commission + tips + owedBack };
+}
+
+function viewCrew() {
+  var crew = tjCrewActive(), st = state.crewKeys || {};
+  if (!st.loaded && !st.busy) crewKeysLoad();
+  var cards = crew.map(function (c) {
+    var pay = crewPay(c), open = crewClosings(c).filter(function (r) { return r.status === 'deposit'; }).length;
+    var fu = crewFollowups(c).filter(function (f) { return f.state === 'open'; }).length;
+    var jobs = crewJobs(c).filter(function (r) { return r.day >= isoToday(); }).length;
+    return '<button class="card card-tap" style="display:block;width:100%;text-align:left" data-act="crew-member" data-arg="' + esc(c.id) + '">' +
+      '<div style="font-weight:700;font-size:17px">' + esc(c.name) + '</div>' +
+      '<div class="row" style="gap:10px;margin-top:10px">' +
+        '<div class="stat"><div class="k">Coming up</div><div class="v" style="font-size:17px">' + jobs + '</div></div>' +
+        '<div class="stat"><div class="k">Open</div><div class="v" style="font-size:17px">' + open + '</div></div>' +
+        '<div class="stat"><div class="k">Follow-ups</div><div class="v" style="font-size:17px">' + fu + '</div></div>' +
+        '<div class="stat"><div class="k">Owed</div><div class="v" style="font-size:17px">' + money(pay.total) + '</div></div>' +
+      '</div></button>';
+  }).join('');
+  return '<div class="app">' +
+    '<div class="topbar"><button class="iconbtn" data-act="home">‹</button><div style="flex:1"><h1>My crew</h1>' +
+      '<div class="sub">' + crew.length + ' active</div></div>' +
+      '<button class="iconbtn" data-act="crew-refresh" aria-label="Refresh">⟳</button></div>' +
+    '<div class="screen">' +
+      (st.busy ? '<div class="empty" style="padding:14px">Loading the crew…</div>' : '') +
+      (cards || (st.loaded ? '<div class="empty" style="padding:14px">Nobody active. Settings, then The crew, to add somebody.</div>' : '')) +
+      (tjCrewAll().length > crew.length
+        ? '<div style="font-size:12px;color:var(--muted);margin-top:10px">' + (tjCrewAll().length - crew.length) + ' switched-off entr' + ((tjCrewAll().length - crew.length) === 1 ? 'y is' : 'ies are') + ' hidden. Their history is kept; they cannot be given work.</div>'
+        : '') +
+    '</div></div>';
+}
+
+function viewCrewMember() {
+  var c = state.crewOne;
+  if (!c) { state.view = 'crew'; return viewCrew(); }
+  var tab = state.crewTab || 'jobs';
+  function tb(k, label, n) {
+    return '<button class="btn ' + (tab === k ? 'btn-gold btn-primary' : 'btn-ghost') + '" data-act="crew-tab" data-arg="' + k + '" style="flex:1;min-width:24%">' + esc(label) + (n ? ' ' + n : '') + '</button>';
+  }
+  var jobs = crewJobs(c), closings = crewClosings(c);
+  var open = closings.filter(function (r) { return r.status === 'deposit'; });
+  var fus = crewFollowups(c).filter(function (f) { return f.state === 'open'; });
+  var pay = crewPay(c);
+  var body = '';
+
+  if (tab === 'jobs') {
+    var up = jobs.filter(function (r) { return r.day >= isoToday(); }).sort(function (a, b) { return (a.day + (a.start_time || '')) < (b.day + (b.start_time || '')) ? -1 : 1; });
+    body = up.length
+      ? up.map(function (r) {
+          return '<div class="card">' +
+            '<div style="font-weight:650">' + esc((r.start_time ? r.start_time + '  ' : '') + (r.title || 'Job')) + '</div>' +
+            '<div style="color:var(--muted);font-size:13px">' + esc(fmtDay(r.day) + (r.location ? ' · ' + r.location : '')) + '</div>' +
+            '<div style="font-size:12px;color:var(--muted);margin-top:4px">' + (r.role === 'seller' ? 'his sale' : 'he performs it') + '</div>' +
+            '<button class="btn btn-ghost" data-act="crew-move" data-arg="' + esc(r.id) + '" style="width:100%;margin-top:8px">Move to someone else</button>' +
+          '</div>';
+        }).join('')
+      : '<div class="empty" style="padding:14px">Nothing coming up for him.</div>';
+  } else if (tab === 'open') {
+    body = open.length
+      ? open.map(function (r) {
+          return '<div class="card">' +
+            '<div style="font-weight:650">' + esc(r.customer || 'Job') + '</div>' +
+            '<div style="color:var(--muted);font-size:13px">' + esc([r.address, fmtDay(r.day)].filter(Boolean).join(' · ')) + '</div>' +
+            '<div class="row" style="gap:10px;margin-top:8px">' +
+              '<div class="stat"><div class="k">Job</div><div class="v" style="font-size:16px">' + money(clPos(r.job_total)) + '</div></div>' +
+              '<div class="stat"><div class="k">Taken</div><div class="v" style="font-size:16px">' + money(clPos(r.collected)) + '</div></div>' +
+              '<div class="stat"><div class="k">Open</div><div class="v" style="font-size:16px">' + money(clBalance(r)) + '</div></div>' +
+            '</div></div>';
+        }).join('')
+      : '<div class="empty" style="padding:14px">Nothing open with a deposit.</div>';
+  } else if (tab === 'follow') {
+    body = fus.length
+      ? fus.map(function (f) {
+          return '<div class="card">' +
+            '<div style="font-weight:650">' + esc(f.customer || 'Customer') + ' · ' + money(clPos(f.amount)) + '</div>' +
+            '<div style="font-size:13px;margin-top:2px">' + esc(f.what || '') + '</div>' +
+            (f.reason ? '<div style="color:var(--muted);font-size:13px">' + esc(f.reason) + '</div>' : '') +
+            (f.due ? '<div style="color:var(--gold);font-size:13px;margin-top:4px">call back ' + esc(fmtDay(f.due)) + '</div>' : '') +
+          '</div>';
+        }).join('')
+      : '<div class="empty" style="padding:14px">Nothing waiting on an answer.</div>';
+  } else {
+    var done = closings.filter(function (r) { return r.status === 'paid' || r.status === 'deposit'; })
+      .sort(function (a, b) { return a.day < b.day ? -1 : 1; });
+    body = '<div class="card">' +
+      '<div class="eyebrow">What he is owed</div>' +
+      '<table style="width:100%;font-size:14px;border-collapse:collapse">' +
+        '<tr><td style="padding:3px 0">Collected · ' + pay.jobs + ' job' + (pay.jobs === 1 ? '' : 's') + '</td><td style="text-align:right">' + money(pay.collected) + '</td></tr>' +
+        (pay.parts ? '<tr><td style="padding:3px 0">Less parts</td><td style="text-align:right">− ' + money(pay.parts) + '</td></tr>' : '') +
+        (pay.sub ? '<tr><td style="padding:3px 0">Less the sub</td><td style="text-align:right">− ' + money(pay.sub) + '</td></tr>' : '') +
+        '<tr><td style="padding:3px 0;border-top:1px solid var(--line)">Commission base</td><td style="text-align:right;border-top:1px solid var(--line)">' + money(pay.base) + '</td></tr>' +
+        '<tr><td style="padding:3px 0">Commission 40%</td><td style="text-align:right">' + money(pay.commission) + '</td></tr>' +
+        (pay.tips ? '<tr><td style="padding:3px 0">Tips (all his)</td><td style="text-align:right">+ ' + money(pay.tips) + '</td></tr>' : '') +
+        (pay.owedBack ? '<tr><td style="padding:3px 0">Parts he paid for</td><td style="text-align:right">+ ' + money(pay.owedBack) + '</td></tr>' : '') +
+        '<tr><td style="padding:7px 0;font-weight:700;border-top:2px solid var(--gold)">Total due</td><td style="text-align:right;font-weight:700;border-top:2px solid var(--gold)">' + money(pay.total) + '</td></tr>' +
+      '</table></div>' +
+      (done.length
+        ? done.map(function (r) {
+            return '<div class="card" style="padding:10px 12px">' +
+              '<div class="row" style="align-items:baseline;gap:8px">' +
+                '<span style="color:var(--muted);font-size:12px;min-width:56px">' + esc(fmtDay(r.day)) + '</span>' +
+                '<span style="flex:1;font-weight:600">' + esc(r.customer || 'Job') + '</span>' +
+                '<span style="font-weight:650">' + money(clPos(r.collected)) + '</span>' +
+              '</div>' +
+              '<div style="color:var(--muted);font-size:12px;margin-left:64px">' + esc([r.address, r.method, clPos(r.parts_amount) ? 'parts ' + money(clPos(r.parts_amount)) : '', clPos(r.sub_amount) ? 'sub ' + money(clPos(r.sub_amount)) : '', clPos(r.tip) ? 'tip ' + money(clPos(r.tip)) : ''].filter(Boolean).join(' · ')) + '</div>' +
+            '</div>';
+          }).join('')
+        : '<div class="empty" style="padding:14px">No closings on file for him yet.</div>');
+  }
+
+  return '<div class="app">' +
+    '<div class="topbar"><button class="iconbtn" data-act="crew">‹</button><div style="flex:1"><h1>' + esc(c.name) + '</h1>' +
+      '<div class="sub">' + money(pay.total) + ' owed</div></div></div>' +
+    '<div class="screen">' +
+      '<div class="row" style="gap:6px;flex-wrap:wrap;margin-bottom:12px">' +
+        tb('jobs', 'Jobs', jobs.filter(function (r) { return r.day >= isoToday(); }).length) +
+        tb('open', 'Open', open.length) +
+        tb('follow', 'Follow-ups', fus.length) +
+        tb('report', 'Report', 0) +
+      '</div>' + body +
+    '</div></div>';
+}
+
+/* Hand one of his jobs to somebody else, without going back to the calendar. */
+function crewMove(jobId) {
+  var from = state.crewOne; if (!from) return;
+  var row = (tjStore().rows || []).filter(function (r) { return r.id === jobId && r.tech_id === crewIdOf(from); })[0];
+  if (!row) { alert('That job is no longer on his list.'); return; }
+  var others = tjCrewActive().filter(function (c) { return c.id !== from.id; });
+  if (!others.length) { alert('There is nobody else active to move it to.'); return; }
+  var names = others.map(function (c, i) { return (i + 1) + ') ' + c.name; }).join('\n');
+  var pick = window.prompt('Move "' + (row.title || 'this job') + '" to:\n' + names + '\n\nType the number, or 0 to take it off his list.', '');
+  if (pick === null) return;
+  var n = parseInt(pick, 10);
+  if (isNaN(n) || n < 0 || n > others.length) { alert('Nothing changed.'); return; }
+  var to = n === 0 ? null : others[n - 1];
+  var key = ownerKey(); if (!key) { alert('Only the office phone can move jobs.'); return; }
+  cloudRpc('tech_jobs_assign', {
+    p_owner: key, p_id: row.id, p_tech_key: to ? to.key : '', p_role: row.role || 'performer',
+    p_job: { acct: row.acct, event_id: row.event_id, title: row.title, day: row.day,
+      start_time: row.start_time || '', end_time: row.end_time || '',
+      location: row.location || '', notes: row.notes || '', share_id: row.share_id || '' }
+  }).then(function () {
+    tjStore().loaded = false;
+    return tjLoad(true);
+  }).then(function () { render(); })
+    .catch(function (e) { alert('Could not move it: ' + ((e && e.message) || e)); });
+}
+
+/* ───────────────────────── One day, everything on it ─────────────────────
+   Tapping a day used to open a blank new-job form, which is no use when what
+   you want is to see the day. Now it opens the day itself: the jobs on it and
+   who has them, what still needs sorting out, and where each man stands. */
+
+/* A colour per person, not per calendar — the same colours the jobs get in
+   Google, so the month grid and the calendar tell the same story.
+   Tomato / Tangerine / Peacock / Grape / Basil / Banana. */
+var TJ_COLORS = ['#039BE5', '#8E24AA', '#0B8043', '#F6BF26', '#3F51B5', '#E67C73'];
+var TJ_GCOLOR = { '#039BE5': '7', '#8E24AA': '3', '#0B8043': '10', '#F6BF26': '5', '#3F51B5': '9', '#E67C73': '4', '#D50000': '11', '#F4511E': '6' };
+function tjColorFor(who) {
+  if (who === TJ_INSTALLER) return '#F4511E';
+  if (!who) return '#D50000';
+  var crew = tjCrewActive();
+  for (var i = 0; i < crew.length; i++) if (crew[i].id === who) return TJ_COLORS[i % TJ_COLORS.length];
+  return '#D50000';
+}
+function tjColorOf(ev) { return tjColorFor(tjPerformerOf(ev)); }
+function tjDot(c) { return '<span style="display:inline-block;width:9px;height:9px;border-radius:50%;background:' + c + ';margin-right:6px;vertical-align:middle"></span>'; }
+
+function dayEvents(iso) {
+  return (state.gcalEvents || []).filter(function (e) { return e.date === iso; })
+    .sort(function (a, b) { return (a.time || '').localeCompare(b.time || ''); });
+}
+
+function viewDay() {
+  var iso = state.dayISO || isoToday();
+  var evs = dayEvents(iso), cl = clStore(), today = isoToday();
+  if (!cl.loaded && !cl.busy) clLoad();
+
+  /* Jobs, each with who has it and whether the money came in. */
+  var jobs = evs.filter(clIsJob), errands = evs.filter(function (e) { return !clIsJob(e); });
+  var jobsHTML = jobs.map(function (e) {
+    var k = clKey(e), done = cl.byJob[k], who = tjPerformerOf(e), col = tjColorFor(who);
+    var pill = done
+      ? (done.status === 'paid' ? '<span class="pill done">' + money(clPos(done.collected)) + '</span>'
+        : done.status === 'deposit' ? '<span class="pill" style="background:var(--gold);color:#1a1a1a">' + money(clPos(done.collected)) + ' dep</span>'
+        : '<span class="pill">' + esc(done.status) + '</span>')
+      : (clEndedAt(e) && clEndedAt(e) < Date.now() ? '<span class="pill defect">no closing</span>' : '');
+    return '<div class="card joblist-item" style="border-left:4px solid ' + col + '">' +
+      '<button class="meta" style="text-align:left" data-act="cal-open" data-arg="' + esc(e.acct + '|' + e.id) + '">' +
+        '<div class="name">' + esc((e.time ? e.time + '  ' : '') + (e.title || 'Job')) + '</div>' +
+        '<div class="sub">' + esc([tjPerformerName(who), e.location].filter(Boolean).join(' · ')) + '</div>' +
+      '</button>' + pill +
+    '</div>';
+  }).join('');
+
+  /* What still has to be sorted out on this day. */
+  var todo = [];
+  jobs.forEach(function (e) {
+    var k = clKey(e), done = cl.byJob[k];
+    if (!done && clEndedAt(e) && clEndedAt(e) < Date.now()) {
+      todo.push({ t: 'Close it — ' + (e.title || 'job'), s: tjPerformerName(tjPerformerOf(e)), act: 'cl-open', arg: k });
+    }
+    if (done && done.status === 'deposit' && clBalance(done) > 0) {
+      todo.push({ t: money(clBalance(done)) + ' still to collect — ' + (done.customer || e.title || 'job'), s: 'deposit taken', act: 'openjobs', arg: '' });
+    }
+  });
+  (cl.fuRows || []).forEach(function (f) {
+    if (f.state === 'open' && f.due === iso) {
+      todo.push({ t: 'Call back ' + (f.customer || '') + ' — ' + (f.what || ''), s: money(clPos(f.amount)), act: '', arg: '' });
+    }
+  });
+  errands.forEach(function (e) {
+    todo.push({ t: (e.time ? e.time + '  ' : '') + (e.title || 'Something on'), s: 'not a job', act: 'cal-open', arg: e.acct + '|' + e.id });
+  });
+  var todoHTML = todo.length
+    ? todo.map(function (x) {
+        var inner = '<div style="font-weight:600;font-size:14px">' + esc(x.t) + '</div>' +
+          '<div style="color:var(--muted);font-size:12px">' + esc(x.s) + '</div>';
+        return x.act
+          ? '<button class="card card-tap" style="display:block;width:100%;text-align:left" data-act="' + x.act + '"' + (x.arg ? ' data-arg="' + esc(x.arg) + '"' : '') + '>' + inner + '</button>'
+          : '<div class="card">' + inner + '</div>';
+      }).join('')
+    : '<div class="empty" style="padding:12px">Nothing hanging over this day.</div>';
+
+  /* Where each man stands on this day. */
+  var crew = tjCrewActive();
+  var stand = [{ id: TJ_ME, name: 'Me' }, { id: TJ_INSTALLER, name: 'Escobar' }]
+    .concat(crew.map(function (c) { return { id: c.id, name: c.name }; }))
+    .map(function (p) {
+      var mine = jobs.filter(function (e) { return tjPerformerOf(e) === p.id; });
+      if (!mine.length) return '';
+      var closed = 0, took = 0;
+      mine.forEach(function (e) { var d = cl.byJob[clKey(e)]; if (d) { closed++; took += clPos(d.collected); } });
+      return '<div class="card" style="padding:10px 12px">' +
+        '<div class="row" style="align-items:center;gap:8px">' +
+          tjDot(tjColorFor(p.id)) +
+          '<span style="flex:1;font-weight:650">' + esc(p.name) + '</span>' +
+          '<span style="color:var(--muted);font-size:13px">' + mine.length + ' job' + (mine.length === 1 ? '' : 's') + ' · ' + closed + ' closed</span>' +
+          (took ? '<span style="font-weight:650;margin-left:8px">' + money(took) + '</span>' : '') +
+        '</div></div>';
+    }).join('');
+
+  var d = new Date(iso + 'T00:00:00');
+  var label = isNaN(d.getTime()) ? iso : d.toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric' });
+  return '<div class="app">' +
+    '<div class="topbar"><button class="iconbtn" data-act="schedule">‹</button>' +
+      '<div style="flex:1"><h1 style="font-size:19px">' + esc(label) + '</h1>' +
+        '<div class="sub">' + jobs.length + ' job' + (jobs.length === 1 ? '' : 's') + (iso === today ? ' · today' : '') + '</div></div>' +
+      '<button class="iconbtn" data-act="day-prev">‹</button><button class="iconbtn" data-act="day-next">›</button></div>' +
+    '<div class="screen">' +
+      '<div class="eyebrow">Jobs</div>' +
+      (jobsHTML || '<div class="empty" style="padding:12px">No jobs on this day.</div>') +
+      '<div class="eyebrow" style="margin-top:16px">To sort out</div>' + todoHTML +
+      (stand ? '<div class="eyebrow" style="margin-top:16px">The crew today</div>' + stand : '') +
+    '</div>' +
+    '<div class="bottombar"><button class="btn btn-gold btn-primary" data-act="day-new">+ New job on this day</button></div>' +
+  '</div>';
+}
+
 function viewHome() {
   var body;
   if (state.picking) {
@@ -1994,6 +2347,7 @@ function viewHome() {
       tile('coach-start', 'Ask Refael', ICO.ask) +
       tile('docs', 'My work', ICO.checklist) +
       (isTech() ? '' : tile('clients', 'Customers', ICO.clients)) +
+      (isTech() ? '' : tile('crew', 'My crew', ICO.clients)) +
       tile('schedule', 'Schedule', ICO.schedule) +
       tile('message-start', 'Messages', ICO.message) +
       tile('settings', 'Settings', ICO.settings) +
@@ -4333,6 +4687,8 @@ function gcalFetch() {
 }
 function gcalEventBody(ev) {
   var body = { summary: ev.title || 'Job', location: ev.location || '', description: ev.notes || '', extendedProperties: { private: { aioWorker: ev.worker ? '1' : '0', aioTech: ev.tech || '', aioSeller: ev.seller || '', aioShare: ev.share || '' } } };
+  var cid = TJ_GCOLOR[tjColorOf(ev)];
+  if (cid) body.colorId = cid;
   var tz = 'America/Chicago'; try { tz = Intl.DateTimeFormat().resolvedOptions().timeZone || tz; } catch (e) {}
   if (ev.time) {
     var s = new Date(ev.date + 'T' + ev.time); var e2 = new Date(s.getTime() + 90 * 60000);
@@ -4432,7 +4788,7 @@ function viewSchedule() {
     else {
       var ds = c.y + '-' + cpad(c.m + 1) + '-' + cpad(dn);
       var evs = (byDate[ds] || []).sort(function (a, b) { return (a.time || '').localeCompare(b.time || ''); });
-      var chips = evs.slice(0, 3).map(function (e) { return '<div class="calchip" data-act="cal-open" data-arg="' + esc(e.acct + '|' + e.id) + '" style="background:' + (e.color || '#0F1D30') + (e.worker ? ';box-shadow:inset 4px 0 0 #C9A24B;padding-left:6px' : '') + '">' + esc((e.time ? e.time + ' ' : '') + e.title) + '</div>'; }).join('');
+      var chips = evs.slice(0, 3).map(function (e) { return '<div class="calchip" data-act="cal-open" data-arg="' + esc(e.acct + '|' + e.id) + '" style="background:' + tjColorOf(e) + '">' + esc((e.time ? e.time + ' ' : '') + e.title) + '</div>'; }).join('');
       if (evs.length > 3) chips += '<div class="calmore">+' + (evs.length - 3) + ' more</div>';
       cells += '<div class="calcell' + (ds === todayStr ? ' today' : '') + '" data-act="cal-day" data-arg="' + ds + '"><div class="caldnum">' + dn + '</div>' + chips + '</div>';
       dn++;
@@ -4443,7 +4799,9 @@ function viewSchedule() {
   return '<div class="app">' +
     '<div class="topbar"><button class="iconbtn" data-act="home">‹</button><div style="flex:1"><h1>Schedule</h1><div class="sub">Both calendars</div></div><button class="iconbtn" data-act="gcal-refresh" aria-label="Refresh">⟳</button></div>' +
     '<div class="screen">' + connBar + head + wk + '<div class="calgrid">' + cells + '</div>' +
-      '<div class="muted" style="margin-top:10px;font-size:13px">Tap a day to add a job, or a job to edit it. Colours show which calendar. Changes save straight to Google. A gold edge = your technician can see that job.</div>' +
+      '<div class="muted" style="margin-top:10px;font-size:13px">Tap a day to open it — the jobs on it, what needs sorting out, and where each man stands. Tap a job to edit it. The colour is the person who performs it: ' +
+        [{ i: TJ_ME, n: 'you' }, { i: TJ_INSTALLER, n: 'Escobar' }].concat(tjCrewActive().map(function (c) { return { i: c.id, n: c.name }; }))
+          .map(function (p) { return tjDot(tjColorFor(p.i)) + esc(p.n); }).join('&nbsp;&nbsp;') + '.</div>' +
       viewWorkerCard() +
     '</div>' +
     '<div class="bottombar"><button class="btn btn-gold btn-primary" data-act="cal-new">+ New job</button></div>' +
@@ -6811,6 +7169,9 @@ function render() {
   else if (state.view === 'closing') html = viewClosing();
   else if (state.view === 'openjobs') html = viewOpenJobs();
   else if (state.view === 'techjob') html = viewTechJob();
+  else if (state.view === 'crew') html = viewCrew();
+  else if (state.view === 'crewone') html = viewCrewMember();
+  else if (state.view === 'day') html = viewDay();
   else html = viewHome();
   root.innerHTML = html;
   wireInputs();
@@ -7128,7 +7489,7 @@ root.addEventListener('click', function (e) {
     case 'sig-cancel': if (state.chat) { state.chat.signing = false; render(); } break;
     case 'sig-done': sigDone(); break;
     case 'message-start': state.msg = { channel: 'whatsapp', text: '', off: {}, busy: false, err: null }; state.view = 'message'; render(); break;
-    case 'schedule': state.view = 'schedule'; render(); if (gcalConnectedSlots().length) gcalFetch(); break;
+    case 'schedule': state.view = 'schedule'; render(); if (gcalConnectedSlots().length) gcalFetch(); clLoad(); crewKeysLoad(); break;
     case 'cl-due': state.clOpen = !state.clOpen; render(); break;
     case 'cl-open': clOpenForm(arg); break;
     case 'cl-skip': clSkip(arg); render(); break;
@@ -7146,11 +7507,19 @@ root.addEventListener('click', function (e) {
     case 'tj-retry': tjLoad(true); break;
     case 'tj-open': { var tjr = tjStore().byId[arg]; if (tjr) { state.techJob = tjr; state.view = 'techjob'; render(); } break; }
     case 'openjobs': state.view = 'openjobs'; render(); clLoad(true); break;
+    case 'crew': if (isTech()) return; state.view = 'crew'; render(); crewKeysLoad(); clLoad(); tjLoad(); break;
+    case 'crew-refresh': crewKeysLoad(true); clLoad(true); tjLoad(true); break;
+    case 'crew-member': { var cm = tjCrewAll().filter(function (x) { return x.id === arg; })[0]; if (cm) { state.crewOne = cm; state.crewTab = 'jobs'; state.view = 'crewone'; render(); } break; }
+    case 'crew-tab': state.crewTab = arg; render(); break;
+    case 'crew-move': crewMove(arg); break;
     case 'gcal-connect': gcalConnect(arg || 'A'); break;
     case 'gcal-refresh': gcalFetch(); break;
     case 'cal-prev': { var cp = state.calMonth; cp.m--; if (cp.m < 0) { cp.m = 11; cp.y--; } render(); gcalFetch(); break; }
     case 'cal-next': { var cn = state.calMonth; cn.m++; if (cn.m > 11) { cn.m = 0; cn.y++; } render(); gcalFetch(); break; }
-    case 'cal-day': state.editEvent = { title: '', date: arg, time: '09:00', location: '', notes: '', acct: 'A' }; state.view = 'calevent'; render(); break;
+    case 'cal-day': state.dayISO = arg; state.view = 'day'; render(); clLoad(); break;
+    case 'day-prev': state.dayISO = isoAddDays(state.dayISO || isoToday(), -1); render(); break;
+    case 'day-next': state.dayISO = isoAddDays(state.dayISO || isoToday(), 1); render(); break;
+    case 'day-new': state.editEvent = { title: '', date: state.dayISO || isoToday(), time: '09:00', location: '', notes: '', acct: 'A' }; state.view = 'calevent'; render(); break;
     case 'cal-new': state.editEvent = { title: '', date: isoToday(), time: '09:00', location: '', notes: '', acct: 'A' }; state.view = 'calevent'; render(); break;
     case 'cev-acct': if (state.editEvent) { state.editEvent.acct = arg; render(); } break;
     case 'worker-link': workerLink(false); break;
