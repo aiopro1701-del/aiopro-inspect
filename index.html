@@ -1200,7 +1200,7 @@ var M = 43, PW = 612, PH = 792, CONTENT = PW - M * 2;
 var APP_DIR = (/^https?:$/.test(location.protocol) && location.hostname) ? location.origin + location.pathname.replace(/[^\/]*$/, '') : 'https://aiopro1701-del.github.io/aiopro-inspect/';
 var IS_BETA = /\/beta\/$/.test(APP_DIR);
 /* Bumped on every deploy, so a screenshot of Settings says which build is on the phone. */
-var APP_BUILD = '2026-10-21 05:10 UTC';
+var APP_BUILD = '2026-10-21 06:25 UTC';
 /* Refael's field knowledge — the bot answers from this. Kept word-for-word stable so it is cached (cheap). */
 var AIO_KB = "AIO PRO CHIMNEY \u2014 FIELD KNOWLEDGE (from the owner, Refael Maman). Use this to answer the technician the way Refael would.\n\nWHO WE ARE\n- AIOPRO LLC, trading as AIO Pro Chimney. 1505 North and South Rd, St. Louis, MO 63130. Phone (314) 379-2871. Email Aiopro1701@gmail.com. aioprochimney.com.\n- Licensed general contractor, insured, CSIA member, NCSG member, BBB accredited. Greater St. Louis; east as far as Belleville and O'Fallon, IL. A Kansas City employee can take Kansas City jobs.\n- Owner: Refael Maman. The office = Refael.\n\nWHO USES THE APP\n- Owner (Refael): everything.\n- Technician: visits the house, finds the problem, prices it, presents it, closes it. Most of the work is technician and customer face to face. The technician is still learning and calls Refael on most jobs; that is fine and expected.\n- Installer: does the booked job. Needs to know when and where, what to bring, and what the technician found (photos + scope).\n\nWHAT THE TECHNICIAN MAY AND MAY NOT SAY\n- Prices: he may give prices and approximate (+/-) ranges, and he may adjust a price or give a discount (see Selling).\n- Dates: never promise a date. Scheduling always goes through the office: \"Refael will call you to book it.\"\n- Warranty: never promise warranty terms. \"The warranty is written on the estimate; Refael confirms it.\"\n- If he does not know something: say \"Let me confirm that with Refael\" and call him. Never guess about safety, code, or warranty.\n- Never run down another company. Never argue with the customer.\n\nMONEY RULES\n- Minimum service charge is usually $49. Sometimes the estimate visit is free, but not often.\n- Deposit: 20% to 40% of the job, depending on the size of the job. Balance on completion unless agreed otherwise.\n- Estimate prices hold for 30 days.\n- Price goes up with: roof pitch (steep = harder/slower, may need extra safety gear), job difficulty, how hard the chimney is to reach (height, stories, trees, lift or scaffold needed), and how much material is needed (liner length, size of the chimney top, number of flues).\n- Access equipment (boom lift, scaffold) is priced as its own line so the customer sees it.\n- Anything that may change once opened up: say so in the scope notes \u2014 \"if we find more once it is opened, we stop and agree the difference with you before continuing.\"\n\nHOW REFAEL WRITES AN ESTIMATE\n- One scope by default: the work he recommends. Add Option B (or C) ONLY when the customer has a real choice (keep the stove vs. new stove, stainless vs. galvanized, vent-free vs. vented gas). Each option has its own full total. \"Choose one \u2014 you do not need both.\"\n- Add-ons the customer can take or leave (a vent cap, a second liner) are listed separately as optional.\n- Each line: a clear name, 3-7 short scope lines specific to this house (sizes, lengths, where), and a price.\n- Explain the cause in plain words (\"a square damper cannot seal a round liner\"), then the fix. Safety items first and clearly: \"This one should not wait.\"\n- Scope notes say what is NOT included and what the customer prepares.\n- Tone: plain, confident, respectful. No jargon, no code numbers, no sales filler.\n\nSELLING (coach the technician)\n- Before the price: show the customer the photos, explain what is wrong, why it happened, and what happens if it waits.\n- Present the recommended scope first, with the total. If there is a real choice, present Option A and Option B side by side.\n- \"It's too expensive\": 1) Acknowledge (\"I understand, it's a real number.\"). 2) Ask (\"What matters most to you \u2014 the lowest price today, or fixing it so it doesn't come back?\" / \"What budget did you have in mind?\"). 3) Advise:\n  a) Split it: the safety / water-stopping part now, the rest later (becomes Option A / B).\n  b) Show the value: materials, labor, cleanup, photos, written warranty, licensed and insured, CSIA/NCSG.\n  c) Deposit 20-40% now, balance when done.\n  d) A discount is a closing tool, tied to a decision today or booking now. Give it once, clearly (\"If we book it today I can take $X off\").\n- \"I need to think about it\": ask what is holding them back; offer to email the estimate now with the Sign button; tell them Refael will follow up.\n- \"I'm getting other quotes\": that's fine; point to the written scope and warranty so they compare the same work. Never bash competitors.\n- Close: ask for the decision. \"Shall I send it to your email so you can sign it on your phone?\"\n\nSAFETY \u2014 STOP AND TELL THE CUSTOMER\n- Gas leak found (bubbles on leak test, smell): the appliance must not be used until repaired; if they smell gas, shut the supply and call the gas utility. Call Refael.\n- Blocked flue (debris, animal nest, collapsed tile) on a furnace or water heater: do not operate that appliance until cleared/lined. CO risk.\n- Unlined or badly cracked flue on a wood fireplace: do not use until repaired.\n- Disconnected or rusted-through vent connector: do not operate.\n- Creosote glaze or heavy buildup: no fires until swept.\n- Say it in one calm sentence, write it on the estimate, and call Refael.\n\nWHAT TO CHECK AND PHOTOGRAPH (standard order, bottom up)\n- First find out what system it is (wood fireplace, gas logs in a fireplace, direct-vent gas, vent-free gas, insert/stove, furnace or water heater flue) and check only the parts that system has. Vent-free gas has no flue: no damper, liner or roof checks.\n- Level 1: inside the home and from the ground only \u2014 no roof or attic. Level 2 adds the roof and the top when it is safe, and a camera scan of the flue. We do not go into attics, basements or crawl spaces.\n1. Front of the house (cover photo), then the appliance / fireplace.\n2. Firebox: cracks, gaps in joints, missing panels.\n3. Damper and throat: opens/closes and seals; damper type vs. flue shape.\n4. Smoke chamber: voids, rough/unparged brick, creosote.\n5. Flue and liner: camera scan if possible; clay tile cracks, offsets, missing mortar; liner size and material; debris.\n6. Appliance vents (furnace/water heater): connector condition, slope, clearance (single-wall 6\", B-vent 1\"), draft.\n8. Roof and exterior: flashing, cricket (chimney wider than 30\"), crown cracks, cap/spark arrestor, chase cover rust, brick and mortar, height (3-2-10 rule).\n9. Measurements that set the price: flue size (inside dimensions), liner length (roofline to appliance + above the top), chimney top size (for cap/chase cover), number of flues, stories, roof pitch, access.\n\nHOW TO MEASURE (short)\n- Liner length: from the appliance connection (or smoke chamber) to the top of the flue tile + about 1 ft; count stories (about 10 ft each) if you cannot measure directly.\n- Flue size: inside width x depth of the clay tile (or diameter for round); the liner is sized to the appliance outlet.\n- Chase cover / cap: outside length x width of the top (crown or chase), plus the flue tile height above the crown.\n- Chimney height above the roof: at least 3 ft above where it passes the roof and 2 ft higher than anything within 10 ft.\n\nWHEN TO CALL REFAEL\n- Any safety hazard, any job over a few thousand dollars, anything not in the price list, anything structural, any date/warranty question, any customer who is unhappy, and whenever unsure.";
 /* Photos keep their real shape: height/width of an image (0.75 if unknown). */
@@ -1606,17 +1606,62 @@ function clDueCard() {
       (state.clOpen ? due.map(clJobLine).join('') : '');
   }
   if (cl.err) out += '<div class="card" style="border-color:var(--defect)"><div style="font-size:13px;color:var(--defect)">' + esc(cl.err) + '</div><button class="btn btn-ghost" data-act="cl-retry" style="width:100%;margin-top:8px">Try again</button></div>';
-  if (!isTech() && dep.length) {
+  if (dep.length) {
     var open = dep.reduce(function (t, r) { return t + clBalance(r); }, 0);
-    out += '<button class="card card-tap" data-act="openjobs" style="display:block;width:100%;text-align:left;border-color:var(--gold)">' +
-      '<div style="font-weight:650">' + dep.length + ' open job' + (dep.length === 1 ? '' : 's') + ' with a deposit</div>' +
-      '<div style="color:var(--muted);font-size:13px">' + money(open) + ' still to collect — tap to decide who does the work</div></button>';
+    /* The same card, pointing at the list that belongs to whoever is holding
+       the phone: his own open jobs, or the whole board. */
+    out += '<button class="card card-tap" data-act="' + (isTech() ? 'td-open' : 'openjobs') + '" style="display:block;width:100%;text-align:left;border-color:var(--gold)">' +
+      '<div style="font-weight:650">' + dep.length + (isTech() ? ' job' : ' open job') + (dep.length === 1 ? '' : 's') + ' with a deposit' + (isTech() ? ' still open' : '') + '</div>' +
+      '<div style="color:var(--muted);font-size:13px">' + money(open) +
+        (isTech() ? ' still to collect — tap to see them and finish them off' : ' still to collect — tap to decide who does the work') + '</div></button>';
+  }
+  /* And who he owes a call back. Nothing on his phone said this before. */
+  if (isTech()) {
+    var fus = myFuRows(), late = fus.filter(function (f) { return f.due && String(f.due) <= isoToday(); }).length;
+    if (fus.length) {
+      out += '<button class="card card-tap" data-act="td-follow" style="display:block;width:100%;text-align:left;border-color:' + (late ? 'var(--defect)' : 'var(--gold)') + '">' +
+        '<div style="font-weight:650">' + fus.length + ' follow-up' + (fus.length === 1 ? '' : 's') + ' waiting on an answer</div>' +
+        '<div style="color:var(--muted);font-size:13px">' +
+          (late ? late + ' due today or overdue — tap to call them back' : 'tap to see who to call and when') + '</div></button>';
+    }
   }
   return out;
 }
 
 /* ── the closing form ── */
 
+/* The words the technician reads, in the order money matters. */
+var CL_DIFF = [
+  { k: 'status',        label: 'how it ended' },
+  { k: 'collected',     label: 'collected',      money: true },
+  { k: 'job_total',     label: 'the job price',  money: true },
+  { k: 'method',        label: 'how he paid' },
+  { k: 'job_source',    label: 'where it came from' },
+  { k: 'parts_amount',  label: 'parts',          money: true },
+  { k: 'parts_paid_by', label: 'who paid the parts' },
+  { k: 'tip',           label: 'tip',            money: true },
+  { k: 'sub_amount',    label: 'the sub',        money: true },
+  { k: 'customer',      label: 'the customer name' },
+  { k: 'day',           label: 'the day' },
+  { k: 'note',          label: 'the note' }
+];
+function clDiffLines(orig, now) {
+  var out = [];
+  CL_DIFF.forEach(function (f) {
+    var a = orig[f.k] == null ? '' : String(orig[f.k]);
+    var b = now[f.k] == null ? '' : String(now[f.k]);
+    if (f.money) {
+      if (clPos(a) === clPos(b)) return;
+      out.push(f.label + ': ' + money(clPos(a)) + ' \u2192 ' + money(clPos(b)));
+      return;
+    }
+    if (f.k === 'day') { a = String(a).slice(0, 10); b = String(b).slice(0, 10); }
+    if (a.trim() === b.trim()) return;
+    if (f.k === 'note') { out.push('the note was rewritten'); return; }
+    out.push(f.label + ': ' + (a.trim() ? a.trim() : 'nothing') + ' \u2192 ' + (b.trim() ? b.trim() : 'nothing'));
+  });
+  return out;
+}
 function clOpenForm(jobKey) {
   var ev = clEventByKey(jobKey), cl = clStore(), had = cl.byJob[jobKey];
   state.clFrom = state.view;
@@ -1658,6 +1703,16 @@ function clOpenForm(jobKey) {
     fuOn: false, fu: { what: '', amount: '', reason: '', due: '' },
     busy: false, err: '', msg: ''
   };
+  /* A closing that already exists can be put right — but the man who made
+     it has to be told what was changed and by whom. Keep the old reading so
+     the change can be named exactly, and keep who closed it so the office
+     knows whose work it is editing. */
+  if (had && had.id) {
+    state.closing.wasClosed = true;
+    state.closing.closedBy = had.tech_id || '';
+    state.closing.orig = {};
+    CL_DIFF.forEach(function (f) { state.closing.orig[f.k] = had[f.k] == null ? '' : String(had[f.k]); });
+  }
   state.view = 'closing';
   render();
 }
@@ -1721,8 +1776,13 @@ function viewClosing() {
   var bal = clPos(c.job_total) - clPos(c.collected);
   return '<div class="app">' +
     '<div class="topbar"><button class="iconbtn" data-act="cl-back"' + (c.busy ? ' disabled' : '') + '>‹</button>' +
-      '<div style="flex:1"><h1>Close this job</h1><div class="sub">' + esc(c.title || '') + '</div></div></div>' +
+      '<div style="flex:1"><h1>' + (c.wasClosed ? 'Put this closing right' : 'Close this job') + '</h1><div class="sub">' + esc(c.title || '') + '</div></div></div>' +
     '<div class="screen">' +
+      (c.wasClosed && !isTech() && c.closedBy && c.closedBy !== myTechId()
+        ? '<div class="card" style="border-color:var(--gold)"><div class="eyebrow">This job is already closed</div>' +
+          '<div style="font-size:14px;line-height:1.55">You can change it. When you save, ' + esc(clClosedByName(c.closedBy) || 'the technician who closed it') +
+          ' gets a note in his app naming exactly what you changed \u2014 so a number in his pay never moves without him knowing.</div></div>'
+        : '') +
       '<div class="card">' +
         '<div class="eyebrow">' + esc(fmtDay(c.day)) + (c.address ? ' · ' + esc(c.address) : '') + '</div>' +
         '<div class="field"><label>Customer</label><input data-model="cls.customer" value="' + esc(c.customer || '') + '"></div>' +
@@ -1877,14 +1937,45 @@ function clSave() {
     }).then(function () { clStore().fuBy[c.id] = { closing_id: c.id }; return null; });
   }).then(function (stop) {
     if (stop && stop.handled) return;
+    return clTellTech(c, payload);
+  }).then(function (stop) {
+    if (stop && stop.handled) return;
     state.closing = null;
-    state.view = (state.clFrom === 'techday' || state.clFrom === 'openjobs' || state.clFrom === 'followup') ? state.clFrom : 'home';
+    state.view = (state.clFrom === 'techday' || state.clFrom === 'openjobs' || state.clFrom === 'followup' ||
+                  state.clFrom === 'myclient' || state.clFrom === 'crewone' || state.clFrom === 'mypay') ? state.clFrom : 'home';
     render(); clLoad(true);
   }).catch(function (err) {
     if (err && err.handled) return;
     c.busy = false;
     c.err = (err && err.message) || 'Could not save it. Check the internet and try again.';
     render();
+  });
+}
+
+/* The office changed a man's closing. He is told what was changed, in his
+   own app, in the same words the office used — not left to find a different
+   number in his pay at the end of the week. */
+function clClosedByName(techId) {
+  var hit = tjCrewAll().filter(function (x) { return crewIdOf(x) === techId; })[0];
+  return hit ? hit.name : '';
+}
+function clTellTech(c, payload) {
+  if (isTech() || !c.wasClosed || !c.orig) return null;
+  if (c.closedBy && c.closedBy === myTechId()) return null;   /* his own closing */
+  var lines = clDiffLines(c.orig, payload);
+  if (!lines.length) return null;
+  var who = (state.settings && state.settings.company) ? 'The office' : 'Refael';
+  var body = who + ' changed this closing \u2014 ' + (clTidyName(payload.customer) || 'job') + ', ' +
+    fmtDay(payload.day) + ':\n' + lines.map(function (l) { return '\u00b7 ' + l; }).join('\n');
+  return cloudRpc('job_update_put', { p_key: sendKey(), p_payload: {
+    job_key: c.job_key, kind: 'update', body: body, author_name: 'Refael'
+  } }).then(function () { return null; }).catch(function (err) {
+    /* The closing is saved either way; say plainly that the man was not told. */
+    try {
+      alert('The closing is saved.\n\nBut the note to the technician did not go through: ' +
+        ((err && err.message) || 'no connection') + '\n\nTell him yourself what you changed:\n\n' + body);
+    } catch (_) {}
+    return null;
   });
 }
 
@@ -2871,6 +2962,9 @@ function viewCrewMember() {
                 '<span style="font-weight:650">' + money(clPos(r.collected)) + '</span>' +
               '</div>' +
               '<div style="color:var(--muted);font-size:12px;margin-left:64px">' + esc([r.address, r.method, clPos(r.parts_amount) ? 'parts ' + money(clPos(r.parts_amount)) : '', clPos(r.sub_amount) ? 'sub ' + money(clPos(r.sub_amount)) : '', clPos(r.tip) ? 'tip ' + money(clPos(r.tip)) : '', r.status === 'paid' ? clRateLabel(r) : ''].filter(Boolean).join(' · ')) + '</div>' +
+              (clNeedsMoney(r.status) && !clPos(r.collected) && !clPos(r.job_total)
+                ? '<div style="color:var(--defect);font-size:12.5px;margin:6px 0 0 64px">Closed with nothing on it — the amount has to go in.</div>' : '') +
+              (r.job_key ? '<button class="btn btn-ghost" data-act="cl-open" data-arg="' + esc(r.job_key) + '" style="width:100%;margin-top:8px;font-size:13px;padding:8px">Put this closing right</button>' : '') +
             '</div>';
           }).join('')
         : '<div class="empty" style="padding:14px">Nothing on file for him in this week.</div>');
@@ -3580,7 +3674,8 @@ function viewMyPay() {
     return clMoneyStatus(r.status) && d >= wkM && d <= wkS;
   }).sort(function (a, b) { return a.day < b.day ? -1 : 1; });
 
-  var body = payWeekBar() +
+  if (!juStore().loaded && !juStore().busy) juLoad();
+  var body = juNewsCard() + payWeekBar() +
     '<div class="card"><div class="eyebrow">What you are owed for this week</div>' +
     '<table style="width:100%;font-size:14px;border-collapse:collapse">' +
       '<tr><td style="padding:3px 0">Collected · ' + pay.jobs + ' job' + (pay.jobs === 1 ? '' : 's') + '</td><td style="text-align:right">' + money(pay.collected) + '</td></tr>' +
@@ -3813,13 +3908,106 @@ function fixCard() {
   '</div>';
 }
 
+/* ── The technician's own board ────────────────────────────────────
+   "My day" showed him today and tomorrow and nothing else. The two lists
+   a man actually works from — what he has still open, and who he owes a
+   call back — were never on his phone at all. They are his, so they live
+   here, next to his day, not on a screen only the office can open. */
+function tdTab() { return state.tdTab || 'day'; }
+function myOpenRows() {
+  return (clStore().rows || []).filter(function (r) { return r.status === 'deposit'; })
+    .sort(function (a, b) { return String(a.day) < String(b.day) ? 1 : -1; });
+}
+function myFuRows() {
+  return (clStore().fuRows || []).filter(function (f) { return (f.state || 'open') === 'open'; })
+    .sort(function (a, b) {
+      var A = String(a.due || ''), B = String(b.due || '');
+      if (!A && !B) return 0;
+      if (!A) return 1;            /* no date yet: it needs a date, so last */
+      if (!B) return -1;
+      return A < B ? -1 : 1;
+    });
+}
+function tdOpenCard(r) {
+  var plan = juLatest(r.job_key, ['plan', 'update']);
+  return '<div class="card">' +
+    '<div style="font-weight:700;font-size:16px">' + esc(clTidyName(r.customer) || 'Job') + '</div>' +
+    '<div style="color:var(--muted);font-size:13px">' + esc([String(r.address || '').split(',')[0], fmtDay(r.day)].filter(Boolean).join(' · ')) + '</div>' +
+    '<div style="margin-top:8px">' + juStatChip(r.job_key) + '</div>' +
+    '<div class="row" style="gap:10px;margin:10px 0">' +
+      '<div class="stat"><div class="k">Job</div><div class="v" style="font-size:17px">' + money(clPos(r.job_total)) + '</div></div>' +
+      '<div class="stat"><div class="k">Taken</div><div class="v" style="font-size:17px">' + money(clPos(r.collected)) + '</div></div>' +
+      '<div class="stat"><div class="k">Still to collect</div><div class="v" style="font-size:17px">' + money(clBalance(r)) + '</div></div>' +
+    '</div>' +
+    (r.note ? '<div style="font-size:13px;line-height:1.5;margin-bottom:8px;white-space:pre-wrap">' + esc(r.note) + '</div>' : '') +
+    (plan ? '<div style="font-size:13px;line-height:1.5;padding:8px 10px;border-left:2px solid var(--gold);margin-bottom:8px">' +
+        '<b>' + (plan.kind === 'plan' ? 'The plan' : 'From the office') + '</b> · ' + esc(juAgo(plan.created_at)) + '<br>' + esc(plan.body || '') + '</div>' : '') +
+    '<div class="row" style="gap:8px">' +
+      '<button class="btn btn-gold" data-act="cl-open" data-arg="' + esc(r.job_key) + '" style="flex:1">Finish this one off</button>' +
+      (juCanAsk(r.job_key) ? '<button class="btn btn-ghost" data-act="ju-ask" data-arg="' + esc(r.job_key) + '" style="flex:none;padding:12px 14px">Ask the office</button>' : '') +
+    '</div></div>';
+}
+function tdFuCard(f) {
+  return '<button class="card card-tap" data-act="fu-open" data-arg="' + esc(f.id) + '" style="display:block;width:100%;text-align:left">' +
+    '<div class="row" style="align-items:baseline;gap:8px">' +
+      '<span style="flex:1;font-weight:700;font-size:16px">' + esc(clTidyName(f.customer) || 'Customer') + '</span>' +
+      (clPos(f.amount) ? '<span style="font-weight:700;color:var(--ember)">' + money(clPos(f.amount)) + '</span>' : '') + '</div>' +
+    (f.what ? '<div style="font-size:14px;margin-top:3px">' + esc(f.what) + '</div>' : '') +
+    (f.reason ? '<div style="color:var(--muted);font-size:13px">' + esc(f.reason) + '</div>' : '') +
+    '<div style="font-size:13px;margin-top:5px;color:' + (f.due ? 'var(--gold)' : 'var(--defect)') + '">' +
+      (f.due ? 'call him back ' + esc(fmtDay(f.due)) : 'no date on this one — tap and set one') + '</div>' +
+  '</button>';
+}
+/* What the office changed after he closed a job. Two roads, because one is
+   not enough: the note Refael writes when he edits (job_updates, which only
+   reaches jobs still on his list), and the closing row itself, which carries
+   the time it was last touched whatever its age. */
+var JU_SEEN_LS = 'aio-ju-seen';
+function juSeenAt() { try { return Number(localStorage.getItem(JU_SEEN_LS) || 0) || 0; } catch (e) { return 0; } }
+function juMarkSeen() { try { localStorage.setItem(JU_SEEN_LS, String(Date.now())); } catch (e) {} }
+function juNews() {
+  if (!isTech()) return [];
+  var since = juSeenAt(), out = [], seen = {};
+  (juStore().rows || []).forEach(function (u) {
+    if (u.kind !== 'update' || u.author !== 'owner') return;
+    var t = new Date(u.created_at).getTime();
+    if (!isFinite(t) || t <= since) return;
+    seen[u.job_key] = 1;
+    out.push({ at: t, job_key: u.job_key, body: u.body || '', ago: juAgo(u.created_at) });
+  });
+  (clStore().rows || []).forEach(function (r) {
+    if (seen[r.job_key]) return;
+    var up = new Date(r.updated_at).getTime(), cr = new Date(r.created_at).getTime();
+    if (!isFinite(up) || up <= since) return;
+    /* A save writes both stamps at once, so only a real later touch counts. */
+    if (!isFinite(cr) || up - cr < 90000) return;
+    out.push({ at: up, job_key: r.job_key, ago: juAgo(r.updated_at),
+      body: 'The office changed this closing — ' + (clTidyName(r.customer) || 'job') + ' now reads ' +
+        money(clPos(r.collected)) + (r.method ? ' ' + r.method : '') + ' · ' + (r.status || '') + '.' });
+  });
+  return out.sort(function (a, b) { return b.at - a.at; }).slice(0, 8);
+}
+function juNewsCard() {
+  var n = juNews();
+  if (!n.length) return '';
+  return '<div class="card" style="border-color:var(--gold)">' +
+    '<div class="eyebrow">' + (n.length === 1 ? 'The office changed a job' : 'The office changed ' + n.length + ' jobs') + '</div>' +
+    n.map(function (u) {
+      return '<div style="padding:7px 0;border-bottom:0.5px solid var(--rule)">' +
+        '<div style="font-size:14px;line-height:1.5;white-space:pre-wrap">' + esc(u.body) + '</div>' +
+        '<div style="color:var(--muted);font-size:12px;margin-top:2px">' + esc(u.ago) + '</div></div>';
+    }).join('') +
+    '<div style="color:var(--muted);font-size:12.5px;margin-top:9px">If one of these is wrong, tell Refael before the week is paid out.</div>' +
+    '<button class="btn btn-ghost" data-act="ju-seen" style="width:100%;margin-top:8px">Got it</button></div>';
+}
 function viewTechDay() {
   var tj = tjStore(), cl = clStore();
   if (!tj.loaded && !tj.busy) tjLoad();
   if (!cl.loaded && !cl.busy) clLoad();
+  if (!juStore().loaded && !juStore().busy) juLoad();
   var today = isoToday(), tom = isoAddDays(today, 1);
   var rowsToday = tjDayRows(today), rowsTom = tjDayRows(tom);
-  var toClose = tjToClose().filter(function (r) { return r.day < today; });
+  var tab = tdTab(), opens = myOpenRows(), fus = myFuRows();
 
   function block(head, rows, empty) {
     return '<div class="eyebrow">' + esc(head) + '</div>' +
@@ -3827,19 +4015,42 @@ function viewTechDay() {
         ? rows.map(function (r) { return tjDayCard(r, today); }).join('')
         : '<div class="empty" style="padding:14px">' + esc(empty) + '</div>');
   }
+  function tb(k, label, n) {
+    return '<button class="btn ' + (tab === k ? 'btn-gold btn-primary' : 'btn-ghost') + '" data-act="td-tab" data-arg="' + k + '" style="flex:1">' +
+      esc(label) + (n ? ' ' + n : '') + '</button>';
+  }
 
   /* Naming them beats counting them: a job he can see is a job he can close,
      one tap from here. */
   var nag = fixCard();
+  var body;
+  if (tab === 'open') {
+    body = '<div class="eyebrow">What you have still open</div>' +
+      (opens.length
+        ? opens.map(tdOpenCard).join('') +
+          '<div class="card" style="color:var(--muted);font-size:13px;line-height:1.6">A job sits here from the moment you take a deposit until you finish it and close it out. The commission on it is not counted until then \u2014 so when the work is done, come back here and tap <b>Finish this one off</b>.</div>'
+        : '<div class="empty" style="padding:14px">' + (cl.busy ? 'Loading\u2026' : 'Nothing open. Every job you took a deposit on has been finished and closed.') + '</div>');
+  } else if (tab === 'follow') {
+    body = '<div class="eyebrow">Who you owe a call back</div>' +
+      (fus.length
+        ? fus.map(tdFuCard).join('') +
+          '<div class="card" style="color:var(--muted);font-size:13px;line-height:1.6">These are the people you quoted and who have not answered yet. Tap one to write what was said, move the date, or \u2014 when he agrees \u2014 turn it into an open job.</div>'
+        : '<div class="empty" style="padding:14px">' + (cl.busy ? 'Loading\u2026' : 'Nobody waiting on an answer. Every estimate you wrote has been dealt with.') + '</div>');
+  } else {
+    body =
+      block('Today \u00b7 ' + fmtDay(today), rowsToday, tj.busy ? 'Loading your jobs\u2026' : 'Nothing on today.') +
+      block('Tomorrow \u00b7 ' + fmtDay(tom), rowsTom, tj.busy ? 'Loading\u2026' : 'Nothing sent to you for tomorrow yet.');
+  }
 
   return '<div class="app">' +
     '<div class="topbar"><button class="iconbtn" data-act="home">\u2039</button><div style="flex:1"><h1>My day</h1>' +
-      '<div class="sub">what you were sent</div></div>' +
+      '<div class="sub">' + (tab === 'open' ? opens.length + ' still open' : tab === 'follow' ? fus.length + ' to call back' : 'what you were sent') + '</div></div>' +
       '<button class="iconbtn" data-act="tday-refresh" aria-label="Refresh">\u27f3</button></div>' +
-    '<div class="screen">' + nag +
+    '<div class="screen">' + juNewsCard() + nag +
       (tj.err ? '<div class="card" style="border-color:var(--defect)"><div style="font-size:13px;color:var(--defect)">' + esc(tj.err) + '</div><button class="btn btn-ghost" data-act="tj-retry" style="width:100%;margin-top:8px">Try again</button></div>' : '') +
-      block('Today \u00b7 ' + fmtDay(today), rowsToday, tj.busy ? 'Loading your jobs\u2026' : 'Nothing on today.') +
-      block('Tomorrow \u00b7 ' + fmtDay(tom), rowsTom, tj.busy ? 'Loading\u2026' : 'Nothing sent to you for tomorrow yet.') +
+      '<div class="row" style="gap:6px;margin-bottom:12px">' +
+        tb('day', 'Today', rowsToday.length) + tb('open', 'Open', opens.length) + tb('follow', 'Follow-ups', fus.length) +
+      '</div>' + body +
     '</div>' +
   '</div>';
 }
@@ -3902,6 +4113,8 @@ function viewHome() {
       bigTile('invoice', 'Invoice', ICO.checklist) +
       tile('coach-start', 'Ask Refael', ICO.ask) +
       tile('docs', 'My work', ICO.checklist) +
+      (isTech() ? tile('td-open', 'Open jobs', ICO.checklist) : '') +
+      (isTech() ? tile('td-follow', 'Follow-ups', ICO.message) : '') +
       (isTech() ? tile('mypay', 'My pay', ICO.estimate) : '') +
       (isTech() ? tile('tech-guide', 'How this works', ICO.ask) : '') +
       (isTech() ? tile('my-clients', 'Customers', ICO.clients) : tile('clients', 'Customers', ICO.clients)) +
@@ -5926,7 +6139,7 @@ function myClients() {
     var k = mcKey(name, addr);
     if (!k) return null;
     var c = map[k];
-    if (!c) { c = map[k] = { key: k, name: name || '', addr: addr || '', phone: phone || '', at: at || 0, docs: [], visits: [] }; order.push(c); }
+    if (!c) { c = map[k] = { key: k, name: name || '', addr: addr || '', phone: phone || '', at: at || 0, docs: [], visits: [], jobs: [], fus: [] }; order.push(c); }
     if (!c.name && name) c.name = name;
     if (!c.addr && addr) c.addr = addr;
     if (!c.phone && phone) c.phone = phone;
@@ -5946,8 +6159,16 @@ function myClients() {
   });
   (tjStore().rows || []).forEach(function (r) {
     var at = r.day ? Date.parse(String(r.day).slice(0, 10) + 'T12:00:00') : 0;
-    touch(String(r.title || '').split(/\s+[\u2014\u00b7|]\s+/)[0].trim(), r.location,
-          tjPhone(r.notes) || tjPhone(r.title), at);
+    var c = touch(clTidyName(r.title), r.location, tjPhone(r.notes) || tjPhone(r.title), at);
+    if (c) c.jobs.push(r);
+  });
+  /* The estimates still waiting on an answer belong in his folder too —
+     that is half of what a man needs to know before he calls somebody. */
+  (clStore().fuRows || []).forEach(function (f) {
+    /* A call-back date in the future must not reorder the list as if the
+       customer had just been worked on, so it carries no time of its own. */
+    var c = touch(clTidyName(f.customer), f.address, '', 0);
+    if (c) c.fus.push(f);
   });
   order.sort(function (a, b) { return (b.at || 0) - (a.at || 0); });
   return order;
@@ -6003,8 +6224,24 @@ function viewMyClients() {
       '<div id="mc_list">' + mcRows() + '</div>' +
     '</div></div>';
 }
+/* One line of arithmetic at the top, so the folder answers "what is this
+   customer worth and is anything outstanding" before it is scrolled. */
+function mcSummary(c) {
+  var paid = 0, bal = 0;
+  c.visits.forEach(function (r) { paid += clPos(r.collected); bal += clBalance(r); });
+  var quoted = 0;
+  c.fus.forEach(function (f) { if ((f.state || 'open') === 'open') quoted += clPos(f.amount); });
+  if (!paid && !bal && !quoted && !c.visits.length) return '';
+  return '<div class="card"><div class="row" style="gap:10px">' +
+    '<div class="stat"><div class="k">Visits</div><div class="v" style="font-size:17px">' + c.visits.length + '</div></div>' +
+    '<div class="stat"><div class="k">Paid in</div><div class="v" style="font-size:17px">' + money(paid) + '</div></div>' +
+    (bal ? '<div class="stat"><div class="k">Still owed</div><div class="v" style="font-size:17px">' + money(bal) + '</div></div>' : '') +
+    (quoted ? '<div class="stat"><div class="k">Quoted</div><div class="v" style="font-size:17px">' + money(quoted) + '</div></div>' : '') +
+    '</div></div>';
+}
 function viewMyClient() {
   mcEnsure(); crewEnsure();
+  if (!tjStore().loaded && !tjStore().busy) tjLoad();
   var c = mcFind(state.mcOne);
   if (!c) { state.view = 'myclients'; return viewMyClients(); }
   var phone = c.phone;
@@ -6014,15 +6251,62 @@ function viewMyClient() {
              '<a class="btn btn-ghost" style="flex:1;text-align:center;text-decoration:none" href="sms:' + esc(phone) + '">Text</a>' : '') +
     '</div>';
 
+  /* The whole folder, not a list of papers: what the job was, what was
+     charged on each visit, who still owes an answer, and everything that
+     was sent. One screen, so nothing about this customer lives elsewhere. */
+  var jobs = c.jobs.length
+    ? '<div class="eyebrow" style="margin:18px 2px 8px">The job' + (c.jobs.length === 1 ? '' : 's') + '</div>' +
+      c.jobs.slice().sort(function (a, b) { return String(a.day) < String(b.day) ? 1 : -1; }).map(function (r) {
+        var note = String(r.notes || '').trim();
+        return '<div class="card">' +
+          '<div style="font-weight:650;font-size:15px">' + esc((r.start_time ? r.start_time + '  ' : '') + (r.title || 'Job')) + '</div>' +
+          '<div style="color:var(--muted);font-size:13px;margin-top:2px">' + esc([fmtDay(r.day), r.location].filter(Boolean).join(' \u00b7 ')) + '</div>' +
+          (note ? '<div style="font-size:13.5px;line-height:1.6;margin-top:8px;white-space:pre-wrap">' + esc(note) + '</div>' : '') +
+        '</div>';
+      }).join('')
+    : '';
+
   var visits = c.visits.length
     ? '<div class="eyebrow" style="margin:18px 2px 8px">What was charged</div>' +
       c.visits.slice().sort(function (a, b) { return String(a.day) < String(b.day) ? 1 : -1; }).map(function (r) {
-        return '<div class="card"><div class="row" style="align-items:baseline;gap:8px">' +
-          '<div style="flex:1;font-weight:650">' + esc(fmtDay(r.day)) + '</div>' +
-          '<div style="font-weight:700;color:var(--ember)">' + esc(money(clPos(r.collected))) + '</div></div>' +
-          '<div style="color:var(--muted);font-size:13px;margin-top:2px">' + esc(r.status + (r.method ? ' \u00b7 ' + r.method : '')) + '</div>' +
-          (r.note ? '<div style="font-size:13px;margin-top:6px;white-space:pre-wrap">' + esc(r.note) + '</div>' : '') +
+        var bal = clBalance(r);
+        var bits = [r.status, r.method, r.job_source ? (r.job_source === 'aio' ? 'AIO Pro' : 'dispatcher') : '',
+          r.status === 'paid' ? clRateLabel(r) : ''].filter(Boolean).join(' \u00b7 ');
+        var extra = [clPos(r.job_total) ? 'price ' + money(clPos(r.job_total)) : '',
+          clPos(r.parts_amount) ? 'parts ' + money(clPos(r.parts_amount)) + (r.parts_paid_by ? ' (' + r.parts_paid_by + ')' : '') : '',
+          clPos(r.sub_amount) ? 'sub ' + money(clPos(r.sub_amount)) : '',
+          clPos(r.tip) ? 'tip ' + money(clPos(r.tip)) : '',
+          bal ? 'still to collect ' + money(bal) : ''].filter(Boolean).join(' \u00b7 ');
+        var bad = clNeedsMoney(r.status) && !clPos(r.collected) && !clPos(r.job_total);
+        return '<div class="card"' + (bad ? ' style="border-color:var(--defect)"' : '') + '>' +
+          '<div class="row" style="align-items:baseline;gap:8px">' +
+            '<div style="flex:1;font-weight:650">' + esc(fmtDay(r.day)) + '</div>' +
+            '<div style="font-weight:700;color:' + (bad ? 'var(--defect)' : 'var(--ember)') + '">' + esc(money(clPos(r.collected))) + '</div></div>' +
+          '<div style="color:var(--muted);font-size:13px;margin-top:2px">' + esc(bits) + '</div>' +
+          (extra ? '<div style="color:var(--muted);font-size:13px">' + esc(extra) + '</div>' : '') +
+          (r.performed_by || r.sold_by
+            ? '<div style="color:var(--muted);font-size:12.5px;margin-top:2px">' +
+              esc([r.performed_by ? 'done by ' + r.performed_by : '', r.sold_by ? 'sold by ' + r.sold_by : ''].filter(Boolean).join(' \u00b7 ')) + '</div>' : '') +
+          (r.note ? '<div style="font-size:13.5px;line-height:1.6;margin-top:7px;white-space:pre-wrap">' + esc(r.note) + '</div>' : '') +
+          (bad ? '<div style="color:var(--defect);font-size:13px;margin-top:7px">This one says money changed hands but carries nothing. The amount has to go in.</div>' : '') +
+          (!isTech() && r.job_key
+            ? '<button class="btn ' + (bad ? 'btn-gold' : 'btn-ghost') + '" data-act="cl-open" data-arg="' + esc(r.job_key) + '" style="width:100%;margin-top:9px">' +
+              (bad ? 'Put the amount in' : 'Put this closing right') + '</button>' : '') +
         '</div>';
+      }).join('')
+    : '';
+
+  var fus = c.fus.length
+    ? '<div class="eyebrow" style="margin:18px 2px 8px">Waiting on an answer</div>' +
+      c.fus.slice().map(function (f) {
+        return '<button class="card card-tap" data-act="fu-open" data-arg="' + esc(f.id) + '" style="display:block;width:100%;text-align:left">' +
+          '<div class="row" style="align-items:baseline;gap:8px">' +
+            '<span style="flex:1;font-weight:650">' + esc(f.what || 'Quoted') + '</span>' +
+            (clPos(f.amount) ? '<span style="font-weight:700;color:var(--ember)">' + money(clPos(f.amount)) + '</span>' : '') + '</div>' +
+          (f.reason ? '<div style="color:var(--muted);font-size:13px;margin-top:2px">' + esc(f.reason) + '</div>' : '') +
+          '<div style="font-size:13px;margin-top:4px;color:' + (f.due ? 'var(--gold)' : 'var(--muted)') + '">' +
+            (f.state && f.state !== 'open' ? esc(f.state) : f.due ? 'call back ' + esc(fmtDay(f.due)) : 'no date yet \u2014 tap to set it') + '</div>' +
+        '</button>';
       }).join('')
     : '';
 
@@ -6047,8 +6331,9 @@ function viewMyClient() {
       '<h1>' + esc(c.name || 'Unnamed') + '</h1>' +
       '<div class="sub">' + esc(String(c.addr || '').split(',')[0] || 'No address on file') + '</div></div></div>' +
     '<div class="screen">' +
-      (c.addr || phone ? '<div class="card"><div style="font-weight:650;font-size:15px">' + esc(c.addr || phone) + '</div>' + actions + '</div>' : '') +
-      visits + papers +
+      (c.addr || phone ? '<div class="card"><div style="font-weight:650;font-size:15px">' + esc(c.addr || phone) + '</div>' +
+        (phone && c.addr ? '<div style="color:var(--muted);font-size:13.5px;margin-top:2px">' + esc(phone) + '</div>' : '') + actions + '</div>' : '') +
+      mcSummary(c) + jobs + visits + fus + papers +
     '</div></div>';
 }
 function wireMyClients() {
@@ -9461,7 +9746,11 @@ root.addEventListener('click', function (e) {
     case 'mypay': state.view = 'mypay'; state.payWeek = wkThis(); render(); clLoad(true); stLoad(true); break;
     case 'mypay-refresh': if (state.crew) state.crew.tried = false; state.mcLoaded = false; crewEnsure(); mcEnsure(); clLoad(true); stLoad(true); render(); break;
     case 'tech-guide': state.view = 'techguide'; render(); break;
-    case 'tech-day': state.view = 'techday'; render(); tjLoad(true); clLoad(true); break;
+    case 'tech-day': state.view = 'techday'; state.tdTab = 'day'; render(); tjLoad(true); clLoad(true); juLoad(true); break;
+    case 'td-tab': state.tdTab = arg; render(); break;
+    case 'td-open': state.view = 'techday'; state.tdTab = 'open'; render(); clLoad(true); juLoad(true); break;
+    case 'td-follow': state.view = 'techday'; state.tdTab = 'follow'; render(); clLoad(true); break;
+    case 'ju-seen': juMarkSeen(); render(); break;
     case 'tday-refresh': tjLoad(true); clLoad(true); render(); break;
     case 'fu-open': state.fuFrom = state.view; fuOpen(arg); break;
     case 'fu-back': state.view = state.fuFrom || 'crewone'; state.fuOne = null; render(); break;
