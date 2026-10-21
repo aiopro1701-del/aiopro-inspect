@@ -1200,7 +1200,7 @@ var M = 43, PW = 612, PH = 792, CONTENT = PW - M * 2;
 var APP_DIR = (/^https?:$/.test(location.protocol) && location.hostname) ? location.origin + location.pathname.replace(/[^\/]*$/, '') : 'https://aiopro1701-del.github.io/aiopro-inspect/';
 var IS_BETA = /\/beta\/$/.test(APP_DIR);
 /* Bumped on every deploy, so a screenshot of Settings says which build is on the phone. */
-var APP_BUILD = '2026-10-21 06:25 UTC';
+var APP_BUILD = '2026-10-21 08:05 UTC';
 /* Refael's field knowledge — the bot answers from this. Kept word-for-word stable so it is cached (cheap). */
 var AIO_KB = "AIO PRO CHIMNEY \u2014 FIELD KNOWLEDGE (from the owner, Refael Maman). Use this to answer the technician the way Refael would.\n\nWHO WE ARE\n- AIOPRO LLC, trading as AIO Pro Chimney. 1505 North and South Rd, St. Louis, MO 63130. Phone (314) 379-2871. Email Aiopro1701@gmail.com. aioprochimney.com.\n- Licensed general contractor, insured, CSIA member, NCSG member, BBB accredited. Greater St. Louis; east as far as Belleville and O'Fallon, IL. A Kansas City employee can take Kansas City jobs.\n- Owner: Refael Maman. The office = Refael.\n\nWHO USES THE APP\n- Owner (Refael): everything.\n- Technician: visits the house, finds the problem, prices it, presents it, closes it. Most of the work is technician and customer face to face. The technician is still learning and calls Refael on most jobs; that is fine and expected.\n- Installer: does the booked job. Needs to know when and where, what to bring, and what the technician found (photos + scope).\n\nWHAT THE TECHNICIAN MAY AND MAY NOT SAY\n- Prices: he may give prices and approximate (+/-) ranges, and he may adjust a price or give a discount (see Selling).\n- Dates: never promise a date. Scheduling always goes through the office: \"Refael will call you to book it.\"\n- Warranty: never promise warranty terms. \"The warranty is written on the estimate; Refael confirms it.\"\n- If he does not know something: say \"Let me confirm that with Refael\" and call him. Never guess about safety, code, or warranty.\n- Never run down another company. Never argue with the customer.\n\nMONEY RULES\n- Minimum service charge is usually $49. Sometimes the estimate visit is free, but not often.\n- Deposit: 20% to 40% of the job, depending on the size of the job. Balance on completion unless agreed otherwise.\n- Estimate prices hold for 30 days.\n- Price goes up with: roof pitch (steep = harder/slower, may need extra safety gear), job difficulty, how hard the chimney is to reach (height, stories, trees, lift or scaffold needed), and how much material is needed (liner length, size of the chimney top, number of flues).\n- Access equipment (boom lift, scaffold) is priced as its own line so the customer sees it.\n- Anything that may change once opened up: say so in the scope notes \u2014 \"if we find more once it is opened, we stop and agree the difference with you before continuing.\"\n\nHOW REFAEL WRITES AN ESTIMATE\n- One scope by default: the work he recommends. Add Option B (or C) ONLY when the customer has a real choice (keep the stove vs. new stove, stainless vs. galvanized, vent-free vs. vented gas). Each option has its own full total. \"Choose one \u2014 you do not need both.\"\n- Add-ons the customer can take or leave (a vent cap, a second liner) are listed separately as optional.\n- Each line: a clear name, 3-7 short scope lines specific to this house (sizes, lengths, where), and a price.\n- Explain the cause in plain words (\"a square damper cannot seal a round liner\"), then the fix. Safety items first and clearly: \"This one should not wait.\"\n- Scope notes say what is NOT included and what the customer prepares.\n- Tone: plain, confident, respectful. No jargon, no code numbers, no sales filler.\n\nSELLING (coach the technician)\n- Before the price: show the customer the photos, explain what is wrong, why it happened, and what happens if it waits.\n- Present the recommended scope first, with the total. If there is a real choice, present Option A and Option B side by side.\n- \"It's too expensive\": 1) Acknowledge (\"I understand, it's a real number.\"). 2) Ask (\"What matters most to you \u2014 the lowest price today, or fixing it so it doesn't come back?\" / \"What budget did you have in mind?\"). 3) Advise:\n  a) Split it: the safety / water-stopping part now, the rest later (becomes Option A / B).\n  b) Show the value: materials, labor, cleanup, photos, written warranty, licensed and insured, CSIA/NCSG.\n  c) Deposit 20-40% now, balance when done.\n  d) A discount is a closing tool, tied to a decision today or booking now. Give it once, clearly (\"If we book it today I can take $X off\").\n- \"I need to think about it\": ask what is holding them back; offer to email the estimate now with the Sign button; tell them Refael will follow up.\n- \"I'm getting other quotes\": that's fine; point to the written scope and warranty so they compare the same work. Never bash competitors.\n- Close: ask for the decision. \"Shall I send it to your email so you can sign it on your phone?\"\n\nSAFETY \u2014 STOP AND TELL THE CUSTOMER\n- Gas leak found (bubbles on leak test, smell): the appliance must not be used until repaired; if they smell gas, shut the supply and call the gas utility. Call Refael.\n- Blocked flue (debris, animal nest, collapsed tile) on a furnace or water heater: do not operate that appliance until cleared/lined. CO risk.\n- Unlined or badly cracked flue on a wood fireplace: do not use until repaired.\n- Disconnected or rusted-through vent connector: do not operate.\n- Creosote glaze or heavy buildup: no fires until swept.\n- Say it in one calm sentence, write it on the estimate, and call Refael.\n\nWHAT TO CHECK AND PHOTOGRAPH (standard order, bottom up)\n- First find out what system it is (wood fireplace, gas logs in a fireplace, direct-vent gas, vent-free gas, insert/stove, furnace or water heater flue) and check only the parts that system has. Vent-free gas has no flue: no damper, liner or roof checks.\n- Level 1: inside the home and from the ground only \u2014 no roof or attic. Level 2 adds the roof and the top when it is safe, and a camera scan of the flue. We do not go into attics, basements or crawl spaces.\n1. Front of the house (cover photo), then the appliance / fireplace.\n2. Firebox: cracks, gaps in joints, missing panels.\n3. Damper and throat: opens/closes and seals; damper type vs. flue shape.\n4. Smoke chamber: voids, rough/unparged brick, creosote.\n5. Flue and liner: camera scan if possible; clay tile cracks, offsets, missing mortar; liner size and material; debris.\n6. Appliance vents (furnace/water heater): connector condition, slope, clearance (single-wall 6\", B-vent 1\"), draft.\n8. Roof and exterior: flashing, cricket (chimney wider than 30\"), crown cracks, cap/spark arrestor, chase cover rust, brick and mortar, height (3-2-10 rule).\n9. Measurements that set the price: flue size (inside dimensions), liner length (roofline to appliance + above the top), chimney top size (for cap/chase cover), number of flues, stories, roof pitch, access.\n\nHOW TO MEASURE (short)\n- Liner length: from the appliance connection (or smoke chamber) to the top of the flue tile + about 1 ft; count stories (about 10 ft each) if you cannot measure directly.\n- Flue size: inside width x depth of the clay tile (or diameter for round); the liner is sized to the appliance outlet.\n- Chase cover / cap: outside length x width of the top (crown or chase), plus the flue tile height above the crown.\n- Chimney height above the roof: at least 3 ft above where it passes the roof and 2 ft higher than anything within 10 ft.\n\nWHEN TO CALL REFAEL\n- Any safety hazard, any job over a few thousand dollars, anything not in the price list, anything structural, any date/warranty question, any customer who is unhappy, and whenever unsure.";
 /* Photos keep their real shape: height/width of an image (0.75 if unknown). */
@@ -2282,7 +2282,7 @@ function tjMineBlock() {
   var today = isoToday(), tom = isoAddDays(today, 1);
   var seen = {};
   var rows = tj.rows.filter(function (r) { if (r.day < today || seen[r.id]) return false; seen[r.id] = 1; return true; });
-  var out = '';
+  var out = crewOutCard();
   if (tj.err) out += '<div class="card" style="border-color:var(--defect)"><div style="font-size:13px;color:var(--defect)">' + esc(tj.err) + '</div><button class="btn btn-ghost" data-act="tj-retry" style="width:100%;margin-top:8px">Try again</button></div>';
   if (!rows.length) {
     return fixes + out + '<div class="eyebrow">My jobs</div><div class="empty" style="padding:14px">' + (tj.busy ? 'Loading your jobs…' : 'Nothing assigned to you yet.') + '</div>';
@@ -2861,6 +2861,7 @@ function viewCrew() {
       '<button class="iconbtn" data-act="crew-refresh" aria-label="Refresh">⟳</button></div>' +
     '<div class="screen">' +
       (st.busy ? '<div class="empty" style="padding:14px">Loading the crew…</div>' : '') +
+      crewOutCard() +
       crewSyncCard() +
       escCard() +
       (cards || (st.loaded ? '<div class="empty" style="padding:14px">No technician on the crew yet. Settings, then The crew, to add one.</div>' : '')) +
@@ -4046,7 +4047,7 @@ function viewTechDay() {
     '<div class="topbar"><button class="iconbtn" data-act="home">\u2039</button><div style="flex:1"><h1>My day</h1>' +
       '<div class="sub">' + (tab === 'open' ? opens.length + ' still open' : tab === 'follow' ? fus.length + ' to call back' : 'what you were sent') + '</div></div>' +
       '<button class="iconbtn" data-act="tday-refresh" aria-label="Refresh">\u27f3</button></div>' +
-    '<div class="screen">' + juNewsCard() + nag +
+    '<div class="screen">' + crewOutCard() + juNewsCard() + nag +
       (tj.err ? '<div class="card" style="border-color:var(--defect)"><div style="font-size:13px;color:var(--defect)">' + esc(tj.err) + '</div><button class="btn btn-ghost" data-act="tj-retry" style="width:100%;margin-top:8px">Try again</button></div>' : '') +
       '<div class="row" style="gap:6px;margin-bottom:12px">' +
         tb('day', 'Today', rowsToday.length) + tb('open', 'Open', opens.length) + tb('follow', 'Follow-ups', fus.length) +
@@ -4794,7 +4795,8 @@ function crewText(v) { return String(v == null ? '' : v).slice(0, 300); }
 function crewPut(doc) {
   var key = sendKey();
   if (!key || !doc || !doc.id) return Promise.resolve(false);
-  return cloudRpc('crew_doc_put', { p_key: key, p_doc: doc }).then(function () { return true; }).catch(function () { return false; });
+  return cloudRpc('crew_doc_put', { p_key: key, p_doc: doc }).then(function () { crewOutDrop(doc.id); return true; })
+    .catch(function () { crewOutAdd(doc); return false; });
 }
 /* Small enough to send on every save: the document itself, without photos. */
 function crewFromReport(rep) {
@@ -4819,11 +4821,126 @@ function crewFromEstimate(e) {
       photos: (e.fjPhotos || []).length || e.photoCount || 0,
       options: used.map(function (o) { return { name: o.name || '', items: (o.items || []).map(function (it) { return { name: it.name || '', desc: it.desc || '', qty: it.qty, price: it.price }; }) }; }) } };
 }
-/* Saves happen on every keystroke, so hold each document for a few seconds. */
+/* ── The outbox ────────────────────────────────────────────────────
+   This used to be one debounced attempt and nothing else: hold the paper
+   for two and a half seconds, send it once, and swallow whatever came
+   back. On a phone that is exactly long enough to lose the work. A man
+   writes an estimate, taps Link, copies the link, switches to WhatsApp to
+   send it — and the page is frozen before the timer ever fires. Seven of
+   his estimates reached the customer on 21 October and not one of them
+   reached the office.
+   So the paper goes on disk FIRST, before anything is sent, and stays
+   there until the server has it. Then it does not matter what happens to
+   the page, the signal or the battery. */
+var CREW_OUT_LS = 'aio-crew-out-1';
+var CREW_OUT_MAX = 60;
+function crewOutGet() { try { return JSON.parse(localStorage.getItem(CREW_OUT_LS) || '{}') || {}; } catch (e) { return {}; } }
+function crewOutSet(m) { try { localStorage.setItem(CREW_OUT_LS, JSON.stringify(m)); return true; } catch (e) { return false; } }
+function crewOutCount() { try { return Object.keys(crewOutGet()).length; } catch (e) { return 0; } }
+function crewOutAdd(doc) {
+  if (!doc || !doc.id) return false;
+  var m = crewOutGet(), had = m[doc.id];
+  m[doc.id] = { at: Date.now(), tries: (had && had.tries) || 0, doc: doc };
+  var ks = Object.keys(m);
+  if (ks.length > CREW_OUT_MAX) {
+    /* Oldest out first, and only ones already tried many times — a day's
+       work must never be pushed out by a week-old failure. */
+    ks.sort(function (a, b) { return (m[a].at || 0) - (m[b].at || 0); });
+    while (ks.length > CREW_OUT_MAX) { delete m[ks[0]]; ks.shift(); }
+  }
+  if (crewOutSet(m)) return true;
+  /* No room on the phone: drop the oldest and try once more rather than
+     losing the paper that was just written. */
+  var k2 = Object.keys(m);
+  k2.sort(function (a, b) { return (m[a].at || 0) - (m[b].at || 0); });
+  while (k2.length > 1) { delete m[k2[0]]; k2.shift(); if (crewOutSet(m)) return true; }
+  return false;
+}
+function crewOutDrop(id) { var m = crewOutGet(); if (m[id]) { delete m[id]; crewOutSet(m); } }
+function crewOutBump(id) { var m = crewOutGet(); if (m[id]) { m[id].tries = (m[id].tries || 0) + 1; crewOutSet(m); } }
+var crewFlushing = false, crewFlushAgain = false;
+function crewFlush() {
+  var key = sendKey();
+  if (!key) return Promise.resolve(0);
+  /* A save landing while a slow round is still in the air used to be
+     skipped and left for the next chance. Remember it and run again. */
+  if (crewFlushing) { crewFlushAgain = true; return Promise.resolve(0); }
+  var m = crewOutGet(), ids = Object.keys(m);
+  state.crewOut = state.crewOut || {};
+  if (!ids.length) { state.crewOut = { left: 0, busy: false, err: '' }; return Promise.resolve(0); }
+  ids.sort(function (a, b) { return (m[a].at || 0) - (m[b].at || 0); });
+  crewFlushing = true;
+  state.crewOut = { left: ids.length, busy: true, err: '' };
+  var sent = 0, failed = 0, lastErr = '';
+  var chain = Promise.resolve();
+  ids.forEach(function (id) {
+    chain = chain.then(function () {
+      return cloudRpc('crew_doc_put', { p_key: key, p_doc: m[id].doc })
+        .then(function () { sent++; crewOutDrop(id); })
+        .catch(function (err) { failed++; lastErr = (err && err.message) || 'no connection'; crewOutBump(id); });
+    });
+  });
+  return chain.then(function () {
+    crewFlushing = false;
+    state.crewOut = { left: crewOutCount(), busy: false, sent: sent, err: failed ? lastErr : '', at: Date.now() };
+    try { render(); } catch (_) {}
+    if (crewFlushAgain) { crewFlushAgain = false; if (crewOutCount()) return crewFlush().then(function (m2) { return sent + m2; }); }
+    return sent;
+  }).catch(function () { crewFlushing = false; crewFlushAgain = false; return sent; });
+}
+/* Saves happen on every keystroke, so hold each document for a few seconds —
+   but it is already safe on disk by then. */
 function crewQueue(doc) {
   if (!doc || !doc.id) return;
+  crewOutAdd(doc);
   if (crewTimers[doc.id]) clearTimeout(crewTimers[doc.id]);
-  crewTimers[doc.id] = setTimeout(function () { delete crewTimers[doc.id]; crewPut(doc); }, 2500);
+  crewTimers[doc.id] = setTimeout(function () { delete crewTimers[doc.id]; crewFlush(); }, 2000);
+}
+/* Anything still waiting goes now: before the page is hidden, when it comes
+   back, when the signal returns, and at every start. */
+function crewFlushNow() {
+  Object.keys(crewTimers).forEach(function (k) { clearTimeout(crewTimers[k]); delete crewTimers[k]; });
+  return crewFlush();
+}
+/* Put every paper on this phone back in the outbox. For the day the sync
+   was broken — and for a phone whose papers were made before any of this. */
+function crewResend() {
+  var n = 0;
+  try { loadEstimates().forEach(function (e) { var d = crewFromEstimate(e); if (d && crewOutAdd(d)) n++; }); } catch (e) {}
+  return docList().then(function (list) {
+    (list || []).forEach(function (rec) {
+      var d = crewFromReport(rec);
+      if (!d) d = { id: rec.id, kind: rec.kind || 'inspection', customer: crewText(rec.name), address: crewText(rec.addr),
+        title: crewText((rec.data && rec.data.title) || rec.modeName || ''), total: Number(rec.total) || 0,
+        status: rec.signedAt ? 'signed' : (rec.emailedAt ? 'sent' : 'draft'), payStatus: rec.payStatus || '',
+        shareId: rec.shareId || '', at: rec.at || Date.now(),
+        payload: { modeName: rec.modeName || '', email: rec.email || '', photos: (rec.imgs || []).length, data: rec.data || {} } };
+      if (crewOutAdd(d)) n++;
+    });
+    return n;
+  }).catch(function () { return n; }).then(function (total) {
+    return crewFlushNow().then(function (sent) { return { queued: total, sent: sent, left: crewOutCount() }; });
+  });
+}
+/* Never silent again: what has not reached the office is on the screen. */
+function crewOutCard() {
+  var left = crewOutCount(), o = state.crewOut || {};
+  if (!left) {
+    if (o.sent && o.at && Date.now() - o.at < 20000) {
+      return '<div style="font-size:12.5px;color:var(--ok);margin-bottom:8px">' + o.sent +
+        ' paper' + (o.sent === 1 ? '' : 's') + ' filed with the office ✓</div>';
+    }
+    return '';
+  }
+  return '<div class="card" style="border-color:var(--defect)">' +
+    '<div style="font-weight:700;color:var(--defect)">' + left + ' paper' + (left === 1 ? '' : 's') +
+      ' not filed with the office yet</div>' +
+    '<div style="color:var(--muted);font-size:13px;margin-top:3px">' +
+      (o.busy ? 'Sending…'
+        : o.err ? esc(o.err) + ' — they are safe on this phone and will go as soon as there is signal.'
+        : 'They are safe on this phone. They go up on their own as soon as there is signal.') + '</div>' +
+    (o.busy ? '' : '<button class="btn btn-gold" data-act="crew-send" style="width:100%;margin-top:9px">Send them now</button>') +
+    '</div>';
 }
 /* First run after the update: send everything already on this phone, so a day's
    work done before this existed is not lost to the office. */
@@ -4868,6 +4985,8 @@ function crewEnsure() {
 }
 function crewLoad() {
   var key = sendKey(); if (!key) return Promise.resolve([]);
+  /* Send before reading, or the list he is shown is missing his own work. */
+  try { crewFlush(); } catch (_) {}
   state.crew = state.crew || {};
   state.crew.busy = true;
   return cloudRpc('crew_docs_list', { p_key: key, p_limit: 200 }).then(function (rows) {
@@ -7554,10 +7673,11 @@ function viewDocs() {
     '<div style="position:sticky;top:0;z-index:4;display:flex;gap:6px;padding:8px 12px;background:var(--paper,#f3eee4);border-bottom:0.5px solid var(--rule)">' +
       TABS.map(function (t) { return '<button class="btn ' + (tab === t[0] ? 'btn-gold btn-primary' : 'btn-ghost') + '" data-act="docs-tab" data-arg="' + t[0] + '" style="flex:1;min-height:40px;padding:0 6px;font-size:13px">' + t[1] + '</button>'; }).join('') +
     '</div>' +
-    '<div class="screen">' + (state.docs && state.docs.msg && tab !== 'crew' ? '<div class="card" style="font-size:14px">' + esc(state.docs.msg) + '</div>' : '') + body + '</div>' +
+    '<div class="screen">' + crewOutCard() + (state.docs && state.docs.msg && tab !== 'crew' ? '<div class="card" style="font-size:14px">' + esc(state.docs.msg) + '</div>' : '') + body + '</div>' +
     (tab === 'crew'
       ? '<div class="bottombar" style="gap:6px"><button class="btn btn-ghost" data-act="crew-reload" style="flex:1">Refresh the list</button></div>'
-      : '<div class="bottombar" style="gap:6px"><button class="btn btn-gold btn-primary" data-act="fj-new" data-arg="' + (tab === 'invoice' ? 'invoice' : tab === 'estimate' ? 'estimate' : 'inspection') + '">New ' + (tab === 'invoice' ? 'invoice' : tab === 'estimate' ? 'estimate' : 'inspection') + '</button></div>') +
+      : '<div class="bottombar" style="gap:6px"><button class="btn btn-gold btn-primary" data-act="fj-new" data-arg="' + (tab === 'invoice' ? 'invoice' : tab === 'estimate' ? 'estimate' : 'inspection') + '" style="flex:1">New ' + (tab === 'invoice' ? 'invoice' : tab === 'estimate' ? 'estimate' : 'inspection') + '</button>' +
+        '<button class="btn btn-ghost" data-act="crew-resend" style="flex:none;padding:12px 14px">File all</button></div>') +
   '</div>';
 }
 function docsLoad(tab) {
@@ -7677,6 +7797,37 @@ function estRefreshOpt(i) {
   var tt = card.querySelector('.est-tot'); if (tt) tt.innerHTML = renderEstOptTotalHTML(i);
 }
 /* Re-render the estimate without jumping the page back to the top. */
+var estTouchT = null;
+function estWorthSaving(e) {
+  if (!e) return false;
+  var cu = e.customer || {};
+  if (String(cu.name || '').trim() || String(cu.addr || '').trim() || String(cu.phone || '').trim()) return true;
+  if (String(e.title || '').trim() || String(e.found || '').trim() || String(e.notes || '').trim()) return true;
+  return !!(e.options || []).some(estHasReal);
+}
+function estTouch() {
+  if (estTouchT) clearTimeout(estTouchT);
+  estTouchT = setTimeout(function () {
+    estTouchT = null;
+    var e = state.estimate;
+    if (!e || !estWorthSaving(e)) return;
+    try { upsertEstimate(e); } catch (_) {}
+  }, 1000);
+}
+/* The Save he asked for: it writes it down, sends the office copy, and says
+   so — so a man can stop in the middle of an estimate and come back to it. */
+function estSaveNow() {
+  var e = state.estimate;
+  if (!e) return;
+  if (estTouchT) { clearTimeout(estTouchT); estTouchT = null; }
+  if (!estWorthSaving(e)) { alert('There is nothing in this estimate yet — put the customer or one line of work in and it will save.'); return; }
+  try { upsertEstimate(e); } catch (_) {}
+  try { estPhotoSave(e); } catch (_) {}
+  state.estSaved = Date.now();
+  render();
+  setTimeout(function () { if (state.view === 'estimate') render(); }, 4200);
+  crewFlushNow();
+}
 function estRender() { var y = window.scrollY || 0; render(); try { window.scrollTo(0, y); } catch (_) {} }
 function estChatReady() { var c = state.chat; return !!(c && c.messages && c.messages.length >= 3); }
 /* Back to the form that built this document: add or remove photos, change a
@@ -8242,14 +8393,21 @@ function viewEstimate() {
         '<div class="field"><label>What we found — 2–3 plain sentences</label><textarea id="est_found" style="min-height:70px">' + esc(e.found) + '</textarea></div>' +
         '<div class="field" style="margin-bottom:0"><label>Scope notes — one per line (what is not included, measurements, what the customer prepares)</label><textarea id="est_notes" style="min-height:80px">' + esc(e.notes) + '</textarea></div></div>' +
     '</div>' +
-    '<div class="bottombar" style="gap:6px"><button class="btn btn-gold btn-primary" data-act="pv-open" data-arg="estimate" style="flex:1.2">Preview &amp; send</button><button class="btn btn-ghost" data-act="estmail-open" style="flex:0.9">' + (e.emailedAt ? 'Emailed ✓' : 'Email') + '</button><button class="btn btn-ghost" id="est_pdf" style="flex:0.6">PDF</button><button class="btn btn-ghost" id="est_share" style="flex:0.6">' + (e.shareId ? 'Link ✓' : 'Link') + '</button></div>' +
+    '<div class="bottombar" style="gap:6px"><button class="btn btn-gold btn-primary" data-act="est-save" style="flex:0.8">' + (state.estSaved && Date.now() - state.estSaved < 4000 ? 'Saved ✓' : 'Save') + '</button><button class="btn btn-ghost" data-act="pv-open" data-arg="estimate" style="flex:1">Preview &amp; send</button><button class="btn btn-ghost" data-act="estmail-open" style="flex:0.8">' + (e.emailedAt ? 'Emailed ✓' : 'Email') + '</button><button class="btn btn-ghost" id="est_pdf" style="flex:0.5">PDF</button><button class="btn btn-ghost" id="est_share" style="flex:0.5">' + (e.shareId ? 'Link ✓' : 'Link') + '</button></div>' +
   '</div>';
 }
 function wireEstimate() {
   if (state.view !== 'estimate' || !state.estimate) return;
   var e = state.estimate;
   wireEstChecks();
-  function bind(id, fn) { var el = root.querySelector('#' + id); if (el) el.addEventListener('input', function () { fn(el.value); }); }
+  /* Typing into this form used to change nothing on disk — the estimate
+     lived in memory until a PDF, a link or an email was made. Leave the
+     screen before that and the work was gone. Now every field saves itself
+     a second after he stops typing, and the office copy goes with it. */
+  function bind(id, fn) {
+    var el = root.querySelector('#' + id);
+    if (el) el.addEventListener('input', function () { fn(el.value); estTouch(); });
+  }
   ['name', 'phone', 'email', 'addr'].forEach(function (k) { bind('est_' + k, function (v) { e.customer[k] = v; }); });
   bind('est_title', function (v) { e.title = v; });
   bind('est_vdate', function (v) { e.visitDate = v; });
@@ -8310,7 +8468,7 @@ function wireEstimate() {
       }
     });
   }
-  var tax = root.querySelector('#est_tax'); if (tax) tax.addEventListener('input', function () { e.tax = tax.value; e.options.forEach(function (o, i) { estRefreshOpt(i); }); });
+  var tax = root.querySelector('#est_tax'); if (tax) tax.addEventListener('input', function () { e.tax = tax.value; e.options.forEach(function (o, i) { estRefreshOpt(i); }); estTouch(); });
   var pdf = root.querySelector('#est_pdf'); if (pdf) pdf.addEventListener('click', function () { buildEstimatePdf(); });
   prepWire(e); prepLoad(e);
   var share = root.querySelector('#est_share'); if (share) share.addEventListener('click', shareEstimate);
@@ -8771,6 +8929,9 @@ function shareEstimate() {
   var btn = root.querySelector('#est_share'); if (btn) { btn.textContent = 'Sharing…'; btn.disabled = true; }
   estEnsureShared(e).then(function (id) {
     crmEnsureForEstimate(e).then(function () { crmLogEstimate(e, 'sent', 'estimate'); });
+    /* File the office copy BEFORE the link goes on the screen: the prompt
+       blocks everything, and the next thing he does is leave for WhatsApp. */
+    crewFlushNow();
     if (btn) { btn.textContent = 'Link ✓'; btn.disabled = false; }
     window.prompt('Send this link to your customer. They can view the estimate' + (estUsed(e).length > 1 ? ', choose an option' : '') + ' and sign — and you\'ll see when they open and sign it:', CLOUD_BASE + '?id=' + id);
   }).catch(function (err) {
@@ -9933,6 +10094,19 @@ root.addEventListener('click', function (e) {
       break;
     }
     case 'crew-reload': if (state.crew) state.crew.tried = false; crewLoad(); break;
+    case 'crew-send': crewFlushNow(); render(); break;
+    case 'crew-resend': {
+      if (!confirm('Send every paper on this phone to the office again?\n\nNothing is changed and nothing is sent to any customer — it only makes sure the office has a copy of all of it.')) break;
+      state.crewOut = { left: crewOutCount(), busy: true, err: '' }; render();
+      crewResend().then(function (r) {
+        alert(r.sent + ' paper' + (r.sent === 1 ? '' : 's') + ' filed with the office.' +
+          (r.left ? '\n\n' + r.left + ' did not go through yet — they are safe on this phone and will go when there is signal.' : ''));
+        if (state.crew) state.crew.tried = false;
+        crewLoad(); render();
+      });
+      break;
+    }
+    case 'est-save': estSaveNow(); break;
     case 'crew-back': state.crewDoc = null; docsLoad('crew'); break;
     case 'crew-link': try { window.open(CLOUD_BASE + '?id=' + encodeURIComponent(arg), '_blank'); } catch (_) {} break;
     case 'doc-open': {
@@ -11247,15 +11421,22 @@ accessCheck().then(function (a) {
   stLoad();
   scLoad();
   juLoad();
+  try { setTimeout(function () { crewFlush(); }, 1500); } catch (_) {}
   return refresh().then(function () { return crmLoadStats(); }).then(function () { if (state.view === 'home') render(); });
 }).catch(function () { render(); });
 
 /* A phone that stays open for days still notices a new build: check again
    whenever the app comes back to the front, at most once every ten minutes. */
 document.addEventListener('visibilitychange', function () {
-  if (!document.hidden) updCheck(false);
+  /* Going away: send what is waiting before the page is frozen. Coming
+     back: send whatever did not make it last time. */
+  if (document.hidden) { try { crewFlushNow(); } catch (_) {} return; }
+  updCheck(false);
+  try { crewFlush(); } catch (_) {}
 });
-window.addEventListener('focus', function () { updCheck(false); });
+window.addEventListener('focus', function () { updCheck(false); try { crewFlush(); } catch (_) {} });
+window.addEventListener('pagehide', function () { try { crewFlushNow(); } catch (_) {} });
+window.addEventListener('online', function () { try { crewFlush(); } catch (_) {} });
 
 /* Register the service worker so the app keeps working offline once
    installed. Only over http(s); on a file:// page it is skipped. */
