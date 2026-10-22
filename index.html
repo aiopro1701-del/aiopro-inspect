@@ -1200,7 +1200,7 @@ var M = 43, PW = 612, PH = 792, CONTENT = PW - M * 2;
 var APP_DIR = (/^https?:$/.test(location.protocol) && location.hostname) ? location.origin + location.pathname.replace(/[^\/]*$/, '') : 'https://aiopro1701-del.github.io/aiopro-inspect/';
 var IS_BETA = /\/beta\/$/.test(APP_DIR);
 /* Bumped on every deploy, so a screenshot of Settings says which build is on the phone. */
-var APP_BUILD = '2026-10-22 05:20 UTC';
+var APP_BUILD = '2026-10-22 07:15 UTC';
 /* Refael's field knowledge — the bot answers from this. Kept word-for-word stable so it is cached (cheap). */
 var AIO_KB = "AIO PRO CHIMNEY \u2014 FIELD KNOWLEDGE (from the owner, Refael Maman). Use this to answer the technician the way Refael would.\n\nWHO WE ARE\n- AIOPRO LLC, trading as AIO Pro Chimney. 1505 North and South Rd, St. Louis, MO 63130. Phone (314) 379-2871. Email Aiopro1701@gmail.com. aioprochimney.com.\n- Licensed general contractor, insured, CSIA member, NCSG member, BBB accredited. Greater St. Louis; east as far as Belleville and O'Fallon, IL. A Kansas City employee can take Kansas City jobs.\n- Owner: Refael Maman. The office = Refael.\n\nWHO USES THE APP\n- Owner (Refael): everything.\n- Technician: visits the house, finds the problem, prices it, presents it, closes it. Most of the work is technician and customer face to face. The technician is still learning and calls Refael on most jobs; that is fine and expected.\n- Installer: does the booked job. Needs to know when and where, what to bring, and what the technician found (photos + scope).\n\nWHAT THE TECHNICIAN MAY AND MAY NOT SAY\n- Prices: he may give prices and approximate (+/-) ranges, and he may adjust a price or give a discount (see Selling).\n- Dates: never promise a date. Scheduling always goes through the office: \"Refael will call you to book it.\"\n- Warranty: never promise warranty terms. \"The warranty is written on the estimate; Refael confirms it.\"\n- If he does not know something: say \"Let me confirm that with Refael\" and call him. Never guess about safety, code, or warranty.\n- Never run down another company. Never argue with the customer.\n\nMONEY RULES\n- Minimum service charge is usually $49. Sometimes the estimate visit is free, but not often.\n- Deposit: 20% to 40% of the job, depending on the size of the job. Balance on completion unless agreed otherwise.\n- Estimate prices hold for 30 days.\n- Price goes up with: roof pitch (steep = harder/slower, may need extra safety gear), job difficulty, how hard the chimney is to reach (height, stories, trees, lift or scaffold needed), and how much material is needed (liner length, size of the chimney top, number of flues).\n- Access equipment (boom lift, scaffold) is priced as its own line so the customer sees it.\n- Anything that may change once opened up: say so in the scope notes \u2014 \"if we find more once it is opened, we stop and agree the difference with you before continuing.\"\n\nHOW REFAEL WRITES AN ESTIMATE\n- One scope by default: the work he recommends. Add Option B (or C) ONLY when the customer has a real choice (keep the stove vs. new stove, stainless vs. galvanized, vent-free vs. vented gas). Each option has its own full total. \"Choose one \u2014 you do not need both.\"\n- Add-ons the customer can take or leave (a vent cap, a second liner) are listed separately as optional.\n- Each line: a clear name, 3-7 short scope lines specific to this house (sizes, lengths, where), and a price.\n- Explain the cause in plain words (\"a square damper cannot seal a round liner\"), then the fix. Safety items first and clearly: \"This one should not wait.\"\n- Scope notes say what is NOT included and what the customer prepares.\n- Tone: plain, confident, respectful. No jargon, no code numbers, no sales filler.\n\nSELLING (coach the technician)\n- Before the price: show the customer the photos, explain what is wrong, why it happened, and what happens if it waits.\n- Present the recommended scope first, with the total. If there is a real choice, present Option A and Option B side by side.\n- \"It's too expensive\": 1) Acknowledge (\"I understand, it's a real number.\"). 2) Ask (\"What matters most to you \u2014 the lowest price today, or fixing it so it doesn't come back?\" / \"What budget did you have in mind?\"). 3) Advise:\n  a) Split it: the safety / water-stopping part now, the rest later (becomes Option A / B).\n  b) Show the value: materials, labor, cleanup, photos, written warranty, licensed and insured, CSIA/NCSG.\n  c) Deposit 20-40% now, balance when done.\n  d) A discount is a closing tool, tied to a decision today or booking now. Give it once, clearly (\"If we book it today I can take $X off\").\n- \"I need to think about it\": ask what is holding them back; offer to email the estimate now with the Sign button; tell them Refael will follow up.\n- \"I'm getting other quotes\": that's fine; point to the written scope and warranty so they compare the same work. Never bash competitors.\n- Close: ask for the decision. \"Shall I send it to your email so you can sign it on your phone?\"\n\nSAFETY \u2014 STOP AND TELL THE CUSTOMER\n- Gas leak found (bubbles on leak test, smell): the appliance must not be used until repaired; if they smell gas, shut the supply and call the gas utility. Call Refael.\n- Blocked flue (debris, animal nest, collapsed tile) on a furnace or water heater: do not operate that appliance until cleared/lined. CO risk.\n- Unlined or badly cracked flue on a wood fireplace: do not use until repaired.\n- Disconnected or rusted-through vent connector: do not operate.\n- Creosote glaze or heavy buildup: no fires until swept.\n- Say it in one calm sentence, write it on the estimate, and call Refael.\n\nWHAT TO CHECK AND PHOTOGRAPH (standard order, bottom up)\n- First find out what system it is (wood fireplace, gas logs in a fireplace, direct-vent gas, vent-free gas, insert/stove, furnace or water heater flue) and check only the parts that system has. Vent-free gas has no flue: no damper, liner or roof checks.\n- Level 1: inside the home and from the ground only \u2014 no roof or attic. Level 2 adds the roof and the top when it is safe, and a camera scan of the flue. We do not go into attics, basements or crawl spaces.\n1. Front of the house (cover photo), then the appliance / fireplace.\n2. Firebox: cracks, gaps in joints, missing panels.\n3. Damper and throat: opens/closes and seals; damper type vs. flue shape.\n4. Smoke chamber: voids, rough/unparged brick, creosote.\n5. Flue and liner: camera scan if possible; clay tile cracks, offsets, missing mortar; liner size and material; debris.\n6. Appliance vents (furnace/water heater): connector condition, slope, clearance (single-wall 6\", B-vent 1\"), draft.\n8. Roof and exterior: flashing, cricket (chimney wider than 30\"), crown cracks, cap/spark arrestor, chase cover rust, brick and mortar, height (3-2-10 rule).\n9. Measurements that set the price: flue size (inside dimensions), liner length (roofline to appliance + above the top), chimney top size (for cap/chase cover), number of flues, stories, roof pitch, access.\n\nHOW TO MEASURE (short)\n- Liner length: from the appliance connection (or smoke chamber) to the top of the flue tile + about 1 ft; count stories (about 10 ft each) if you cannot measure directly.\n- Flue size: inside width x depth of the clay tile (or diameter for round); the liner is sized to the appliance outlet.\n- Chase cover / cap: outside length x width of the top (crown or chase), plus the flue tile height above the crown.\n- Chimney height above the roof: at least 3 ft above where it passes the roof and 2 ft higher than anything within 10 ft.\n\nWHEN TO CALL REFAEL\n- Any safety hazard, any job over a few thousand dollars, anything not in the price list, anything structural, any date/warranty question, any customer who is unhappy, and whenever unsure.";
 /* Photos keep their real shape: height/width of an image (0.75 if unknown). */
@@ -1575,6 +1575,28 @@ function clAwaiting() {
     return !cl.byJob[k] && !skip[k];
   }).sort(function (a, b) { return clEndedAt(b) - clEndedAt(a); });
 }
+/* Work from a day already gone that nobody closed. The owner reads it off
+   the calendar, a technician off his own job list — same thing, same red. */
+function clPastUnclosed() {
+  var today = isoToday();
+  return clAwaiting().filter(function (ev) { return String(ev.date || '') < today; })
+    .sort(function (a, b) { return String(a.date) < String(b.date) ? -1 : 1; });
+}
+function needsClosingCard(who, when, where, act, arg) {
+  var late = Math.max(0, Math.round((Date.parse(isoToday() + 'T12:00:00') - Date.parse(String(when).slice(0, 10) + 'T12:00:00')) / 864e5));
+  return '<button class="card card-tap" data-act="' + esc(act) + '" data-arg="' + esc(arg) + '" ' +
+    'style="display:block;width:100%;text-align:left;border-color:var(--defect)">' +
+    '<div class="row" style="align-items:baseline;gap:8px">' +
+      '<span style="flex:1;font-weight:700;font-size:16px">' + esc(clTidyName(who) || 'Job') + '</span>' +
+      '<span class="pill defect">NEEDS CLOSING</span>' +
+    '</div>' +
+    '<div style="color:var(--muted);font-size:13px;margin-top:3px">' +
+      esc([fmtDay(when), String(where || '').split(',')[0]].filter(Boolean).join(' \u00b7 ')) + '</div>' +
+    '<div style="color:var(--defect);font-size:12.5px;margin-top:4px">' +
+      (late === 1 ? 'Finished yesterday and still not closed' : 'Finished ' + late + ' days ago and still not closed') +
+      ' \u2014 tap to close it</div>' +
+  '</button>';
+}
 function clDeposits() { var cl = clStore(); return (Array.isArray(cl.rows) ? cl.rows : []).filter(function (r) { return r.status === 'deposit'; }); }
 
 function clJobLine(ev) {
@@ -1594,16 +1616,15 @@ function clDueCard() {
   if (!cl.loaded && !cl.busy) clLoad();
   var due = clAwaiting(), dep = clDeposits(), out = '';
   if (due.length) {
-    out += '<button class="card card-tap" data-act="cl-due" style="display:block;width:100%;text-align:left;border-color:var(--defect)">' +
+    out += '<button class="card card-tap" data-act="' + (isTech() ? 'td-open' : 'openjobs') + '" style="display:block;width:100%;text-align:left;border-color:var(--defect)">' +
       '<div class="row" style="align-items:center;gap:10px">' +
         '<span class="pill defect">' + due.length + '</span>' +
         '<span style="flex:1">' +
           '<span style="font-weight:700;display:block">' + (due.length === 1 ? 'A job is waiting to be closed' : due.length + ' jobs are waiting to be closed') + '</span>' +
-          '<span style="color:var(--muted);font-size:13px">' + esc(due[0].title || 'Job') + (due.length > 1 ? ' and ' + (due.length - 1) + ' more' : '') + '</span>' +
+          '<span style="color:var(--muted);font-size:13px">' + esc(clTidyName(due[0].title) || 'Job') + (due.length > 1 ? ' and ' + (due.length - 1) + ' more' : '') + ' \u2014 they are in Open jobs</span>' +
         '</span>' +
-        '<span style="color:var(--muted)">' + (state.clOpen ? '▾' : '▸') + '</span>' +
-      '</div></button>' +
-      (state.clOpen ? due.map(clJobLine).join('') : '');
+        '<span style="color:var(--muted)">\u203a</span>' +
+      '</div></button>';
   }
   if (cl.err) out += '<div class="card" style="border-color:var(--defect)"><div style="font-size:13px;color:var(--defect)">' + esc(cl.err) + '</div><button class="btn btn-ghost" data-act="cl-retry" style="width:100%;margin-top:8px">Try again</button></div>';
   if (dep.length) {
@@ -1981,8 +2002,54 @@ function clTellTech(c, payload) {
 
 /* ── open jobs: deposit taken, work still to do, and who performs it ── */
 
+/* Every estimate still waiting on an answer, across the crew. The office had
+   no such screen — a follow-up could only be reached by opening the man who
+   wrote it. */
+function viewFuList() {
+  var cl = clStore();
+  if (!cl.loaded && !cl.busy) clLoad();
+  var today = isoToday();
+  var rows = (cl.fuRows || []).filter(function (f) { return (f.state || 'open') === 'open'; })
+    .sort(function (a, b) {
+      var A = String(a.due || ''), B = String(b.due || '');
+      if (!A && !B) return 0;
+      if (!A) return 1;
+      if (!B) return -1;
+      return A < B ? -1 : 1;
+    });
+  var due = rows.filter(function (f) { return f.due && String(f.due) <= today; }).length;
+  var worth = rows.reduce(function (t, f) { return t + clPos(f.amount); }, 0);
+  var body = rows.length
+    ? rows.map(function (f) {
+        var over = f.due && String(f.due) <= today;
+        return '<button class="card card-tap" data-act="fu-open" data-arg="' + esc(f.id) + '" ' +
+          'style="display:block;width:100%;text-align:left' + (over ? ';border-color:var(--defect)' : '') + '">' +
+          '<div class="row" style="align-items:baseline;gap:8px">' +
+            '<span style="flex:1;font-weight:700;font-size:16px">' + esc(clTidyName(f.customer) || 'Customer') + '</span>' +
+            (clPos(f.amount) ? '<span style="font-weight:700;color:var(--ember)">' + money(clPos(f.amount)) + '</span>' : '') + '</div>' +
+          (f.what ? '<div style="font-size:14px;margin-top:3px">' + esc(f.what) + '</div>' : '') +
+          (f.reason ? '<div style="color:var(--muted);font-size:13px">' + esc(f.reason) + '</div>' : '') +
+          '<div class="row" style="align-items:center;gap:8px;margin-top:5px">' +
+            '<span style="flex:1;font-size:13px;color:' + (f.due ? (over ? 'var(--defect)' : 'var(--gold)') : 'var(--muted)') + '">' +
+              (f.due ? (over ? 'due ' + esc(fmtDay(f.due)) + ' \u2014 call him' : 'call back ' + esc(fmtDay(f.due))) : 'no day on it yet') + '</span>' +
+            (f.sold_by ? '<span style="color:var(--muted);font-size:12px">' + esc(f.sold_by) + '</span>' : '') +
+          '</div>' +
+        '</button>';
+      }).join('')
+    : '<div class="empty" style="padding:14px">' + (cl.busy ? 'Loading\u2026' : 'Nothing waiting on an answer.') + '</div>';
+  return '<div class="app">' +
+    '<div class="topbar"><button class="iconbtn" data-act="home">\u2039</button><div style="flex:1"><h1>Follow-ups</h1>' +
+      '<div class="sub">' + rows.length + ' out' + (due ? ' \u00b7 ' + due + ' due now' : '') + '</div></div></div>' +
+    '<div class="screen">' +
+      (rows.length ? '<div class="card"><div class="eyebrow">Quoted and waiting</div>' +
+        '<div style="font-size:26px;font-weight:700">' + money(worth) + '</div>' +
+        '<div style="color:var(--muted);font-size:13px">across ' + rows.length + ' estimate' + (rows.length === 1 ? '' : 's') +
+          (due ? ' \u00b7 ' + due + ' past the day you said you would call' : '') + '</div></div>' : '') +
+      body +
+    '</div></div>';
+}
 function viewOpenJobs() {
-  var dep = clDeposits();
+  var dep = clDeposits(), late = clPastUnclosed();
   var open = dep.reduce(function (t, r) { return t + clBalance(r); }, 0);
   var rows = dep.map(function (r) {
     var ev = clEventByKey(r.job_key);
@@ -2015,6 +2082,13 @@ function viewOpenJobs() {
     '<div class="topbar"><button class="iconbtn" data-act="home">‹</button><div style="flex:1"><h1>Open jobs</h1>' +
       '<div class="sub">deposit taken, work still to finish</div></div></div>' +
     '<div class="screen">' +
+      (late.length
+        ? '<div class="eyebrow" style="margin:2px 2px 8px;color:var(--defect)">' +
+            (late.length === 1 ? 'One job still needs closing' : late.length + ' jobs still need closing') + '</div>' +
+          late.map(function (ev) { return needsClosingCard(ev.title, ev.date, ev.location, 'cl-open', clKey(ev)); }).join('') +
+          '<div style="color:var(--muted);font-size:12.5px;margin:0 2px 16px">Their day is over and nothing was filed. Until one is closed there is no money on it and nothing in anybody\u2019s report.</div>'
+        : '') +
+      '<div class="eyebrow" style="margin:2px 2px 8px">Deposit taken, work to finish</div>' +
       '<div class="card"><div class="eyebrow">Money out in the field</div><div style="font-size:26px;font-weight:700">' + money(open) + '</div>' +
         '<div style="color:var(--muted);font-size:13px">across ' + dep.length + ' job' + (dep.length === 1 ? '' : 's') + '</div></div>' +
       (rows || '<div class="empty" style="padding:14px">Nothing open with a deposit.</div>') +
@@ -3686,12 +3760,28 @@ function crewUpcoming(c) {
    The server already hands his phone nothing but his own closings, so the
    same sums the office sees are worked out here from what he has. */
 function myTechId() { var k = techKey() || ownerKey(); return k ? clMd5(k) : ''; }
+/* On a technician's phone the server already hands him his own rows and
+   nobody else's. On the office phone it hands over everything — so "my pay"
+   has to mean the jobs this phone closed, or it reads the whole company's
+   takings back as one man's week. */
+function myRows() {
+  var me = myTechId(), all = (clStore().rows || []);
+  if (!me) return all;
+  var mine = all.filter(function (r) { return r.tech_id === me; });
+  return (!mine.length && isTech()) ? all : mine;
+}
+function myFu() {
+  var me = myTechId(), all = (clStore().fuRows || []);
+  if (!me) return all;
+  var mine = all.filter(function (r) { return r.tech_id === me; });
+  return (!mine.length && isTech()) ? all : mine;
+}
 function myPay(from, to) {
-  var all = (clStore().rows || []);
+  var all = myRows();
   if (from) all = all.filter(function (r) { var d = String(r.day || '').slice(0, 10); return d >= from && d <= to; });
   return payFromRows(all);
 }
-function myWeeks() { return weeksOf((clStore().rows || []).map(function (r) { return r.day; })); }
+function myWeeks() { return weeksOf(myRows().map(function (r) { return r.day; })); }
 
 /* How many papers were sent on this job — so the row says what is behind it. */
 function payPapers(r) {
@@ -3710,7 +3800,7 @@ function viewMyPay() {
   var pay = myPay(wkM, wkS), st = stFor(id, wkM);
   var owed = 0;
   myWeeks().forEach(function (m) { owed += weekLeft(id, m, myPay(m, wkSunday(m)).total); });
-  var done = (cl.rows || []).filter(function (r) {
+  var done = myRows().filter(function (r) {
     var d = String(r.day || '').slice(0, 10);
     return clMoneyStatus(r.status) && d >= wkM && d <= wkS;
   }).sort(function (a, b) { return a.day < b.day ? -1 : 1; });
@@ -3849,11 +3939,14 @@ function tjDayRows(iso) {
   });
 }
 /* A job that is done but never closed is his own money sitting unclaimed. */
+/* A job is closed on the day it is done. Once that day is over an unclosed
+   job is not part of today any more — it leaves the day screen and becomes
+   an open job that needs closing, in red, until somebody closes it. */
 function tjToClose() {
   var today = isoToday(), cl = clStore(), seen = {};
   if (cl.failed || !cl.loaded) return [];
   return (tjStore().rows || []).filter(function (r) {
-    if (r.day > today || seen[r.id] || cl.byJob[r.id]) return false;
+    if (r.day >= today || seen[r.id] || cl.byJob[r.id]) return false;
     seen[r.id] = 1; return true;
   }).sort(function (a, b) {
     /* Oldest first: the one most likely to be forgotten is the one named. */
@@ -3905,13 +3998,6 @@ function fixList() {
       how: 'Open it and put in what you took. Nothing here means nothing in your pay.' });
   });
 
-  tjToClose().forEach(function (r) {
-    out.push({ rank: 1, act: 'cl-open', arg: r.id,
-      who: clTidyName(r.title) || 'Job', when: r.day,
-      what: 'Done, never closed',
-      how: 'Open it and close it \u2014 it does not reach your report until you do.' });
-  });
-
   (cl.fuRows || []).forEach(function (f) {
     if ((f.state || 'open') !== 'open') return;
     if (String(f.due || '').trim()) return;
@@ -3956,11 +4042,11 @@ function fixCard() {
    here, next to his day, not on a screen only the office can open. */
 function tdTab() { return state.tdTab || 'day'; }
 function myOpenRows() {
-  return (clStore().rows || []).filter(function (r) { return r.status === 'deposit'; })
+  return myRows().filter(function (r) { return r.status === 'deposit'; })
     .sort(function (a, b) { return String(a.day) < String(b.day) ? 1 : -1; });
 }
 function myFuRows() {
-  return (clStore().fuRows || []).filter(function (f) { return (f.state || 'open') === 'open'; })
+  return myFu().filter(function (f) { return (f.state || 'open') === 'open'; })
     .sort(function (a, b) {
       var A = String(a.due || ''), B = String(b.due || '');
       if (!A && !B) return 0;
@@ -4066,7 +4152,14 @@ function viewTechDay() {
   var nag = fixCard();
   var body;
   if (tab === 'open') {
-    body = '<div class="eyebrow">What you have still open</div>' +
+    var late = tjToClose();
+    body = (late.length
+      ? '<div class="eyebrow" style="margin:2px 2px 8px;color:var(--defect)">' +
+          (late.length === 1 ? 'One job still needs closing' : late.length + ' jobs still need closing') + '</div>' +
+        late.map(function (r) { return needsClosingCard(r.title, r.day, r.location, 'cl-open', r.id); }).join('') +
+        '<div style="color:var(--muted);font-size:12.5px;margin:0 2px 16px">You finished these and never closed them. Nothing is counted and nothing is paid until you do.</div>'
+      : '') +
+      '<div class="eyebrow">What you have still open</div>' +
       (opens.length
         ? opens.map(tdOpenCard).join('') +
           '<div class="card" style="color:var(--muted);font-size:13px;line-height:1.6">A job sits here from the moment you take a deposit until you finish it and close it out. The commission on it is not counted until then \u2014 so when the work is done, come back here and tap <b>Finish this one off</b>.</div>'
@@ -4085,12 +4178,12 @@ function viewTechDay() {
 
   return '<div class="app">' +
     '<div class="topbar"><button class="iconbtn" data-act="home">\u2039</button><div style="flex:1"><h1>My day</h1>' +
-      '<div class="sub">' + (tab === 'open' ? opens.length + ' still open' : tab === 'follow' ? fus.length + ' to call back' : 'what you were sent') + '</div></div>' +
+      '<div class="sub">' + (tab === 'open' ? (opens.length + tjToClose().length) + ' still open' : tab === 'follow' ? fus.length + ' to call back' : 'what you were sent') + '</div></div>' +
       '<button class="iconbtn" data-act="tday-refresh" aria-label="Refresh">\u27f3</button></div>' +
     '<div class="screen">' + crewOutCard() + juNewsCard() + nag +
       (tj.err ? '<div class="card" style="border-color:var(--defect)"><div style="font-size:13px;color:var(--defect)">' + esc(tj.err) + '</div><button class="btn btn-ghost" data-act="tj-retry" style="width:100%;margin-top:8px">Try again</button></div>' : '') +
       '<div class="row" style="gap:6px;margin-bottom:12px">' +
-        tb('day', 'Today', rowsToday.length) + tb('open', 'Open', opens.length) + tb('follow', 'Follow-ups', fus.length) +
+        tb('day', 'Today', rowsToday.length) + tb('open', 'Open', opens.length + tjToClose().length) + tb('follow', 'Follow-ups', fus.length) +
       '</div>' + body +
     '</div>' +
   '</div>';
@@ -4134,7 +4227,10 @@ function viewHome() {
 
     var hr = new Date().getHours();
     var greet = hr < 12 ? 'Good morning' : hr < 18 ? 'Good afternoon' : 'Good evening';
-    var openJobs = (state.jobs || []).filter(function (j) { return !j.done; }).length;
+    /* These were counting inspection drafts on this phone, which is not what
+       anybody reads them as. Jobs today, and work still open. */
+    var openJobs = myOpenRows().length + (isTech() ? tjToClose().length : clPastUnclosed().length);
+    var todayCount = isTech() ? tjDayRows(today).length : todays.length;
     function tico(p) { return '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">' + p + '</svg>'; }
     function tile(act, label, path) { return '<button class="tile" data-act="' + act + '"><span class="ico">' + tico(path) + '</span><span class="lbl2">' + label + '</span></button>'; }
     var ICO = {
@@ -4148,27 +4244,35 @@ function viewHome() {
       settings: '<circle cx="12" cy="12" r="3"/><path d="M12 3.5v2.5M12 18v2.5M4.4 7.5l2.2 1.3M17.4 15.2l2.2 1.3M19.6 7.5l-2.2 1.3M6.6 15.2l-2.2 1.3"/>'
     };
     function bigTile(kind, label, path) { return '<button class="tile" data-act="fj-new" data-arg="' + kind + '"><span class="ico">' + tico(path) + '</span><span class="lbl2">' + label + '</span></button>'; }
+    /* Inspection, Estimate and Invoice sit across the bottom of every screen,
+       so having them here as well was the same three buttons twice. The grid
+       is for the places a man goes; the bar is for the thing he makes. */
     var tiles = '<div class="tiles">' +
-      bigTile('inspection', 'Inspection', ICO.inspect) +
-      bigTile('estimate', 'Estimate', ICO.estimate) +
-      bigTile('invoice', 'Invoice', ICO.checklist) +
-      tile('coach-start', 'Ask Refael', ICO.ask) +
-      tile('docs', 'My work', ICO.checklist) +
-      (isTech() ? tile('td-open', 'Open jobs', ICO.checklist) : '') +
-      (isTech() ? tile('td-follow', 'Follow-ups', ICO.message) : '') +
-      (isTech() ? tile('mypay', 'My pay', ICO.estimate) : '') +
-      (isTech() ? tile('tech-guide', 'How this works', ICO.ask) : '') +
-      (isTech() ? tile('my-clients', 'Customers', ICO.clients) : tile('clients', 'Customers', ICO.clients)) +
-      (isTech() ? '' : tile('crew', 'My crew', ICO.clients)) +
-      (isTech() ? tile('tech-day', 'My day', ICO.schedule) : tile('schedule', 'Schedule', ICO.schedule)) +
-      tile('message-start', 'Messages', ICO.message) +
-      tile('settings', 'Settings', ICO.settings) +
+      (isTech()
+        ? tile('tech-day', 'My day', ICO.schedule) +
+          tile('td-open', 'Open jobs', ICO.checklist) +
+          tile('td-follow', 'Follow-ups', ICO.message) +
+          tile('mypay', 'My pay', ICO.estimate) +
+          tile('docs', 'My work', ICO.checklist) +
+          tile('my-clients', 'Customers', ICO.clients) +
+          tile('coach-start', 'Ask Refael', ICO.ask) +
+          tile('tech-guide', 'How this works', ICO.ask)
+        : tile('schedule', 'Schedule', ICO.schedule) +
+          tile('openjobs', 'Open jobs', ICO.checklist) +
+          tile('fulist', 'Follow-ups', ICO.message) +
+          tile('mypay', 'My pay', ICO.estimate) +
+          tile('docs', 'My work', ICO.checklist) +
+          tile('clients', 'Customers', ICO.clients) +
+          tile('crew', 'My crew', ICO.clients) +
+          tile('coach-start', 'Ask Refael', ICO.ask) +
+          tile('message-start', 'Messages', ICO.message) +
+          tile('settings', 'Settings', ICO.settings)) +
       '</div>';
     var hero = '<div class="hero">' +
       '<div class="greet">' + greet + '</div>' +
       '<div class="date">' + esc(new Date().toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric' })) + '</div>' +
       '<div class="row" style="gap:10px;margin:16px 0 18px">' +
-        '<div class="stat"><div class="k">Jobs today</div><div class="v">' + todays.length + '</div></div>' +
+        '<div class="stat"><div class="k">Jobs today</div><div class="v">' + todayCount + '</div></div>' +
         '<div class="stat"><div class="k">Open jobs</div><div class="v">' + openJobs + '</div></div>' +
       '</div>' +
       '<div class="lbl">WORKSPACE</div>' + tiles +
@@ -9519,6 +9623,7 @@ function render() {
   else if (state.view === 'crew') html = viewCrew();
   else if (state.view === 'crewone') html = (state.crewOne && state.crewOne.id === TJ_INSTALLER) ? viewEscobar() : viewCrewMember();
   else if (state.view === 'followup') html = viewFollowup();
+  else if (state.view === 'fulist') html = viewFuList();
   else if (state.view === 'mypay') html = viewMyPay();
   else if (state.view === 'techguide') html = viewTechGuide();
   else if (state.view === 'techday') html = viewTechDay();
@@ -9911,6 +10016,7 @@ root.addEventListener('click', function (e) {
       break;
     }
     case 'openjobs': state.view = 'openjobs'; render(); clLoad(true); juLoad(true); scLoad(true); break;
+    case 'fulist': state.view = 'fulist'; render(); clLoad(true); break;
     case 'crew': if (isTech()) return; state.view = 'crew'; render(); crewKeysLoad(); clLoad(); tjLoad(); stLoad(); scLoad(); if (gcalConnectedSlots().length) gcalFetch(); break;
     case 'crew-push': crewPush(); break;
     case 'fu-to-open': fuToOpen(arg); break;
