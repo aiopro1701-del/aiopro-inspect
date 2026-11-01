@@ -917,6 +917,46 @@ function allItems(template) {
 }
 
 /* ── Storage: jobs in IndexedDB, settings in localStorage ──── */
+/* ── Looking over a man's shoulder ──────────────────────────────────
+   The office can open any of his people's apps and see exactly what that
+   man sees. It is a real copy of the app running with that man's key, not
+   a drawing of one — so what the office is shown is what is there.
+   Two things make it safe to look:
+     • the key is handed over in sessionStorage and taken straight back out,
+       so it is never in a link, never in history and never on disk;
+     • the copy writes nothing. Not to the phone, not to the cloud. Every
+       save is turned away before it leaves, so looking cannot change a
+       closing, a draft, or the key this phone is paired with.
+   It is a window, and a window only. */
+var PREVIEW_HANDOFF = 'aio-preview-handoff';
+var PREVIEW = false, PREVIEW_KEY = '', PREVIEW_NAME = '';
+(function () {
+  try {
+    if (!/[?&]preview=1\b/.test(location.search)) return;
+    var raw = sessionStorage.getItem(PREVIEW_HANDOFF);
+    sessionStorage.removeItem(PREVIEW_HANDOFF);
+    if (!raw) return;
+    var h = JSON.parse(raw) || {};
+    if (!h.key) return;
+    PREVIEW = true; PREVIEW_KEY = String(h.key); PREVIEW_NAME = String(h.name || 'him');
+  } catch (e) { PREVIEW = false; PREVIEW_KEY = ''; }
+})();
+/* Nothing a preview does is allowed to reach the disk. */
+if (PREVIEW) {
+  try {
+    var _lsSet = Storage.prototype.setItem, _lsDel = Storage.prototype.removeItem, _lsClr = Storage.prototype.clear;
+    Storage.prototype.setItem = function (k) {
+      if (this === window.localStorage) return;
+      return _lsSet.apply(this, arguments);
+    };
+    Storage.prototype.removeItem = function (k) {
+      if (this === window.localStorage) return;
+      return _lsDel.apply(this, arguments);
+    };
+    Storage.prototype.clear = function () { if (this === window.localStorage) return; return _lsClr.apply(this, arguments); };
+  } catch (e) {}
+}
+
 var DB_NAME = 'chimney-inspect', STORE = 'jobs', DOCS = 'docs', LS_JOB = 'aiopro-job-';
 var storageMode = null;      // 'idb' | 'ls' — decided once at boot
 var storageReady = null;
@@ -970,6 +1010,9 @@ function idbCursor(store, keep) {
   });
 }
 function idbRun(mode, fn, store) {
+  /* The window shares this phone's database. A preview that wrote to it would
+     be overwriting the office's own drafts and reports with his. */
+  if (PREVIEW && mode === 'readwrite') return Promise.reject(new Error('read only'));
   return idb().then(function (db) {
     return new Promise(function (resolve, reject) {
       var tx = db.transaction(store || STORE, mode);
@@ -1265,7 +1308,7 @@ var M = 43, PW = 612, PH = 792, CONTENT = PW - M * 2;
 var APP_DIR = (/^https?:$/.test(location.protocol) && location.hostname) ? location.origin + location.pathname.replace(/[^\/]*$/, '') : 'https://aiopro1701-del.github.io/aiopro-inspect/';
 var IS_BETA = /\/beta\/$/.test(APP_DIR);
 /* Bumped on every deploy, so a screenshot of Settings says which build is on the phone. */
-var APP_BUILD = '2026-11-01 23:20 UTC';
+var APP_BUILD = '2026-11-02 00:05 UTC';
 /* Refael's field knowledge — the bot answers from this. Kept word-for-word stable so it is cached (cheap). */
 var AIO_KB = "AIO PRO CHIMNEY \u2014 FIELD KNOWLEDGE (from the owner, Refael Maman). Use this to answer the technician the way Refael would.\n\nWHO WE ARE\n- AIOPRO LLC, trading as AIO Pro Chimney. 1505 North and South Rd, St. Louis, MO 63130. Phone (314) 379-2871. Email Aiopro1701@gmail.com. aioprochimney.com.\n- Licensed general contractor, insured, CSIA member, NCSG member, BBB accredited. Greater St. Louis; east as far as Belleville and O'Fallon, IL. A Kansas City employee can take Kansas City jobs.\n- Owner: Refael Maman. The office = Refael.\n\nWHO USES THE APP\n- Owner (Refael): everything.\n- Technician: visits the house, finds the problem, prices it, presents it, closes it. Most of the work is technician and customer face to face. The technician is still learning and calls Refael on most jobs; that is fine and expected.\n- Installer: does the booked job. Needs to know when and where, what to bring, and what the technician found (photos + scope).\n\nWHAT THE TECHNICIAN MAY AND MAY NOT SAY\n- Prices: he may give prices and approximate (+/-) ranges, and he may adjust a price or give a discount (see Selling).\n- Dates: never promise a date. Scheduling always goes through the office: \"Refael will call you to book it.\"\n- Warranty: never promise warranty terms. \"The warranty is written on the estimate; Refael confirms it.\"\n- If he does not know something: say \"Let me confirm that with Refael\" and call him. Never guess about safety, code, or warranty.\n- Never run down another company. Never argue with the customer.\n\nMONEY RULES\n- Minimum service charge is usually $49. Sometimes the estimate visit is free, but not often.\n- Deposit: 20% to 40% of the job, depending on the size of the job. Balance on completion unless agreed otherwise.\n- Estimate prices hold for 30 days.\n- Price goes up with: roof pitch (steep = harder/slower, may need extra safety gear), job difficulty, how hard the chimney is to reach (height, stories, trees, lift or scaffold needed), and how much material is needed (liner length, size of the chimney top, number of flues).\n- Access equipment (boom lift, scaffold) is priced as its own line so the customer sees it.\n- Anything that may change once opened up: say so in the scope notes \u2014 \"if we find more once it is opened, we stop and agree the difference with you before continuing.\"\n\nHOW REFAEL WRITES AN ESTIMATE\n- One scope by default: the work he recommends. Add Option B (or C) ONLY when the customer has a real choice (keep the stove vs. new stove, stainless vs. galvanized, vent-free vs. vented gas). Each option has its own full total. \"Choose one \u2014 you do not need both.\"\n- Add-ons the customer can take or leave (a vent cap, a second liner) are listed separately as optional.\n- Each line: a clear name, 3-7 short scope lines specific to this house (sizes, lengths, where), and a price.\n- Explain the cause in plain words (\"a square damper cannot seal a round liner\"), then the fix. Safety items first and clearly: \"This one should not wait.\"\n- Scope notes say what is NOT included and what the customer prepares.\n- Tone: plain, confident, respectful. No jargon, no code numbers, no sales filler.\n\nSELLING (coach the technician)\n- Before the price: show the customer the photos, explain what is wrong, why it happened, and what happens if it waits.\n- Present the recommended scope first, with the total. If there is a real choice, present Option A and Option B side by side.\n- \"It's too expensive\": 1) Acknowledge (\"I understand, it's a real number.\"). 2) Ask (\"What matters most to you \u2014 the lowest price today, or fixing it so it doesn't come back?\" / \"What budget did you have in mind?\"). 3) Advise:\n  a) Split it: the safety / water-stopping part now, the rest later (becomes Option A / B).\n  b) Show the value: materials, labor, cleanup, photos, written warranty, licensed and insured, CSIA/NCSG.\n  c) Deposit 20-40% now, balance when done.\n  d) A discount is a closing tool, tied to a decision today or booking now. Give it once, clearly (\"If we book it today I can take $X off\").\n- \"I need to think about it\": ask what is holding them back; offer to email the estimate now with the Sign button; tell them Refael will follow up.\n- \"I'm getting other quotes\": that's fine; point to the written scope and warranty so they compare the same work. Never bash competitors.\n- Close: ask for the decision. \"Shall I send it to your email so you can sign it on your phone?\"\n\nSAFETY \u2014 STOP AND TELL THE CUSTOMER\n- Gas leak found (bubbles on leak test, smell): the appliance must not be used until repaired; if they smell gas, shut the supply and call the gas utility. Call Refael.\n- Blocked flue (debris, animal nest, collapsed tile) on a furnace or water heater: do not operate that appliance until cleared/lined. CO risk.\n- Unlined or badly cracked flue on a wood fireplace: do not use until repaired.\n- Disconnected or rusted-through vent connector: do not operate.\n- Creosote glaze or heavy buildup: no fires until swept.\n- Say it in one calm sentence, write it on the estimate, and call Refael.\n\nWHAT TO CHECK AND PHOTOGRAPH (standard order, bottom up)\n- First find out what system it is (wood fireplace, gas logs in a fireplace, direct-vent gas, vent-free gas, insert/stove, furnace or water heater flue) and check only the parts that system has. Vent-free gas has no flue: no damper, liner or roof checks.\n- Level 1: inside the home and from the ground only \u2014 no roof or attic. Level 2 adds the roof and the top when it is safe, and a camera scan of the flue. We do not go into attics, basements or crawl spaces.\n1. Front of the house (cover photo), then the appliance / fireplace.\n2. Firebox: cracks, gaps in joints, missing panels.\n3. Damper and throat: opens/closes and seals; damper type vs. flue shape.\n4. Smoke chamber: voids, rough/unparged brick, creosote.\n5. Flue and liner: camera scan if possible; clay tile cracks, offsets, missing mortar; liner size and material; debris.\n6. Appliance vents (furnace/water heater): connector condition, slope, clearance (single-wall 6\", B-vent 1\"), draft.\n8. Roof and exterior: flashing, cricket (chimney wider than 30\"), crown cracks, cap/spark arrestor, chase cover rust, brick and mortar, height (3-2-10 rule).\n9. Measurements that set the price: flue size (inside dimensions), liner length (roofline to appliance + above the top), chimney top size (for cap/chase cover), number of flues, stories, roof pitch, access.\n\nHOW TO MEASURE (short)\n- Liner length: from the appliance connection (or smoke chamber) to the top of the flue tile + about 1 ft; count stories (about 10 ft each) if you cannot measure directly.\n- Flue size: inside width x depth of the clay tile (or diameter for round); the liner is sized to the appliance outlet.\n- Chase cover / cap: outside length x width of the top (crown or chase), plus the flue tile height above the crown.\n- Chimney height above the roof: at least 3 ft above where it passes the roof and 2 ft higher than anything within 10 ft.\n\nWHEN TO CALL REFAEL\n- Any safety hazard, any job over a few thousand dollars, anything not in the price list, anything structural, any date/warranty question, any customer who is unhappy, and whenever unsure.";
 /* Photos keep their real shape: height/width of an image (0.75 if unknown). */
@@ -3432,7 +3475,8 @@ function viewCrew() {
         '<div class="stat"><div class="k">Open</div><div class="v" style="font-size:17px">' + open + '</div></div>' +
         '<div class="stat"><div class="k">Follow-ups</div><div class="v" style="font-size:17px">' + fu + '</div></div>' +
         '<div class="stat"><div class="k">Owed</div><div class="v" style="font-size:17px">' + money(owed) + '</div></div>' +
-      '</div></button>';
+      '</div></button>' +
+      '<button class="btn btn-ghost" data-act="see-as" data-arg="' + esc(c.id) + '" style="width:100%;margin:-6px 0 14px;font-size:13px;padding:9px">See his app the way he sees it</button>';
   }).join('');
   return '<div class="app">' +
     '<div class="topbar"><button class="iconbtn" data-act="home">‹</button><div style="flex:1"><h1>My crew</h1>' +
@@ -3447,6 +3491,40 @@ function viewCrew() {
       (tjCrewAll().length > crew.length
         ? '<div style="font-size:12px;color:var(--muted);margin-top:10px">' + (tjCrewAll().length - crew.length) + ' switched-off entr' + ((tjCrewAll().length - crew.length) === 1 ? 'y is' : 'ies are') + ' hidden. Their history is kept; they cannot be given work.</div>'
         : '') +
+    '</div></div>';
+}
+
+/* A real copy of his app, running in a frame on the office phone, with his
+   key and nothing else of his. The band across the top is there so the office
+   never forgets whose screen it is reading. */
+function viewSeeAs() {
+  var pv = state.seeAs || {};
+  if (pv.err) {
+    return '<div class="app"><div class="topbar"><button class="iconbtn" data-act="crew">\u2039</button>' +
+      '<div style="flex:1"><h1>' + esc(pv.name || 'His app') + '</h1></div></div>' +
+      '<div class="screen"><div class="card" style="border-color:var(--defect)">' +
+      '<div style="font-weight:650;margin-bottom:6px">Could not open his app</div>' +
+      '<div style="font-size:14px;color:var(--muted)">' + esc(pv.err) + '</div></div></div></div>';
+  }
+  if (!pv.src) {
+    return '<div class="app"><div class="topbar"><button class="iconbtn" data-act="crew">\u2039</button>' +
+      '<div style="flex:1"><h1>' + esc(pv.name || '') + '</h1></div></div>' +
+      '<div class="screen"><div class="empty" style="padding:18px">Opening his app\u2026</div></div></div>';
+  }
+  return '<div class="app">' +
+    '<div class="topbar" style="background:#0f1d30">' +
+      '<button class="iconbtn" data-act="crew" style="color:#fff">\u2039</button>' +
+      '<div style="flex:1"><h1 style="color:#fff">' + esc(pv.name) + '\u2019s app</h1>' +
+      '<div class="sub" style="color:#c9b27a">exactly what he sees \u00b7 nothing here can be changed</div></div>' +
+      '<button class="iconbtn" data-act="see-as-reload" aria-label="Reload" style="color:#fff">\u27f3</button></div>' +
+    '<div class="screen" style="padding:10px">' +
+      '<iframe id="seeasframe" src="' + esc(pv.src) + '" ' +
+        'style="width:100%;height:calc(100vh - 160px);min-height:460px;border:1px solid var(--rule);border-radius:14px;background:#fff" ' +
+        'referrerpolicy="no-referrer"></iframe>' +
+      '<div style="font-size:12px;color:var(--muted);margin-top:10px;line-height:1.6">' +
+        'This is his app with his own key, running here. Tap around it as he would. ' +
+        'It reads, and that is all \u2014 anything that would save is turned away before it leaves the phone, ' +
+        'so looking cannot change his work or unpair yours.</div>' +
     '</div></div>';
 }
 
@@ -3566,6 +3644,40 @@ function viewCrewMember() {
         tb('report', 'Report', 0) +
       '</div>' + body +
     '</div></div>';
+}
+
+/* Open a man's own app, with his own key, on the office phone.
+   The key goes across in sessionStorage and the copy takes it straight back
+   out: it is never in the address bar, never in history, never on disk. */
+function seeAs(who) {
+  var key = realOwnerKey();
+  if (!key) { alert('Only the office phone can do this.'); return; }
+  state.view = 'seeas';
+  if (who === TJ_INSTALLER) {
+    state.seeAs = { name: 'Escobar', src: '', err: '' };
+    render();
+    cloudRpc('worker_key_get', { p_owner: key }).then(function (wk) {
+      if (!wk) throw new Error('He has no link yet. Make one first from My crew.');
+      /* His app is a page of its own and reads its key from the link, so it
+         is opened the way he opens it. It is already a read-only page. */
+      state.seeAs = { name: 'Escobar', src: WORKER_BASE + '?k=' + encodeURIComponent(wk), err: '' };
+      render();
+    }).catch(function (err) {
+      state.seeAs = { name: 'Escobar', src: '', err: (err && err.message) || 'could not get his link' };
+      render();
+    });
+    return;
+  }
+  var c = tjCrewAll().filter(function (x) { return x.id === who; })[0];
+  if (!c) { state.seeAs = { name: '', src: '', err: 'That man is not on the crew any more.' }; render(); return; }
+  if (!c.key) {
+    state.seeAs = { name: c.name || '', src: '', err: 'He has no key yet \u2014 add him in Settings, The crew, and send him his link.' };
+    render(); return;
+  }
+  var handoff = { key: c.key, name: c.name || 'him' };
+  try { sessionStorage.setItem(PREVIEW_HANDOFF, JSON.stringify(handoff)); } catch (e) {}
+  state.seeAs = { name: c.name || '', src: APP_DIR + 'index.html?preview=1&t=' + Date.now(), err: '', handoff: handoff };
+  render();
 }
 
 /* Hand one of his jobs to somebody else, without going back to the calendar. */
@@ -3803,7 +3915,8 @@ function escCard() {
       '<div class="stat"><div class="k">Coming up</div><div class="v" style="font-size:17px">' + up + '</div></div>' +
       '<div class="stat"><div class="k">Jobs done</div><div class="v" style="font-size:17px">' + pay.jobs + '</div></div>' +
       '<div class="stat"><div class="k">Owed</div><div class="v" style="font-size:17px">' + money(owed) + '</div></div>' +
-    '</div></button>';
+    '</div></button>' +
+    '<button class="btn btn-ghost" data-act="see-as" data-arg="' + TJ_INSTALLER + '" style="width:100%;margin:-6px 0 14px;font-size:13px;padding:9px">See his app the way he sees it</button>';
 }
 
 function viewEscobar() {
@@ -7598,8 +7711,15 @@ function gcalDeleteEvent(id, slot) {
 }
 /* ── Worker app sharing (owner decides which jobs the technician sees) ── */
 var WORKER_BASE = APP_DIR + 'worker.html';
-function ownerKey() { try { return localStorage.getItem('aio-owner-key') || ''; } catch (e) { return ''; } }
+function realOwnerKey() { try { return localStorage.getItem('aio-owner-key') || ''; } catch (e) { return ''; } }
+function ownerKey() { return PREVIEW ? '' : realOwnerKey(); }
+/* Reading tells the office what the man sees. Writing would make the office
+   into the man, which is not what looking means. */
+var RPC_READ_ONLY = /(_list|_get|_probe|^app_role$|^closing_actor$|^share_public)/;
 function cloudRpc(fn, args) {
+  if (PREVIEW && !RPC_READ_ONLY.test(String(fn))) {
+    return Promise.reject(new Error('You are looking at ' + PREVIEW_NAME + '\u2019s app. Nothing can be changed from here.'));
+  }
   return fetch(CLOUD_URL + '/rest/v1/rpc/' + fn, {
     method: 'POST',
     headers: { apikey: CLOUD_KEY, Authorization: 'Bearer ' + CLOUD_KEY, 'Content-Type': 'application/json' },
@@ -7780,7 +7900,7 @@ function aiCostCard() {
 var ACCESS_LS = 'aio-access', ACCESS_GRACE_DAYS = 7;
 function accessRead() { try { return JSON.parse(localStorage.getItem(ACCESS_LS) || '{}') || {}; } catch (e) { return {}; } }
 function accessWrite(o) { try { localStorage.setItem(ACCESS_LS, JSON.stringify(o)); } catch (e) {} }
-function accessRole() { return (state.access && state.access.role) || accessRead().role || ''; }
+function accessRole() { if (PREVIEW) return 'tech'; return (state.access && state.access.role) || accessRead().role || ''; }
 /* A technician phone: it may do jobs, but the company's customer list,
    the branding, the AI key and the settings are not his to see or change. */
 function isTech() { return accessRole() === 'tech' || (!ownerKey() && !!techKey()); }
@@ -9671,7 +9791,7 @@ function shareEstimate() {
 
 /* ── Email the estimate from the AIO Pro Gmail (a small Google Apps Script mailer in that account) ── */
 var MAILER_URL = 'https://script.google.com/macros/s/AKfycbwRYDiA9ImnwXmsWpFSf8CXZAJHGkGAsOFCiOhPtQg-plxSTcYqv5h6dSfzjO-9YzOF/exec';
-function techKey() { try { return localStorage.getItem('aio-tech-key') || ''; } catch (e) { return ''; } }
+function techKey() { if (PREVIEW) return PREVIEW_KEY; try { return localStorage.getItem('aio-tech-key') || ''; } catch (e) { return ''; } }
 function sendKey() { return ownerKey() || techKey(); }
 function blobToB64(blob) { return new Promise(function (res, rej) { var r = new FileReader(); r.onload = function () { res(String(r.result).split(',')[1] || ''); }; r.onerror = function () { rej(new Error('Could not read the PDF.')); }; r.readAsDataURL(blob); }); }
 function firstNameOf(n) { return String(n || '').trim().split(/\s+/)[0] || 'there'; }
@@ -10125,6 +10245,10 @@ function updCheck(force) {
 function updStale() { return !!(updState.latest && updState.latest !== APP_BUILD); }
 /* Throw away every cached copy, stand the worker down, and come back fresh. */
 function updApply() {
+  /* This throws away the caches and stands the service worker down for the
+     whole origin. A window looking at somebody else's app has no business
+     doing that to the phone it is sitting on. */
+  if (PREVIEW) { try { location.replace(location.pathname + location.search); } catch (e) {} return; }
   var done = function () { location.replace(location.pathname + '?v=' + Date.now()); };
   var jobs = [];
   try {
@@ -10219,6 +10343,7 @@ function render() {
   else if (state.view === 'techjob') html = viewTechJob();
   else if (state.view === 'crew') html = viewCrew();
   else if (state.view === 'crewone') html = (state.crewOne && state.crewOne.id === TJ_INSTALLER) ? viewEscobar() : viewCrewMember();
+  else if (state.view === 'seeas') html = viewSeeAs();
   else if (state.view === 'followup') html = viewFollowup();
   else if (state.view === 'fulist') html = viewFuList();
   else if (state.view === 'mypay') html = viewMyPay();
@@ -10671,6 +10796,14 @@ root.addEventListener('click', function (e) {
     })(); break;
     case 'cal-who': state.calWho = (state.calWho === arg ? '' : arg); render(); break;
     case 'crew-move': crewMove(arg); break;
+    case 'see-as': seeAs(arg); break;
+    case 'see-as-reload': (function () {
+      var fr = document.getElementById('seeasframe');
+      if (fr && state.seeAs && state.seeAs.handoff) {
+        try { sessionStorage.setItem(PREVIEW_HANDOFF, JSON.stringify(state.seeAs.handoff)); } catch (e) {}
+        fr.src = state.seeAs.src;
+      }
+    })(); break;
     case 'gcal-connect': gcalConnect(arg || 'A'); break;
     case 'gcal-refresh': gcalFetch(); break;
     case 'cal-prev': { var cp = state.calMonth; cp.m--; if (cp.m < 0) { cp.m = 11; cp.y--; } render(); gcalFetch(); break; }
@@ -12188,7 +12321,7 @@ window.addEventListener('online', function () { try { crewFlush(); } catch (_) {
 
 /* Register the service worker so the app keeps working offline once
    installed. Only over http(s); on a file:// page it is skipped. */
-if ('serviceWorker' in navigator && location.protocol.indexOf('http') === 0) {
+if (!PREVIEW && 'serviceWorker' in navigator && location.protocol.indexOf('http') === 0) {
   window.addEventListener('load', function () {
     navigator.serviceWorker.register('sw.js').catch(function () { /* offline mode just won't be available */ });
   });
