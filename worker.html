@@ -26,6 +26,20 @@ body{background:var(--paper);color:var(--ink);font-family:-apple-system,Segoe UI
 .top button.lang{padding:9px 10px;font-size:13px;letter-spacing:.5px;min-width:44px}
 .wrap{max-width:680px;margin:0 auto;padding:14px 16px calc(40px + env(safe-area-inset-bottom,0px))}
 .upd{color:var(--muted);font-size:12px;margin:0 0 12px}
+.cal{background:#fff;border:.5px solid var(--rule);border-radius:12px;padding:10px 10px 8px;margin-bottom:14px}
+.chead{display:flex;align-items:center;gap:8px;margin-bottom:6px}
+.chead b{flex:1;text-align:center;font-family:Georgia,serif;font-size:16px}
+.chead button{width:38px;height:34px;border:.5px solid var(--rule);background:#fbf8f1;border-radius:8px;font-size:17px;color:var(--navy)}
+.cgrid{display:grid;grid-template-columns:repeat(7,1fr);gap:3px}
+.cdow{text-align:center;font-size:11px;color:var(--muted);padding:2px 0}
+.cday{min-height:42px;border:.5px solid var(--rule);background:#fff;border-radius:8px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;padding:2px 0;color:var(--navy)}
+.cday span{font-size:13px;font-weight:600;line-height:1}
+.cday i{font-size:9px;font-style:normal;color:var(--a);line-height:1;min-height:9px}
+.cday.has{background:#fbf8f1}
+.cday.now span{text-decoration:underline}
+.cday.on{background:var(--navy);color:#fff}
+.cday.on i{color:#fff}
+.call{width:100%;margin-top:8px;height:36px;border:.5px solid var(--rule);background:#fbf8f1;border-radius:8px;color:var(--navy);font-size:13px}
 .day{font-family:Georgia,serif;font-size:18px;margin:18px 0 8px;display:flex;align-items:baseline;gap:8px}
 .day .n{font-family:-apple-system,Segoe UI,Roboto,sans-serif;font-size:12px;color:var(--muted)}
 .day.today{color:#8a6a1f}
@@ -129,6 +143,7 @@ body{background:var(--paper);color:var(--ink);font-family:-apple-system,Segoe UI
       noScope: 'Refael todavía no ha enlazado el presupuesto a este trabajo. Puedes tomar fotos igual.',
       updated: 'Actualizado', auto: 'se actualiza solo cada pocos minutos',
       stale: 'No se pudo actualizar — mostrando la última lista. Revisa tu internet.',
+      month: 'Mes', allDays: 'Todo el mes', nothingDay: 'Nada ese dia',
       myPrice: 'Mi precio por este trabajo', send: 'Enviar', sending: 'Enviando…',
       sent: 'Enviado', change: 'Cambiar',
       priceHint: 'Tu precio de la lista, no el del cliente. Solo Refael lo ve.',
@@ -162,6 +177,7 @@ body{background:var(--paper);color:var(--ink);font-family:-apple-system,Segoe UI
       noScope: 'Refael has not linked the estimate to this job yet. You can still take your photos.',
       updated: 'Updated', auto: 'updates on its own every few minutes',
       stale: 'Could not refresh — showing the last list. Check your internet.',
+      month: 'Month', allDays: 'Whole month', nothingDay: 'Nothing that day',
       myPrice: 'My price for this job', send: 'Send', sending: 'Sending…',
       sent: 'Sent', change: 'Change',
       priceHint: 'Your price off the list, not the customer price. Only Refael sees it.',
@@ -236,16 +252,65 @@ body{background:var(--paper);color:var(--ink);font-family:-apple-system,Segoe UI
      so he sees what was sold; if not, it hangs off the job and he can still
      take his photos. */
   function woId(j) { return j.share_id || j.event_id || ''; }
+  /* ── The month, laid out as a month ─────────────────────────────────────
+     A flat list told him what was next but never what his week looked like.
+     The grid answers "which day, and what time" by looking, and tapping a
+     day opens that day and nothing else. */
+  var vMonth = '', vDay = '';
+  function monthOf(iso) { return String(iso || '').slice(0, 7); }
+  function monthShift(ym, n) {
+    var y = Number(ym.slice(0, 4)), m = Number(ym.slice(5, 7)) - 1 + n;
+    y += Math.floor(m / 12); m = ((m % 12) + 12) % 12;
+    return y + '-' + pad(m + 1);
+  }
+  function monthDays(ym) { return new Date(Number(ym.slice(0, 4)), Number(ym.slice(5, 7)), 0).getDate(); }
+  function monthLabel(ym) {
+    var d = new Date(ym + '-01T00:00:00');
+    return isNaN(d.getTime()) ? ym : d.toLocaleDateString(t('loc'), { month: 'long', year: 'numeric' });
+  }
+  function calHTML(rows) {
+    var today = isoOf(new Date());
+    if (!vMonth) vMonth = monthOf(today);
+    var byDay = {};
+    rows.forEach(function (j) { if (j.day) byDay[j.day] = (byDay[j.day] || 0) + 1; });
+    var first = vMonth + '-01';
+    var lead = new Date(first + 'T00:00:00').getDay();
+    var days = monthDays(vMonth);
+    var dow = ['D', 'L', 'M', 'M', 'J', 'V', 'S'];
+    if (lang === 'en') dow = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
+    var head = dow.map(function (x) { return '<div class="cdow">' + x + '</div>'; }).join('');
+    var cells = '';
+    for (var i = 0; i < lead; i++) cells += '<div></div>';
+    for (var n = 1; n <= days; n++) {
+      var d = vMonth + '-' + pad(n), c = byDay[d] || 0;
+      cells += '<button type="button" class="cday' + (vDay === d ? ' on' : '') + (d === today ? ' now' : '') +
+        (c ? ' has' : '') + '" data-cday="' + d + '"><span>' + n + '</span>' +
+        '<i>' + (c ? new Array(Math.min(c, 3) + 1).join('\u25cf') : '') + '</i></button>';
+    }
+    return '<div class="cal">' +
+      '<div class="chead">' +
+        '<button type="button" data-cmon="-1">\u2039</button>' +
+        '<b>' + esc(monthLabel(vMonth)) + '</b>' +
+        '<button type="button" data-cmon="1">\u203a</button>' +
+      '</div>' +
+      '<div class="cgrid">' + head + cells + '</div>' +
+      (vDay ? '<button type="button" class="call" data-cday="">' + t('allDays') + '</button>' : '') +
+    '</div>';
+  }
+
   function show(rows) {
     var today = isoOf(new Date());
     if (!rows.length) {
       app.innerHTML = '<div class="center"><b>' + t('noJobsT') + '</b>' + t('noJobsB') + '</div>';
       return;
     }
+    var cal = calHTML(rows);
+    var shown = vDay ? rows.filter(function (j) { return j.day === vDay; }) : rows;
+    if (!shown.length) { app.innerHTML = cal + '<div class="center"><b>' + t('nothingDay') + '</b></div>'; return; }
     var html = '', lastDay = '';
-    rows.forEach(function (j) {
+    shown.forEach(function (j) {
       if (j.day !== lastDay) {
-        var count = rows.filter(function (x) { return x.day === j.day; }).length;
+        var count = shown.filter(function (x) { return x.day === j.day; }).length;
         var sub = (j.day === today || j.day === addDays(today, 1) || j.day === addDays(today, -1))
           ? new Date(j.day + 'T00:00:00').toLocaleDateString(t('loc'), { weekday: 'short', month: 'short', day: 'numeric' }) + ' · '
           : '';
@@ -268,10 +333,10 @@ body{background:var(--paper);color:var(--ink);font-family:-apple-system,Segoe UI
         subHTML(jobKeyOf(j)) +
       '</div>';
     });
-    app.innerHTML = html;
+    app.innerHTML = cal + html;
     /* The job he is standing in front of should already be open. */
     var soon = [today, addDays(today, 1)];
-    rows.forEach(function (j) {
+    shown.forEach(function (j) {
       var wid = woId(j);
       if (!wid || soon.indexOf(j.day) < 0 || packets[wid] || loadingPk[wid]) return;
       var box = app.querySelector('.det[data-share="' + wid + '"]');
@@ -511,6 +576,16 @@ body{background:var(--paper);color:var(--ink);font-family:-apple-system,Segoe UI
       .catch(function (err) { delete loadingPk[sid]; box = app.querySelector('.det[data-share="' + sid + '"]') || box; box.innerHTML = '<button type="button" data-open="' + esc(sid) + '">' + t('pkFail') + ' (' + esc(err.message) + ') — ' + t('tapRetry') + '</button>'; });
   }
   app.addEventListener('click', function (ev) {
+    var mo = ev.target.closest('[data-cmon]');
+    if (mo) { vMonth = monthShift(vMonth || monthOf(isoOf(new Date())), Number(mo.getAttribute('data-cmon'))); vDay = ''; if (lastRows) show(lastRows); return; }
+    var cd = ev.target.closest('[data-cday]');
+    if (cd) {
+      var d = cd.getAttribute('data-cday');
+      vDay = (d && vDay === d) ? '' : d;
+      if (vDay) vMonth = monthOf(vDay);
+      if (lastRows) show(lastRows);
+      return;
+    }
     var sv = ev.target.closest('[data-subsave]');
     if (sv) { saveCharge(sv.getAttribute('data-subsave')); return; }
     var b = ev.target.closest('[data-open]'); if (b) { openPacket(b.getAttribute('data-open'), b.parentNode); return; }
