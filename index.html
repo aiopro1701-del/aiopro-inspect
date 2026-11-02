@@ -1308,7 +1308,7 @@ var M = 43, PW = 612, PH = 792, CONTENT = PW - M * 2;
 var APP_DIR = (/^https?:$/.test(location.protocol) && location.hostname) ? location.origin + location.pathname.replace(/[^\/]*$/, '') : 'https://aiopro1701-del.github.io/aiopro-inspect/';
 var IS_BETA = /\/beta\/$/.test(APP_DIR);
 /* Bumped on every deploy, so a screenshot of Settings says which build is on the phone. */
-var APP_BUILD = '2026-11-02 23:30 UTC';
+var APP_BUILD = '2026-11-03 00:05 UTC';
 /* Refael's field knowledge — the bot answers from this. Kept word-for-word stable so it is cached (cheap). */
 var AIO_KB = "AIO PRO CHIMNEY \u2014 FIELD KNOWLEDGE (from the owner, Refael Maman). Use this to answer the technician the way Refael would.\n\nWHO WE ARE\n- AIOPRO LLC, trading as AIO Pro Chimney. 1505 North and South Rd, St. Louis, MO 63130. Phone (314) 379-2871. Email Aiopro1701@gmail.com. aioprochimney.com.\n- Licensed general contractor, insured, CSIA member, NCSG member, BBB accredited. Greater St. Louis; east as far as Belleville and O'Fallon, IL. A Kansas City employee can take Kansas City jobs.\n- Owner: Refael Maman. The office = Refael.\n\nWHO USES THE APP\n- Owner (Refael): everything.\n- Technician: visits the house, finds the problem, prices it, presents it, closes it. Most of the work is technician and customer face to face. The technician is still learning and calls Refael on most jobs; that is fine and expected.\n- Installer: does the booked job. Needs to know when and where, what to bring, and what the technician found (photos + scope).\n\nWHAT THE TECHNICIAN MAY AND MAY NOT SAY\n- Prices: he may give prices and approximate (+/-) ranges, and he may adjust a price or give a discount (see Selling).\n- Dates: never promise a date. Scheduling always goes through the office: \"Refael will call you to book it.\"\n- Warranty: never promise warranty terms. \"The warranty is written on the estimate; Refael confirms it.\"\n- If he does not know something: say \"Let me confirm that with Refael\" and call him. Never guess about safety, code, or warranty.\n- Never run down another company. Never argue with the customer.\n\nMONEY RULES\n- Minimum service charge is usually $49. Sometimes the estimate visit is free, but not often.\n- Deposit: 20% to 40% of the job, depending on the size of the job. Balance on completion unless agreed otherwise.\n- Estimate prices hold for 30 days.\n- Price goes up with: roof pitch (steep = harder/slower, may need extra safety gear), job difficulty, how hard the chimney is to reach (height, stories, trees, lift or scaffold needed), and how much material is needed (liner length, size of the chimney top, number of flues).\n- Access equipment (boom lift, scaffold) is priced as its own line so the customer sees it.\n- Anything that may change once opened up: say so in the scope notes \u2014 \"if we find more once it is opened, we stop and agree the difference with you before continuing.\"\n\nHOW REFAEL WRITES AN ESTIMATE\n- One scope by default: the work he recommends. Add Option B (or C) ONLY when the customer has a real choice (keep the stove vs. new stove, stainless vs. galvanized, vent-free vs. vented gas). Each option has its own full total. \"Choose one \u2014 you do not need both.\"\n- Add-ons the customer can take or leave (a vent cap, a second liner) are listed separately as optional.\n- Each line: a clear name, 3-7 short scope lines specific to this house (sizes, lengths, where), and a price.\n- Explain the cause in plain words (\"a square damper cannot seal a round liner\"), then the fix. Safety items first and clearly: \"This one should not wait.\"\n- Scope notes say what is NOT included and what the customer prepares.\n- Tone: plain, confident, respectful. No jargon, no code numbers, no sales filler.\n\nSELLING (coach the technician)\n- Before the price: show the customer the photos, explain what is wrong, why it happened, and what happens if it waits.\n- Present the recommended scope first, with the total. If there is a real choice, present Option A and Option B side by side.\n- \"It's too expensive\": 1) Acknowledge (\"I understand, it's a real number.\"). 2) Ask (\"What matters most to you \u2014 the lowest price today, or fixing it so it doesn't come back?\" / \"What budget did you have in mind?\"). 3) Advise:\n  a) Split it: the safety / water-stopping part now, the rest later (becomes Option A / B).\n  b) Show the value: materials, labor, cleanup, photos, written warranty, licensed and insured, CSIA/NCSG.\n  c) Deposit 20-40% now, balance when done.\n  d) A discount is a closing tool, tied to a decision today or booking now. Give it once, clearly (\"If we book it today I can take $X off\").\n- \"I need to think about it\": ask what is holding them back; offer to email the estimate now with the Sign button; tell them Refael will follow up.\n- \"I'm getting other quotes\": that's fine; point to the written scope and warranty so they compare the same work. Never bash competitors.\n- Close: ask for the decision. \"Shall I send it to your email so you can sign it on your phone?\"\n\nSAFETY \u2014 STOP AND TELL THE CUSTOMER\n- Gas leak found (bubbles on leak test, smell): the appliance must not be used until repaired; if they smell gas, shut the supply and call the gas utility. Call Refael.\n- Blocked flue (debris, animal nest, collapsed tile) on a furnace or water heater: do not operate that appliance until cleared/lined. CO risk.\n- Unlined or badly cracked flue on a wood fireplace: do not use until repaired.\n- Disconnected or rusted-through vent connector: do not operate.\n- Creosote glaze or heavy buildup: no fires until swept.\n- Say it in one calm sentence, write it on the estimate, and call Refael.\n\nWHAT TO CHECK AND PHOTOGRAPH (standard order, bottom up)\n- First find out what system it is (wood fireplace, gas logs in a fireplace, direct-vent gas, vent-free gas, insert/stove, furnace or water heater flue) and check only the parts that system has. Vent-free gas has no flue: no damper, liner or roof checks.\n- Level 1: inside the home and from the ground only \u2014 no roof or attic. Level 2 adds the roof and the top when it is safe, and a camera scan of the flue. We do not go into attics, basements or crawl spaces.\n1. Front of the house (cover photo), then the appliance / fireplace.\n2. Firebox: cracks, gaps in joints, missing panels.\n3. Damper and throat: opens/closes and seals; damper type vs. flue shape.\n4. Smoke chamber: voids, rough/unparged brick, creosote.\n5. Flue and liner: camera scan if possible; clay tile cracks, offsets, missing mortar; liner size and material; debris.\n6. Appliance vents (furnace/water heater): connector condition, slope, clearance (single-wall 6\", B-vent 1\"), draft.\n8. Roof and exterior: flashing, cricket (chimney wider than 30\"), crown cracks, cap/spark arrestor, chase cover rust, brick and mortar, height (3-2-10 rule).\n9. Measurements that set the price: flue size (inside dimensions), liner length (roofline to appliance + above the top), chimney top size (for cap/chase cover), number of flues, stories, roof pitch, access.\n\nHOW TO MEASURE (short)\n- Liner length: from the appliance connection (or smoke chamber) to the top of the flue tile + about 1 ft; count stories (about 10 ft each) if you cannot measure directly.\n- Flue size: inside width x depth of the clay tile (or diameter for round); the liner is sized to the appliance outlet.\n- Chase cover / cap: outside length x width of the top (crown or chase), plus the flue tile height above the crown.\n- Chimney height above the roof: at least 3 ft above where it passes the roof and 2 ft higher than anything within 10 ft.\n\nWHEN TO CALL REFAEL\n- Any safety hazard, any job over a few thousand dollars, anything not in the price list, anything structural, any date/warranty question, any customer who is unhappy, and whenever unsure.";
 /* Photos keep their real shape: height/width of an image (0.75 if unknown). */
@@ -3982,7 +3982,7 @@ function viewCrewMember() {
             '<div style="color:var(--muted);font-size:13px">' + esc(fmtDay(r.day) + (r.location ? ' · ' + r.location : '')) + '</div>' +
             '<div style="font-size:12px;color:var(--muted);margin-top:4px">' + (r.role === 'seller' ? 'his sale' : 'he performs it') +
               (r.notSent ? ' \u00b7 <span style="color:var(--gold)">not on his phone yet</span>' : '') + '</div>' +
-            '<button class="btn btn-ghost" data-act="crew-move" data-arg="' + esc(r.id) + '" style="width:100%;margin-top:8px">Move to someone else</button>' +
+            crewMoveHTML(r) +
           '</div>';
         }).join('')
       : '<div class="empty" style="padding:14px">' +
@@ -4113,6 +4113,50 @@ function seeAs(who) {
 }
 
 /* Hand one of his jobs to somebody else, without going back to the calendar. */
+/* Taking a job off a man, and handing it to another one, without typing a
+   number into a prompt. A phone does not always show window.prompt at all,
+   and even where it does, a job that is simply on the wrong day should come
+   off in one tap and go back to the calendar \u2014 not be moved to somebody
+   else who does not want it either. */
+function crewHandOver(jobId, toId) {
+  var from = state.crewOne; if (!from) return;
+  var row = (tjStore().rows || []).filter(function (r) { return r.id === jobId && r.tech_id === crewIdOf(from); })[0];
+  if (!row) { alert('That job is no longer on his list.'); return; }
+  var key = ownerKey(); if (!key) { alert('Only the office phone can move jobs.'); return; }
+  var to = toId ? tjCrewById(toId) : null;
+  if (toId && !to) { alert('That man is not on the crew any more.'); return; }
+  var what = row.title || 'this job';
+  var ask = to
+    ? 'Move "' + what + '" to ' + to.name + '?'
+    : 'Take "' + what + '" off ' + (from.name || 'his list') + '?\n\nIt goes back to the calendar and nobody sees it on a phone until you hand it out again.';
+  if (!window.confirm(ask)) return;
+  var cm = state.crewMoving || (state.crewMoving = {});
+  cm[jobId] = 1; render();
+  cloudRpc('tech_jobs_assign', {
+    p_owner: key, p_id: row.id, p_tech_key: to ? to.key : '', p_role: row.role || 'performer',
+    p_job: { acct: row.acct, event_id: row.event_id, title: row.title, day: row.day,
+      start_time: row.start_time || '', end_time: row.end_time || '',
+      location: row.location || '', notes: row.notes || '', share_id: row.share_id || '' }
+  }).then(function () {
+    tjStore().loaded = false;
+    return tjLoad(true);
+  }).then(function () { delete cm[jobId]; render(); })
+    .catch(function (e) { delete cm[jobId]; render(); alert('Could not move it: ' + ((e && e.message) || e)); });
+}
+/* The buttons that go under a job on his list. */
+function crewMoveHTML(row) {
+  var from = state.crewOne;
+  var others = tjCrewActive().filter(function (c) { return c.id !== (from && from.id); });
+  var busy = !!(state.crewMoving || {})[row.id];
+  return '<div class="row" style="gap:6px;margin-top:8px;flex-wrap:wrap">' +
+      others.map(function (c) {
+        return '<button class="btn btn-ghost" data-act="crew-to" data-arg="' + esc(row.id + '::' + c.id) + '"' +
+          (busy ? ' disabled' : '') + ' style="flex:1;min-width:45%;font-size:13px">To ' + esc(c.name) + '</button>';
+      }).join('') +
+    '</div>' +
+    '<button class="btn btn-ghost" data-act="crew-off" data-arg="' + esc(row.id) + '"' + (busy ? ' disabled' : '') +
+      ' style="width:100%;margin-top:6px;font-size:13px">' + (busy ? 'Working\u2026' : 'Take it off his list \u2014 back to the calendar') + '</button>';
+}
 function crewMove(jobId) {
   var from = state.crewOne; if (!from) return;
   var row = (tjStore().rows || []).filter(function (r) { return r.id === jobId && r.tech_id === crewIdOf(from); })[0];
@@ -11289,6 +11333,8 @@ root.addEventListener('click', function (e) {
     })(); break;
     case 'cal-who': state.calWho = (state.calWho === arg ? '' : arg); render(); break;
     case 'crew-move': crewMove(arg); break;
+    case 'crew-off': crewHandOver(arg, ''); break;
+    case 'crew-to': (function () { var i = String(arg).lastIndexOf('::'); crewHandOver(String(arg).slice(0, i), String(arg).slice(i + 2)); })(); break;
     case 'see-as': seeAs(arg); break;
     case 'triage': state.view = 'triage'; state.tri = state.tri || {}; render(); crewEnsure(); clLoad(true); triSignedLoad(true); break;
     case 'tri-refresh': (function () {
