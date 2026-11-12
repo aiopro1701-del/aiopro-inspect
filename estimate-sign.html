@@ -250,13 +250,52 @@ canvas{width:100%;height:200px;background:#fbfaf7;border:1.5px dashed #c9c2b5;bo
     var ph = document.getElementById('photos');
     if (ph) ph.addEventListener('click', function (ev) { var im = ev.target.closest('img'); if (!im) return; var lb = document.createElement('div'); lb.className = 'lb'; lb.innerHTML = '<img src="' + im.src + '" alt="">'; lb.addEventListener('click', function () { lb.remove(); }); document.body.appendChild(lb); });
     var st = document.getElementById('startSign'); if (st) st.addEventListener('click', function () { openSign(true); });
+    var pb = document.getElementById('payBtn'); if (pb) pb.addEventListener('click', payStart);
     if (S && S.open) drawSign();
     updateBar();
+  }
+  /* Paying, once he has agreed. The amount is never sent from this page -
+     the office works it out from the quote he actually signed, so nothing
+     here can be edited into a different number. */
+  var PAY = { busy: false, err: '', url: '' };
+  function payHTML() {
+    if (doc.kind === 'report' && !isInvoice()) return '';
+    if (doc.status !== 'signed') return '';
+    if (PAY.url) {
+      return '<div class="card" style="margin-top:14px"><p class="q" style="margin:0 0 8px">Pay by card</p>' +
+        '<a class="btn wide" href="' + esc(PAY.url) + '" target="_blank" rel="noopener">Open the secure card page</a>' +
+        '<p class="h" style="margin:10px 0 0">The page opens on Square, who handle the card. We never see the number.</p></div>';
+    }
+    return '<div class="card" style="margin-top:14px"><p class="q" style="margin:0 0 8px">Would you like to pay by card?</p>' +
+      '<p class="h" style="margin:0 0 10px">You can also pay us on the day — whichever is easier.</p>' +
+      (PAY.err ? '<p class="h" style="color:#a3362a;margin:0 0 8px">' + esc(PAY.err) + '</p>' : '') +
+      '<button class="btn wide" type="button" id="payBtn"' + (PAY.busy ? ' disabled' : '') + '>' +
+        (PAY.busy ? 'One moment…' : 'Pay by card') + '</button></div>';
+  }
+  function payStart() {
+    if (PAY.busy) return;
+    PAY.busy = true; PAY.err = ''; render();
+    rpc('share_public_pay', { p_id: doc.id })
+      .then(function (r) {
+        PAY.busy = false;
+        PAY.url = (r && r.url) || '';
+        if (!PAY.url) PAY.err = 'The card page could not be opened. Please call us.';
+        render();
+        if (PAY.url) { try { window.open(PAY.url, '_blank'); } catch (e) {} }
+      })
+      .catch(function (err) {
+        PAY.busy = false;
+        PAY.err = /not switched on/i.test((err && err.message) || '')
+          ? 'Card payment is not available on this one — please call us.'
+          : 'Could not open the card page. Please check your internet, or call us.';
+        render();
+      });
   }
   function doneHTML() {
     var sig = /^data:image\/png;base64,[A-Za-z0-9+\/=]+$/.test(String(doc.signature || '')) ? '<br><img src="' + doc.signature + '" alt="Signature">' : '';
     return '<div class="done">✓ Signed' + (doc.signer_name ? ' by ' + esc(doc.signer_name) : '') + (doc.sign_date ? '<br><span style="font-size:14px">Dated ' + esc(doc.sign_date) + '</span>' : '') + sig +
-      '<div style="font-size:14px;color:#3d6b52;margin-top:8px">' + (doc.kind === 'report' ? 'Thank you — we have your confirmation.' : 'Thank you! We will call you to schedule the work.') + '</div></div>';
+      '<div style="font-size:14px;color:#3d6b52;margin-top:8px">' + (doc.kind === 'report' ? 'Thank you — we have your confirmation.' : 'Thank you! We will call you to schedule the work.') + '</div></div>' +
+      payHTML();
   }
   function updateBar() {
     if (!doc || doc.status === 'signed' || (S && S.open)) { bar.hidden = true; return; }
