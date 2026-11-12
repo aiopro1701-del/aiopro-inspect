@@ -1327,7 +1327,7 @@ var M = 43, PW = 612, PH = 792, CONTENT = PW - M * 2;
 var APP_DIR = (/^https?:$/.test(location.protocol) && location.hostname) ? location.origin + location.pathname.replace(/[^\/]*$/, '') : 'https://aiopro1701-del.github.io/aiopro-inspect/';
 var IS_BETA = /\/beta\/$/.test(APP_DIR);
 /* Bumped on every deploy, so a screenshot of Settings says which build is on the phone. */
-var APP_BUILD = '2026-11-13 13:40 UTC';
+var APP_BUILD = '2026-11-13 16:20 UTC';
 /* Refael's field knowledge — the bot answers from this. Kept word-for-word stable so it is cached (cheap). */
 var AIO_KB = "AIO PRO CHIMNEY \u2014 FIELD KNOWLEDGE (from the owner, Refael Maman). Use this to answer the technician the way Refael would.\n\nWHO WE ARE\n- AIOPRO LLC, trading as AIO Pro Chimney. 1505 North and South Rd, St. Louis, MO 63130. Phone (314) 379-2871. Email Aiopro1701@gmail.com. aioprochimney.com.\n- Licensed general contractor, insured, CSIA member, NCSG member, BBB accredited. Greater St. Louis; east as far as Belleville and O'Fallon, IL. A Kansas City employee can take Kansas City jobs.\n- Owner: Refael Maman. The office = Refael.\n\nWHO USES THE APP\n- Owner (Refael): everything.\n- Technician: visits the house, finds the problem, prices it, presents it, closes it. Most of the work is technician and customer face to face. The technician is still learning and calls Refael on most jobs; that is fine and expected.\n- Installer: does the booked job. Needs to know when and where, what to bring, and what the technician found (photos + scope).\n\nWHAT THE TECHNICIAN MAY AND MAY NOT SAY\n- Prices: he may give prices and approximate (+/-) ranges, and he may adjust a price or give a discount (see Selling).\n- Dates: never promise a date. Scheduling always goes through the office: \"Refael will call you to book it.\"\n- Warranty: never promise warranty terms. \"The warranty is written on the estimate; Refael confirms it.\"\n- If he does not know something: say \"Let me confirm that with Refael\" and call him. Never guess about safety, code, or warranty.\n- Never run down another company. Never argue with the customer.\n\nMONEY RULES\n- Minimum service charge is usually $49. Sometimes the estimate visit is free, but not often.\n- Deposit: 20% to 40% of the job, depending on the size of the job. Balance on completion unless agreed otherwise.\n- Estimate prices hold for 30 days.\n- Price goes up with: roof pitch (steep = harder/slower, may need extra safety gear), job difficulty, how hard the chimney is to reach (height, stories, trees, lift or scaffold needed), and how much material is needed (liner length, size of the chimney top, number of flues).\n- Access equipment (boom lift, scaffold) is priced as its own line so the customer sees it.\n- Anything that may change once opened up: say so in the scope notes \u2014 \"if we find more once it is opened, we stop and agree the difference with you before continuing.\"\n\nHOW REFAEL WRITES AN ESTIMATE\n- One scope by default: the work he recommends. Add Option B (or C) ONLY when the customer has a real choice (keep the stove vs. new stove, stainless vs. galvanized, vent-free vs. vented gas). Each option has its own full total. \"Choose one \u2014 you do not need both.\"\n- Add-ons the customer can take or leave (a vent cap, a second liner) are listed separately as optional.\n- Each line: a clear name, 3-7 short scope lines specific to this house (sizes, lengths, where), and a price.\n- Explain the cause in plain words (\"a square damper cannot seal a round liner\"), then the fix. Safety items first and clearly: \"This one should not wait.\"\n- Scope notes say what is NOT included and what the customer prepares.\n- Tone: plain, confident, respectful. No jargon, no code numbers, no sales filler.\n\nSELLING (coach the technician)\n- Before the price: show the customer the photos, explain what is wrong, why it happened, and what happens if it waits.\n- Present the recommended scope first, with the total. If there is a real choice, present Option A and Option B side by side.\n- \"It's too expensive\": 1) Acknowledge (\"I understand, it's a real number.\"). 2) Ask (\"What matters most to you \u2014 the lowest price today, or fixing it so it doesn't come back?\" / \"What budget did you have in mind?\"). 3) Advise:\n  a) Split it: the safety / water-stopping part now, the rest later (becomes Option A / B).\n  b) Show the value: materials, labor, cleanup, photos, written warranty, licensed and insured, CSIA/NCSG.\n  c) Deposit 20-40% now, balance when done.\n  d) A discount is a closing tool, tied to a decision today or booking now. Give it once, clearly (\"If we book it today I can take $X off\").\n- \"I need to think about it\": ask what is holding them back; offer to email the estimate now with the Sign button; tell them Refael will follow up.\n- \"I'm getting other quotes\": that's fine; point to the written scope and warranty so they compare the same work. Never bash competitors.\n- Close: ask for the decision. \"Shall I send it to your email so you can sign it on your phone?\"\n\nSAFETY \u2014 STOP AND TELL THE CUSTOMER\n- Gas leak found (bubbles on leak test, smell): the appliance must not be used until repaired; if they smell gas, shut the supply and call the gas utility. Call Refael.\n- Blocked flue (debris, animal nest, collapsed tile) on a furnace or water heater: do not operate that appliance until cleared/lined. CO risk.\n- Unlined or badly cracked flue on a wood fireplace: do not use until repaired.\n- Disconnected or rusted-through vent connector: do not operate.\n- Creosote glaze or heavy buildup: no fires until swept.\n- Say it in one calm sentence, write it on the estimate, and call Refael.\n\nWHAT TO CHECK AND PHOTOGRAPH (standard order, bottom up)\n- First find out what system it is (wood fireplace, gas logs in a fireplace, direct-vent gas, vent-free gas, insert/stove, furnace or water heater flue) and check only the parts that system has. Vent-free gas has no flue: no damper, liner or roof checks.\n- Level 1: inside the home and from the ground only \u2014 no roof or attic. Level 2 adds the roof and the top when it is safe, and a camera scan of the flue. We do not go into attics, basements or crawl spaces.\n1. Front of the house (cover photo), then the appliance / fireplace.\n2. Firebox: cracks, gaps in joints, missing panels.\n3. Damper and throat: opens/closes and seals; damper type vs. flue shape.\n4. Smoke chamber: voids, rough/unparged brick, creosote.\n5. Flue and liner: camera scan if possible; clay tile cracks, offsets, missing mortar; liner size and material; debris.\n6. Appliance vents (furnace/water heater): connector condition, slope, clearance (single-wall 6\", B-vent 1\"), draft.\n8. Roof and exterior: flashing, cricket (chimney wider than 30\"), crown cracks, cap/spark arrestor, chase cover rust, brick and mortar, height (3-2-10 rule).\n9. Measurements that set the price: flue size (inside dimensions), liner length (roofline to appliance + above the top), chimney top size (for cap/chase cover), number of flues, stories, roof pitch, access.\n\nHOW TO MEASURE (short)\n- Liner length: from the appliance connection (or smoke chamber) to the top of the flue tile + about 1 ft; count stories (about 10 ft each) if you cannot measure directly.\n- Flue size: inside width x depth of the clay tile (or diameter for round); the liner is sized to the appliance outlet.\n- Chase cover / cap: outside length x width of the top (crown or chase), plus the flue tile height above the crown.\n- Chimney height above the roof: at least 3 ft above where it passes the roof and 2 ft higher than anything within 10 ft.\n\nWHEN TO CALL REFAEL\n- Any safety hazard, any job over a few thousand dollars, anything not in the price list, anything structural, any date/warranty question, any customer who is unhappy, and whenever unsure.";
 /* Photos keep their real shape: height/width of an image (0.75 if unknown). */
@@ -3423,6 +3423,115 @@ function dayMark(jobKey, step) {
     .then(function () { d.saving = ''; render(); });
 }
 
+/* \u2500\u2500 "On my way", and what the customer is told \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
+   The technician says when he will actually be there. If that is later than
+   the hour the customer was given, the message says so and apologises \u2014 a
+   customer who is told is not a customer who is waiting and wondering.
+   The text goes from HIS phone, and he presses send: the app only fills it
+   in. Nothing here sends on its own. */
+var ETA_QUICK = [15, 30, 45, 60];
+function etaStore() { return state.eta || (state.eta = { job: '', mins: 0, sent: false }); }
+function etaOpen(jobKey) { var e = etaStore(); e.job = jobKey; e.mins = 0; e.sent = false; render(); }
+function etaClose() { state.eta = null; render(); }
+function etaNowMin() { var d = new Date(); return d.getHours() * 60 + d.getMinutes(); }
+/* "08:00" is what the calendar hands over; anything else is no set hour. */
+function etaParseHM(v) {
+  var m = /^\s*(\d{1,2}):(\d{2})/.exec(String(v || ''));
+  if (!m) return null;
+  var h = Number(m[1]), mi = Number(m[2]);
+  if (h > 23 || mi > 59) return null;
+  return h * 60 + mi;
+}
+function etaClock(min) {
+  var m = ((min % 1440) + 1440) % 1440, h = Math.floor(m / 60), mi = m % 60;
+  var ap = h < 12 ? 'AM' : 'PM', h12 = h % 12; if (!h12) h12 = 12;
+  return h12 + ':' + (mi < 10 ? '0' : '') + mi + ' ' + ap;
+}
+/* How late, to the nearest five minutes. A couple of minutes over the hour
+   is not lateness and must not trigger an apology for nothing. */
+function etaLateBy(startHM, arriveMin) {
+  var st = etaParseHM(startHM);
+  if (st == null) return 0;
+  var over = arriveMin - st;
+  return over >= 10 ? Math.round(over / 5) * 5 : 0;
+}
+/* How a man says it out loud. Never "about" \u2014 the sentence around this
+   already says "about", and "about about 540 minutes" is what came out the
+   first time. Past an hour it is said in hours, because nobody hears
+   "540 minutes" as nine hours. */
+function etaLateWord(mins) {
+  if (mins < 60) return mins + ' minutes';
+  var h = Math.floor(mins / 60), m = Math.round((mins % 60) / 15) * 15;
+  if (m === 60) { h += 1; m = 0; }
+  var hw = h === 1 ? 'an hour' : h + ' hours';
+  if (!m) return hw;
+  if (m === 30) return h === 1 ? 'an hour and a half' : h + ' and a half hours';
+  return hw + ' and ' + m + ' minutes';
+}
+/* The name this phone signs its paperwork with is the name its owner
+   answers to. Read RAW, never through estPrepDefault() \u2014 that falls back to
+   the owner's own name, and a text from Dan signed "Refael" is worse than a
+   text with no name at all. The crew list is the second try, and it is
+   refused on a technician's key, so the company name is the honest last
+   resort. */
+function etaWho() {
+  var n = '';
+  try { n = localStorage.getItem('aio-est-prep') || ''; } catch (e) {}
+  if (!n) { try { n = clClosedByName(myTechId()) || ''; } catch (e2) {} }
+  var co = (state.settings && state.settings.company) || 'AIO Pro Chimney';
+  n = String(n).split(',')[0].trim().split(/\s+/)[0] || '';
+  return n ? n + ' from ' + co : co;
+}
+function etaText(r, arriveMin) {
+  var late = etaLateBy(r.start_time, arriveMin), when = etaClock(arriveMin);
+  var who = etaWho();
+  if (late) {
+    return 'Hi, this is ' + who + '. I am running about ' + etaLateWord(late) +
+      ' behind today and I am sorry to keep you waiting. I am on my way now and should be with you around ' +
+      when + '. Thank you for bearing with me.';
+  }
+  return 'Hi, this is ' + who + '. I am on my way and should be with you around ' + when + '.';
+}
+function etaSmsLink(r, arriveMin) {
+  var ph = tjPhone(r.notes) || tjPhone(r.title);
+  return ph ? 'sms:' + ph + '?&body=' + encodeURIComponent(etaText(r, arriveMin)) : '';
+}
+function etaPanelHTML(r, jobKey) {
+  var e = etaStore(), mins = e.mins || 0;
+  var arrive = etaNowMin() + mins, late = mins ? etaLateBy(r.start_time, arrive) : 0;
+  var link = mins ? etaSmsLink(r, arrive) : '';
+  var ph = tjPhone(r.notes) || tjPhone(r.title);
+  return '<div style="margin-top:10px;padding-top:10px;border-top:1px solid var(--line)">' +
+    '<div style="font-weight:650;font-size:15px">When will you be there?</div>' +
+    (r.start_time ? '<div style="font-size:12px;color:var(--muted);margin:2px 0 8px">He was given ' + esc(r.start_time) + '.</div>'
+                  : '<div style="font-size:12px;color:var(--muted);margin:2px 0 8px">No hour was set for this one.</div>') +
+    '<div class="row" style="gap:6px;flex-wrap:wrap">' +
+      ETA_QUICK.map(function (q) {
+        var on = mins === q;
+        return '<button class="btn ' + (on ? 'btn-gold btn-primary' : 'btn-ghost') + '" data-act="eta-in" data-arg="' + q + '" ' +
+          'style="flex:1 1 68px;min-width:0;padding:11px 4px;line-height:1.25">' +
+          '<div style="font-weight:700;font-size:15px">' + (q === 60 ? '1 hr' : q + 'm') + '</div>' +
+          '<div style="font-size:11px;opacity:.75">' + esc(etaClock(etaNowMin() + q)) + '</div></button>';
+      }).join('') +
+    '</div>' +
+    (mins
+      ? '<div class="card" style="margin:10px 0 8px;' + (late ? 'border-color:var(--gold)' : '') + '">' +
+          (late ? '<div class="eyebrow" style="color:var(--gold)">' + esc(etaLateWord(late)) + ' late \u2014 the text says sorry</div>' : '') +
+          '<div style="font-size:13.5px;line-height:1.55;white-space:pre-wrap">' + esc(etaText(r, arrive)) + '</div>' +
+        '</div>' +
+        '<div class="row" style="gap:6px;flex-wrap:wrap">' +
+          (link
+            ? '<a class="btn btn-gold btn-primary" href="' + esc(link) + '" data-act="eta-go" data-arg="' + esc(jobKey) + '" ' +
+                'style="flex:2 1 150px;text-align:center;text-decoration:none">Open the text</a>'
+            : '<button class="btn btn-ghost" disabled style="flex:2 1 150px">' + (ph ? 'No number' : 'No number on this ticket') + '</button>') +
+          '<button class="btn btn-ghost" data-act="eta-skip" data-arg="' + esc(jobKey) + '" style="flex:1 1 110px">No text</button>' +
+        '</div>' +
+        '<div style="font-size:11.5px;color:var(--muted);margin-top:8px">It opens in your own messages with the words ready. You press send.</div>'
+      : '<div style="font-size:12px;color:var(--muted);margin-top:10px">Pick one and the message is written for you.</div>') +
+    '<button class="btn btn-ghost btn-wide" data-act="eta-cancel" style="margin-top:8px">Back</button>' +
+  '</div>';
+}
+
 function dayMapLink(addr) {
   var a = String(addr || '').trim();
   return a ? 'https://www.google.com/maps/dir/?api=1&destination=' + encodeURIComponent(a) : '';
@@ -3444,8 +3553,9 @@ function dayStopHTML(r, n, total) {
     '</div>' +
     '<div style="font-weight:650;font-size:17px;margin-top:3px">' + esc(r.title || 'Job') + '</div>' +
     (r.location ? '<div style="font-size:12.5px;color:var(--faint,var(--muted));font-family:var(--mono);margin-top:2px;unicode-bidi:plaintext">' + esc(r.location) + '</div>' : '') +
+    (etaStore().job === jobKey ? etaPanelHTML(r, jobKey) : '') +
     '<div class="row" style="gap:6px;margin-top:10px;flex-wrap:wrap">' +
-      (next ? '<button class="btn btn-gold btn-primary" data-act="' + next.act + '" data-arg="' + esc(jobKey) + '" style="flex:2 1 140px"' + (dayStore().saving === jobKey ? ' disabled' : '') + '>' + next.label + '</button>' : '') +
+      (next && etaStore().job !== jobKey ? '<button class="btn btn-gold btn-primary" data-act="' + next.act + '" data-arg="' + esc(jobKey) + '" style="flex:2 1 140px"' + (dayStore().saving === jobKey ? ' disabled' : '') + '>' + next.label + '</button>' : '') +
       (map ? '<a class="btn btn-ghost" href="' + esc(map) + '" target="_blank" rel="noopener" style="flex:1 1 92px;text-align:center;text-decoration:none">Drive</a>' : '') +
       '<button class="btn btn-ghost" data-act="tj-open" data-arg="' + esc(r.id) + '" style="flex:1 1 92px">The ticket</button>' +
     '</div>' +
@@ -12945,7 +13055,24 @@ root.addEventListener('click', function (e) {
     case 'cev-perf': tjAssignFromArg(arg, 'performer'); break;
     case 'cev-sell': tjAssignFromArg(arg, 'seller'); break;
     case 'tj-retry': tjLoad(true); break;
-    case 'day-otw': dayMark(arg, 'otw'); break;
+    /* "On my way" asks when before it tells anyone. Marking first would put
+       him on the road in the office's eyes while he is still deciding. */
+    case 'day-otw': etaOpen(arg); break;
+    case 'eta-in': { var ee = etaStore(); ee.mins = Number(arg) || 0; render(); break; }
+    case 'eta-cancel': etaClose(); break;
+    /* He chose not to text this one \u2014 still on the road, just quietly. */
+    case 'eta-skip': dayMark(arg, 'otw'); etaClose(); break;
+    /* The link opens his messages; the browser follows it on its own. All we
+       do here is record that he set off. He is the one who presses send. */
+    case 'eta-go': {
+      /* The browser is following this same click to his messages app. Marking
+         the job here would re-render and pull the anchor out of the DOM
+         mid-event, and some browsers drop the navigation when that happens.
+         So the mark waits until the link has been followed. */
+      var ag = arg;
+      setTimeout(function () { dayMark(ag, 'otw'); etaClose(); }, 500);
+      break;
+    }
     case 'day-here': dayMark(arg, 'arrived'); break;
     case 'day-close': clOpenForm(arg); break;
     case 'tj-open': { var tjr = tjStore().byId[arg]; if (tjr) { state.tjFrom = state.view; state.techJob = tjr; state.view = 'techjob'; render(); juLoad(); } break; }
