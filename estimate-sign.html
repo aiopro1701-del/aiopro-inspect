@@ -258,9 +258,35 @@ canvas{width:100%;height:200px;background:#fbfaf7;border:1.5px dashed #c9c2b5;bo
      the office works it out from the quote he actually signed, so nothing
      here can be edited into a different number. */
   var PAY = { busy: false, err: '', url: '' };
+  /* What this document actually asks for. A card button on a document with
+     nothing on it is a button that cannot work: Square will not take $0, and
+     the page used to blame the customer's internet for it. The title is no
+     test \u2014 a report can be headed "Invoice" and still carry no price. */
+  function amountDue() {
+    if (opts.length) {
+      var i = typeof doc.choice === 'number' && opts[doc.choice] ? doc.choice : 0;
+      var t = totals(opts[i], pay.tax), n = t ? num(t.total) : 0;
+      var ex = doc.extras;
+      if (ex && typeof ex === 'object') {
+        (opts[i].items || []).forEach(function (it, j) {
+          if (it && it.opt && (Array.isArray(ex) ? ex.indexOf(j) >= 0 : ex[j])) n += line(it);
+        });
+      }
+      return n;
+    }
+    var li = (pay.lineItems || []).filter(function (it) {
+      return it && (String(it.description || '').trim() || num(it.amount) || num(it.unitPrice));
+    });
+    if (num(pay.total)) return num(pay.total);
+    var sb = num(pay.subtotal) || li.reduce(function (t, it) {
+      return t + (num(it.amount) || num(it.qty) * num(it.unitPrice));
+    }, 0);
+    return sb - num(pay.discount) + num(pay.tax);
+  }
   function payHTML() {
     if (doc.kind === 'report' && !isInvoice()) return '';
     if (doc.status !== 'signed') return '';
+    if (!(amountDue() > 0)) return '';
     if (PAY.url) {
       return '<div class="card" style="margin-top:14px"><p class="q" style="margin:0 0 8px">Pay by card</p>' +
         '<a class="btn wide" href="' + esc(PAY.url) + '" target="_blank" rel="noopener">Open the secure card page</a>' +
@@ -285,9 +311,14 @@ canvas{width:100%;height:200px;background:#fbfaf7;border:1.5px dashed #c9c2b5;bo
       })
       .catch(function (err) {
         PAY.busy = false;
-        PAY.err = /not switched on/i.test((err && err.message) || '')
-          ? 'Card payment is not available on this one — please call us.'
-          : 'Could not open the card page. Please check your internet, or call us.';
+        var m = (err && err.message) || '';
+        /* Say what is true. Blaming the internet for a document with no price
+           on it sends the customer chasing a problem that is not theirs. */
+        PAY.err = /nothing to pay/i.test(m)
+          ? 'There is nothing to pay on this one.'
+          : /not switched on/i.test(m)
+            ? 'Card payment is not available on this one — please call us.'
+            : 'Could not open the card page. Please check your internet, or call us.';
         render();
       });
   }
