@@ -1327,7 +1327,7 @@ var M = 43, PW = 612, PH = 792, CONTENT = PW - M * 2;
 var APP_DIR = (/^https?:$/.test(location.protocol) && location.hostname) ? location.origin + location.pathname.replace(/[^\/]*$/, '') : 'https://aiopro1701-del.github.io/aiopro-inspect/';
 var IS_BETA = /\/beta\/$/.test(APP_DIR);
 /* Bumped on every deploy, so a screenshot of Settings says which build is on the phone. */
-var APP_BUILD = '2026-11-14 21:10 UTC';
+var APP_BUILD = '2026-11-15 00:40 UTC';
 /* Refael's field knowledge — the bot answers from this. Kept word-for-word stable so it is cached (cheap). */
 var AIO_KB = "AIO PRO CHIMNEY \u2014 FIELD KNOWLEDGE (from the owner, Refael Maman). Use this to answer the technician the way Refael would.\n\nWHO WE ARE\n- AIOPRO LLC, trading as AIO Pro Chimney. 1505 North and South Rd, St. Louis, MO 63130. Phone (314) 379-2871. Email Aiopro1701@gmail.com. aioprochimney.com.\n- Licensed general contractor, insured, CSIA member, NCSG member, BBB accredited. Greater St. Louis; east as far as Belleville and O'Fallon, IL. A Kansas City employee can take Kansas City jobs.\n- Owner: Refael Maman. The office = Refael.\n\nWHO USES THE APP\n- Owner (Refael): everything.\n- Technician: visits the house, finds the problem, prices it, presents it, closes it. Most of the work is technician and customer face to face. The technician is still learning and calls Refael on most jobs; that is fine and expected.\n- Installer: does the booked job. Needs to know when and where, what to bring, and what the technician found (photos + scope).\n\nWHAT THE TECHNICIAN MAY AND MAY NOT SAY\n- Prices: he may give prices and approximate (+/-) ranges, and he may adjust a price or give a discount (see Selling).\n- Dates: never promise a date. Scheduling always goes through the office: \"Refael will call you to book it.\"\n- Warranty: never promise warranty terms. \"The warranty is written on the estimate; Refael confirms it.\"\n- If he does not know something: say \"Let me confirm that with Refael\" and call him. Never guess about safety, code, or warranty.\n- Never run down another company. Never argue with the customer.\n\nMONEY RULES\n- Minimum service charge is usually $49. Sometimes the estimate visit is free, but not often.\n- Deposit: 20% to 40% of the job, depending on the size of the job. Balance on completion unless agreed otherwise.\n- Estimate prices hold for 30 days.\n- Price goes up with: roof pitch (steep = harder/slower, may need extra safety gear), job difficulty, how hard the chimney is to reach (height, stories, trees, lift or scaffold needed), and how much material is needed (liner length, size of the chimney top, number of flues).\n- Access equipment (boom lift, scaffold) is priced as its own line so the customer sees it.\n- Anything that may change once opened up: say so in the scope notes \u2014 \"if we find more once it is opened, we stop and agree the difference with you before continuing.\"\n\nHOW REFAEL WRITES AN ESTIMATE\n- One scope by default: the work he recommends. Add Option B (or C) ONLY when the customer has a real choice (keep the stove vs. new stove, stainless vs. galvanized, vent-free vs. vented gas). Each option has its own full total. \"Choose one \u2014 you do not need both.\"\n- Add-ons the customer can take or leave (a vent cap, a second liner) are listed separately as optional.\n- Each line: a clear name, 3-7 short scope lines specific to this house (sizes, lengths, where), and a price.\n- Explain the cause in plain words (\"a square damper cannot seal a round liner\"), then the fix. Safety items first and clearly: \"This one should not wait.\"\n- Scope notes say what is NOT included and what the customer prepares.\n- Tone: plain, confident, respectful. No jargon, no code numbers, no sales filler.\n\nSELLING (coach the technician)\n- Before the price: show the customer the photos, explain what is wrong, why it happened, and what happens if it waits.\n- Present the recommended scope first, with the total. If there is a real choice, present Option A and Option B side by side.\n- \"It's too expensive\": 1) Acknowledge (\"I understand, it's a real number.\"). 2) Ask (\"What matters most to you \u2014 the lowest price today, or fixing it so it doesn't come back?\" / \"What budget did you have in mind?\"). 3) Advise:\n  a) Split it: the safety / water-stopping part now, the rest later (becomes Option A / B).\n  b) Show the value: materials, labor, cleanup, photos, written warranty, licensed and insured, CSIA/NCSG.\n  c) Deposit 20-40% now, balance when done.\n  d) A discount is a closing tool, tied to a decision today or booking now. Give it once, clearly (\"If we book it today I can take $X off\").\n- \"I need to think about it\": ask what is holding them back; offer to email the estimate now with the Sign button; tell them Refael will follow up.\n- \"I'm getting other quotes\": that's fine; point to the written scope and warranty so they compare the same work. Never bash competitors.\n- Close: ask for the decision. \"Shall I send it to your email so you can sign it on your phone?\"\n\nSAFETY \u2014 STOP AND TELL THE CUSTOMER\n- Gas leak found (bubbles on leak test, smell): the appliance must not be used until repaired; if they smell gas, shut the supply and call the gas utility. Call Refael.\n- Blocked flue (debris, animal nest, collapsed tile) on a furnace or water heater: do not operate that appliance until cleared/lined. CO risk.\n- Unlined or badly cracked flue on a wood fireplace: do not use until repaired.\n- Disconnected or rusted-through vent connector: do not operate.\n- Creosote glaze or heavy buildup: no fires until swept.\n- Say it in one calm sentence, write it on the estimate, and call Refael.\n\nWHAT TO CHECK AND PHOTOGRAPH (standard order, bottom up)\n- First find out what system it is (wood fireplace, gas logs in a fireplace, direct-vent gas, vent-free gas, insert/stove, furnace or water heater flue) and check only the parts that system has. Vent-free gas has no flue: no damper, liner or roof checks.\n- Level 1: inside the home and from the ground only \u2014 no roof or attic. Level 2 adds the roof and the top when it is safe, and a camera scan of the flue. We do not go into attics, basements or crawl spaces.\n1. Front of the house (cover photo), then the appliance / fireplace.\n2. Firebox: cracks, gaps in joints, missing panels.\n3. Damper and throat: opens/closes and seals; damper type vs. flue shape.\n4. Smoke chamber: voids, rough/unparged brick, creosote.\n5. Flue and liner: camera scan if possible; clay tile cracks, offsets, missing mortar; liner size and material; debris.\n6. Appliance vents (furnace/water heater): connector condition, slope, clearance (single-wall 6\", B-vent 1\"), draft.\n8. Roof and exterior: flashing, cricket (chimney wider than 30\"), crown cracks, cap/spark arrestor, chase cover rust, brick and mortar, height (3-2-10 rule).\n9. Measurements that set the price: flue size (inside dimensions), liner length (roofline to appliance + above the top), chimney top size (for cap/chase cover), number of flues, stories, roof pitch, access.\n\nHOW TO MEASURE (short)\n- Liner length: from the appliance connection (or smoke chamber) to the top of the flue tile + about 1 ft; count stories (about 10 ft each) if you cannot measure directly.\n- Flue size: inside width x depth of the clay tile (or diameter for round); the liner is sized to the appliance outlet.\n- Chase cover / cap: outside length x width of the top (crown or chase), plus the flue tile height above the crown.\n- Chimney height above the roof: at least 3 ft above where it passes the roof and 2 ft higher than anything within 10 ft.\n\nWHEN TO CALL REFAEL\n- Any safety hazard, any job over a few thousand dollars, anything not in the price list, anything structural, any date/warranty question, any customer who is unhappy, and whenever unsure.";
 /* Photos keep their real shape: height/width of an image (0.75 if unknown). */
@@ -2390,7 +2390,11 @@ function clStepList(c) {
     s.push('money', 'method');
     /* Nothing was collected, so there is nothing to tip on. Asking anyway is
        one more screen between a man and the end of his day. */
-    if (clPos(c.collected) > 0) s.push('tip');
+    /* Asking a man whether he was tipped is a question the app has no
+       business putting to him. A tip is the customer's move, made on the
+       paper he is paying from. It stays reachable on the summary \u2014 a cash
+       tip handed over at the door still has to be recordable \u2014 but it is
+       not a step he is walked through. */
     s.push('costs');
     /* The ticket said where it came from, so it is not asked. The owner can
        still change it from the summary. */
@@ -2428,6 +2432,11 @@ function clStepErr(c, step) {
 function clGo(step) {
   var c = state.closing; if (!c || c.busy) return;
   var l = clStepList(c), here = clStepNow(c);
+  /* The summary can send him to a step the walk does not include \u2014 the tip
+     is not asked for any more, but it is still his to put in. */
+  if (step !== 'next' && step !== 'prev' && l.indexOf(step) < 0 && CL_STEPS[step]) {
+    c.step = step; c.err = ''; render(); return;
+  }
   if (step === 'next' || step === 'prev') {
     var i = l.indexOf(here);
     if (step === 'next') {
@@ -2723,7 +2732,7 @@ function viewClosing() {
         clRow('Paid by', c.method2 ? (c.method + ' + ' + c.method2) : (c.method || ''), 'method') +
         (clPos(c.parts_amount) ? clRow('Parts', money(clPos(c.parts_amount)) + (c.parts_paid_by === 'tech' ? ' — you paid' : c.parts_paid_by === 'office' ? ' — the office paid' : ''), 'costs') : '') +
         
-        (clPos(c.collected) > 0 ? clRow('Tip', clPos(c.tip) ? money(clPos(c.tip)) : 'Nothing', 'tip') : '') +
+        (clPos(c.collected) > 0 ? clRow('Tip', clPos(c.tip) ? money(clPos(c.tip)) : 'None \u2014 tap if he handed you one', 'tip') : '') +
         clRow('Came from', (c.job_source === 'supplier' ? 'A dispatcher' : c.job_source === 'aio' ? 'AIO Pro' : '') + (clTicketCompany(c.notes) ? ' \u00b7 ' + clTicketCompany(c.notes) : '') + ' \u00b7 ' + clRateLabel(c), 'source');
     }
     if (c.status === 'deposit' && clPos(c.sub_amount)) h += clRow('Escobar is owed', money(clPos(c.sub_amount)), 'plan');
@@ -6132,7 +6141,28 @@ function crewUpcoming(c) {
 /* ── A technician's own pay screen ─────────────────────────────────
    The server already hands his phone nothing but his own closings, so the
    same sums the office sees are worked out here from what he has. */
-function myTechId() { var k = techKey() || ownerKey(); return k ? clMd5(k) : ''; }
+/* One phone can hold two keys: his owner key and a technician key he paired
+   to walk the crew's side of the app. A closing is filed under the key it
+   was SENT with \u2014 sendKey(), the owner key first \u2014 while "mine" was worked
+   out the other way round, the technician key first. On a phone holding
+   both, the two never met: the job closed, the day said it was in the
+   Report, and the Report had never heard of it. Both keys are his, so both
+   count as his. */
+function myTechId() { var k = sendKey(); return k ? clMd5(k) : ''; }
+function myTechIds() {
+  var out = [], k1 = ownerKey(), k2 = techKey();
+  if (k1) out.push(clMd5(k1));
+  if (k2) { var m = clMd5(k2); if (out.indexOf(m) < 0) out.push(m); }
+  return out;
+}
+/* Never true for a blank id \u2014 that would hand him every unfiled row in
+   the company. */
+function isMineId(id) {
+  if (!id) return false;
+  var all = myTechIds();
+  for (var i = 0; i < all.length; i++) if (all[i] === id) return true;
+  return false;
+}
 /* On a technician's phone the server already hands him his own rows and
    nobody else's. On the office phone it hands over everything — so "my pay"
    has to mean the jobs this phone closed, or it reads the whole company's
@@ -6140,13 +6170,13 @@ function myTechId() { var k = techKey() || ownerKey(); return k ? clMd5(k) : '';
 function myRows() {
   var me = myTechId(), all = (clStore().rows || []);
   if (!me) return all;
-  var mine = all.filter(function (r) { return r.tech_id === me; });
+  var mine = all.filter(function (r) { return isMineId(r.tech_id); });
   return (!mine.length && isTech()) ? all : mine;
 }
 function myFu() {
   var me = myTechId(), all = (clStore().fuRows || []);
   if (!me) return all;
-  var mine = all.filter(function (r) { return r.tech_id === me; });
+  var mine = all.filter(function (r) { return isMineId(r.tech_id); });
   return (!mine.length && isTech()) ? all : mine;
 }
 function myPay(from, to) {
@@ -6336,7 +6366,7 @@ function tjMineCount() {
   if (!me) return 0;
   var rows = (state.tj && state.tj.rows) || [];
   var n = 0;
-  for (var i = 0; i < rows.length; i++) if (rows[i].tech_id === me) n++;
+  for (var i = 0; i < rows.length; i++) if (isMineId(rows[i].tech_id)) n++;
   return n;
 }
 function canAsTech() { return !!ownerKey() && !isOffice(); }
@@ -6358,7 +6388,7 @@ function tjMine(rows) {
   var list = tjCrewAll(), crew = {}, known = 0;
   list.forEach(function (c) { var id = crewIdOf(c); if (id) { crew[id] = 1; known++; } });
   return (rows || []).filter(function (r) {
-    if (r.tech_id === me) return true;
+    if (isMineId(r.tech_id)) return true;
     /* "Belongs to nobody" can only be judged once the crew is actually
        known. Before that, an unknown key might be Dan's, and guessing in
        his favour would put Dan's work on this screen. Strict until then. */
@@ -14099,6 +14129,7 @@ root.addEventListener('click', function (e) {
       render();
       break;
     }
+    case 'fj-fee-mode': if (state.fj) { state.fj.cardFee = arg; render(); } break;
     case 'fj-level': if (state.fj) { state.fj.level = arg; render(); } break;
     case 'fj-sys': if (state.fj) { state.fj.system = arg; render(); } break;
     case 'fj-area': if (state.fj) { var ai2 = state.fj.areas.indexOf(arg); if (ai2 >= 0) state.fj.areas.splice(ai2, 1); else state.fj.areas.push(arg); render(); } break;
@@ -15146,6 +15177,136 @@ function fjFeeCardHTML(f) {
         : '') +
     '</div>';
 }
+/* \u2500\u2500 The money on the job \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
+   Every line a man writes is work somebody is paying for, so the price
+   belongs on the line itself and the sum belongs at the foot of the page,
+   adding itself up as he types. Up to now the form collected the work and
+   said nothing about the money until much later, which is why it never
+   looked like a quote. */
+function fjQty(r) { var q = clPos(r && r.qty); return q > 0 ? q : 1; }
+function fjLineTotal(r) { return clPos(r && r.price) * fjQty(r); }
+function fjSeedPrice(f, id, name) {
+  var r = fjRow(f, id);
+  if (!r.priceSeeded) {
+    r.priceSeeded = true;
+    if (!String(r.price || '').trim()) {
+      var pr = fjPrice(name);
+      if (pr) r.price = String(pr);
+    }
+  }
+  return r;
+}
+/* Each line, plus every alternative that carries a price of its own \u2014 an
+   option B is a price the customer may choose, not part of the total. */
+function fjMoneyLines(f) {
+  var out = [];
+  (f.areas || []).forEach(function (id) {
+    var a = fjArea(id, f); if (!a) return;
+    var r = fjRow(f, id);
+    out.push({
+      id: id,
+      name: String(r.title || a.name || '').trim() || a.name,
+      qty: fjQty(r),
+      price: clPos(r.price),
+      total: fjLineTotal(r),
+      alts: (r.alts || []).filter(function (x) { return clPos(x.price); })
+        .map(function (x, i) { return { name: x.name || ('Other way ' + (i + 1)), price: clPos(x.price) }; })
+    });
+  });
+  return out;
+}
+function fjSubtotal(f) {
+  var n = 0;
+  fjMoneyLines(f).forEach(function (l) { n += l.total; });
+  return n;
+}
+function fjDeposit(f) { return clPos(f && f.deposit); }
+/* \u2500\u2500 The card fee \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
+   Square's cut used to come out of his own money. It is the customer's
+   choice to pay by card, so it is added on top and shown by name \u2014 never
+   buried in the price. Grossed up, not simply added: on a flat 2.6% added
+   to the price, Square still takes 2.6% of the larger number and he is
+   short. charged = (price + fixed) / (1 - rate) is what actually leaves him
+   whole. */
+var FJ_FEES = {
+  tap:  { rate: 0.026, fixed: 0.15, label: 'Card in hand \u00b7 2.6% + 15\u00a2' },
+  link: { rate: 0.033, fixed: 0.30, label: 'Paid by link \u00b7 3.3% + 30\u00a2' }
+};
+function fjFeeMode(f) {
+  var m = f && f.cardFee;
+  return (m === 'tap' || m === 'link' || m === 'none') ? m : 'tap';
+}
+function fjCardFee(f) {
+  var m = fjFeeMode(f); if (m === 'none') return 0;
+  var sub = fjSubtotal(f); if (sub <= 0) return 0;
+  var o = FJ_FEES[m];
+  var charged = (sub + o.fixed) / (1 - o.rate);
+  return Math.round((charged - sub) * 100) / 100;
+}
+function fjGrand(f) { return Math.round((fjSubtotal(f) + fjCardFee(f)) * 100) / 100; }
+/* The foot of the quote: what each line comes to, what it all comes to, and
+   what he is asking for up front. Redrawn on its own as he types, so the
+   caret stays where his thumb left it. */
+function fjTotalsHTML(f) {
+  var lines = fjMoneyLines(f), sub = fjSubtotal(f), dep = fjDeposit(f);
+  var fee = fjCardFee(f);
+  var priced = lines.filter(function (l) { return l.total > 0; });
+  function row(label, value, strong, muted) {
+    return '<div class="row" style="justify-content:space-between;gap:10px;align-items:baseline;padding:' + (strong ? '9px 0 2px' : '4px 0') + ';' +
+      (strong ? 'border-top:2px solid var(--gold);' : '') + '">' +
+      '<span style="' + (strong ? 'font-weight:700;' : '') + (muted ? 'color:var(--muted);font-size:13px;' : 'font-size:14px;') + '">' + label + '</span>' +
+      '<span style="white-space:nowrap;' + (strong ? 'font-weight:700;font-size:17px;' : 'font-size:14px;') + (muted ? 'color:var(--muted);' : '') + '">' + value + '</span></div>';
+  }
+  return '<div class="card">' +
+    '<div class="eyebrow" style="margin-bottom:8px">What it comes to</div>' +
+    (priced.length
+      ? priced.map(function (l) {
+          return row(esc(l.name) + (l.qty > 1 ? ' <span style="color:var(--muted)">\u00d7 ' + l.qty + '</span>' : ''), money(l.total));
+        }).join('')
+      : '<div style="color:var(--muted);font-size:13.5px;padding:2px 0 6px">No prices on it yet. Put one on each line above and the total writes itself.</div>') +
+    (priced.length ? row('Subtotal', money(sub)) : '') +
+    (priced.length
+      ? '<div style="margin:8px 0 2px"><div class="eyebrow" style="margin-bottom:5px">If he pays by card</div>' +
+          '<div class="row" style="gap:6px;flex-wrap:wrap">' +
+            [['tap', 'Card in hand'], ['link', 'By link'], ['none', 'No fee']].map(function (o) {
+              var on = fjFeeMode(f) === o[0];
+              return '<button class="btn ' + (on ? 'btn-gold btn-primary' : 'btn-ghost') + '" data-act="fj-fee-mode" data-arg="' + o[0] + '" ' +
+                'style="flex:1 1 30%;min-height:40px;font-size:13px;padding:0 6px">' + o[1] + '</button>';
+            }).join('') +
+          '</div></div>'
+      : '') +
+    (fee > 0 ? row('Card processing \u00b7 ' + esc(FJ_FEES[fjFeeMode(f)].label.split(' \u00b7 ')[1]), money(fee)) : '') +
+    (priced.length ? row('<b>Total</b>', money(sub + fee), true) : '') +
+    (fee > 0 ? '<div style="color:var(--muted);font-size:12px;margin:2px 0 0">Cash or a check pays ' + money(sub) + ' \u2014 the fee is only on a card, and it is shown to him by name.</div>' : '') +
+    '<div class="field" style="margin:12px 0 0"><label>Deposit to start (leave empty for none)</label>' +
+      '<input class="fj-money" data-k="deposit" inputmode="decimal" value="' + esc(f.deposit || '') + '" placeholder="0.00"></div>' +
+    (dep > 0
+      ? row('Deposit to begin', money(dep), false, true) +
+        row('Left on completion', money(sub + fee - dep > 0 ? sub + fee - dep : 0), false, true)
+      : '') +
+    (lines.some(function (l) { return l.alts.length; })
+      ? '<div style="margin-top:10px;padding-top:8px;border-top:1px solid var(--line)">' +
+          '<div class="eyebrow" style="margin-bottom:5px">Other ways, priced separately</div>' +
+          lines.map(function (l) {
+            return l.alts.map(function (x) { return row(esc(l.name) + ' \u00b7 ' + esc(x.name), money(x.price), false, true); }).join('');
+          }).join('') +
+          '<div style="color:var(--muted);font-size:12px;margin-top:4px">These are instead of the line above, so they are not in the total.</div>' +
+        '</div>'
+      : '') +
+  '</div>';
+}
+function fjPriceRowHTML(f, id, a) {
+  var r = fjSeedPrice(f, id, a.name), t = fjLineTotal(r);
+  return '<div class="row" style="gap:8px;align-items:flex-end;margin:9px 0 2px">' +
+      '<div class="field" style="flex:0 0 72px;margin-bottom:0"><label>Qty</label>' +
+        '<input class="fj-money" data-fj="' + esc(id) + '" data-k="qty" inputmode="decimal" value="' + esc(r.qty || '') + '" placeholder="1"></div>' +
+      '<div class="field" style="flex:1;margin-bottom:0"><label>Price ($)</label>' +
+        '<input class="fj-money" data-fj="' + esc(id) + '" data-k="price" inputmode="decimal" value="' + esc(r.price || '') + '" placeholder="0.00"></div>' +
+      '<div style="flex:0 0 auto;padding-bottom:9px;text-align:right;min-width:74px">' +
+        '<div style="color:var(--muted);font-size:11px;font-family:var(--mono)">LINE</div>' +
+        '<div data-line="' + esc(id) + '" style="color:var(--ember);font-weight:700;font-size:16px">' + money(t) + '</div></div>' +
+    '</div>';
+}
 function fjAltBlockHTML(id, r) {
   var alts = r.alts || [];
   return '<div style="margin-top:12px">' +
@@ -15157,7 +15318,8 @@ function fjAltBlockHTML(id, r) {
           '<button class="btn btn-ghost" data-act="fj-alt-del" data-arg="' + esc(id + '|' + i) + '" aria-label="Remove this alternative" style="flex:0 0 30px;min-height:30px;height:30px;width:30px;padding:0;border-radius:15px;font-size:13px;color:var(--defect);border-color:var(--defect)">\u2715</button>' +
         '</div>' +
         '<input class="fj-alt" data-fj="' + esc(id) + '" data-ai="' + i + '" data-k="name" placeholder="Call it something \u2014 e.g. Stainless liner" value="' + esc(alt.name || '') + '" style="width:100%;box-sizing:border-box;padding:9px 11px;border:1px solid var(--rule);border-radius:8px;font-size:15px;margin-bottom:6px">' +
-        '<input class="fj-alt" data-fj="' + esc(id) + '" data-ai="' + i + '" data-k="note" placeholder="Why she might want this one instead\u2026" value="' + esc(alt.note || '') + '" style="width:100%;box-sizing:border-box;padding:9px 11px;border:1px solid var(--rule);border-radius:8px;font-size:15px">' +
+        '<input class="fj-alt" data-fj="' + esc(id) + '" data-ai="' + i + '" data-k="note" placeholder="Why she might want this one instead\u2026" value="' + esc(alt.note || '') + '" style="width:100%;box-sizing:border-box;padding:9px 11px;border:1px solid var(--rule);border-radius:8px;font-size:15px;margin-bottom:6px">' +
+        '<input class="fj-alt" data-fj="' + esc(id) + '" data-ai="' + i + '" data-k="price" inputmode="decimal" placeholder="What this one costs ($)" value="' + esc(alt.price || '') + '" style="width:100%;box-sizing:border-box;padding:9px 11px;border:1px solid var(--rule);border-radius:8px;font-size:15px">' +
       '</div>';
     }).join('') +
     '<button class="btn btn-ghost" data-act="fj-alt-add" data-arg="' + esc(id) + '" style="width:100%;border-style:dashed;min-height:44px;font-size:14px">+ Another way to do this</button>' +
@@ -15222,6 +15384,7 @@ function viewFjForm() {
         }).join('') +
         fjPhotoStrip(id, r.photos) +
         '<input class="fj-note" data-fj="' + esc(id) + '" placeholder="' + (f.kind === 'invoice' ? 'What you did, in a few words…' : 'What you found and what it needs…') + '" value="' + esc(r.note || '') + '" style="width:100%;padding:10px 11px;border:1px solid var(--rule);border-radius:8px;font-size:15px">' +
+        fjPriceRowHTML(f, id, a) +
         (a.m.length && showM ? '<div style="margin-top:10px"><div class="eyebrow" style="margin-bottom:6px">Measurements (for us, not for the customer)</div>' +
           '<div class="row" style="flex-wrap:wrap;gap:8px">' + a.m.map(function (label, i) {
             return '<div class="field" style="flex:1 1 46%;margin-bottom:0"><label>' + esc(label) + '</label><input class="fj-m" data-fj="' + esc(id) + '" data-mi="' + i + '" value="' + esc((r.m && r.m[label]) || '') + '"></div>';
@@ -15242,6 +15405,7 @@ function viewFjForm() {
         fjPhotoStrip('_after', f.afterPhotos) + '</div>';
   }
   if (f.kind === 'inspection') body += fjFeeCardHTML(f);
+  else body += '<div id="fj_tot">' + fjTotalsHTML(f) + '</div>';
   body += '<div class="eyebrow" style="margin:14px 2px 8px">Anything else</div>' +
     '<div class="card">' + fjPhotoStrip('_extra', f.extraPhotos) +
       '<textarea class="fj-note" data-fj="_extra" placeholder="Anything else worth writing down…" style="width:100%;min-height:70px;padding:10px 11px;border:1px solid var(--rule);border-radius:8px;font-size:15px">' + esc(f.extraNote || '') + '</textarea></div>';
@@ -15315,11 +15479,35 @@ function wireFj() {
   root.querySelectorAll('.fj-title').forEach(function (el) {
     el.addEventListener('input', function () { fjRow(f, el.getAttribute('data-fj')).title = el.value; fjDraftSave(); });
   });
+  /* Money typed anywhere on the page \u2014 a line price, a quantity, the
+     deposit \u2014 redraws the foot of the page and that line's own total, and
+     nothing else. A full render here would take the caret with it. */
+  function fjMoneyPaint() {
+    var tot = root.querySelector('#fj_tot');
+    if (tot) tot.innerHTML = fjTotalsHTML(f);
+  }
+  root.querySelectorAll('.fj-money').forEach(function (el) {
+    el.addEventListener('input', function () {
+      var id = el.getAttribute('data-fj'), k = el.getAttribute('data-k');
+      if (!id) { f[k] = el.value; }
+      else {
+        var r = fjRow(f, id);
+        r[k] = el.value;
+        if (k === 'price') r.priceSeeded = true;
+        var line = el.parentNode && el.parentNode.parentNode;
+        var out = line && line.querySelector('[data-line]');
+        if (out) out.textContent = money(fjLineTotal(r));
+      }
+      fjMoneyPaint();
+      fjDraftSave();
+    });
+  });
   root.querySelectorAll('.fj-alt').forEach(function (el) {
     el.addEventListener('input', function () {
       var r = fjRow(f, el.getAttribute('data-fj')), i = Number(el.getAttribute('data-ai'));
       if (!r.alts[i]) return;
       r.alts[i][el.getAttribute('data-k')] = el.value;
+      if (el.getAttribute('data-k') === 'price') fjMoneyPaint();
       fjDraftSave();
     });
   });
