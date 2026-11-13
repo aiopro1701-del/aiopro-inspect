@@ -1327,7 +1327,7 @@ var M = 43, PW = 612, PH = 792, CONTENT = PW - M * 2;
 var APP_DIR = (/^https?:$/.test(location.protocol) && location.hostname) ? location.origin + location.pathname.replace(/[^\/]*$/, '') : 'https://aiopro1701-del.github.io/aiopro-inspect/';
 var IS_BETA = /\/beta\/$/.test(APP_DIR);
 /* Bumped on every deploy, so a screenshot of Settings says which build is on the phone. */
-var APP_BUILD = '2026-11-13 22:30 UTC';
+var APP_BUILD = '2026-11-14 02:05 UTC';
 /* Refael's field knowledge — the bot answers from this. Kept word-for-word stable so it is cached (cheap). */
 var AIO_KB = "AIO PRO CHIMNEY \u2014 FIELD KNOWLEDGE (from the owner, Refael Maman). Use this to answer the technician the way Refael would.\n\nWHO WE ARE\n- AIOPRO LLC, trading as AIO Pro Chimney. 1505 North and South Rd, St. Louis, MO 63130. Phone (314) 379-2871. Email Aiopro1701@gmail.com. aioprochimney.com.\n- Licensed general contractor, insured, CSIA member, NCSG member, BBB accredited. Greater St. Louis; east as far as Belleville and O'Fallon, IL. A Kansas City employee can take Kansas City jobs.\n- Owner: Refael Maman. The office = Refael.\n\nWHO USES THE APP\n- Owner (Refael): everything.\n- Technician: visits the house, finds the problem, prices it, presents it, closes it. Most of the work is technician and customer face to face. The technician is still learning and calls Refael on most jobs; that is fine and expected.\n- Installer: does the booked job. Needs to know when and where, what to bring, and what the technician found (photos + scope).\n\nWHAT THE TECHNICIAN MAY AND MAY NOT SAY\n- Prices: he may give prices and approximate (+/-) ranges, and he may adjust a price or give a discount (see Selling).\n- Dates: never promise a date. Scheduling always goes through the office: \"Refael will call you to book it.\"\n- Warranty: never promise warranty terms. \"The warranty is written on the estimate; Refael confirms it.\"\n- If he does not know something: say \"Let me confirm that with Refael\" and call him. Never guess about safety, code, or warranty.\n- Never run down another company. Never argue with the customer.\n\nMONEY RULES\n- Minimum service charge is usually $49. Sometimes the estimate visit is free, but not often.\n- Deposit: 20% to 40% of the job, depending on the size of the job. Balance on completion unless agreed otherwise.\n- Estimate prices hold for 30 days.\n- Price goes up with: roof pitch (steep = harder/slower, may need extra safety gear), job difficulty, how hard the chimney is to reach (height, stories, trees, lift or scaffold needed), and how much material is needed (liner length, size of the chimney top, number of flues).\n- Access equipment (boom lift, scaffold) is priced as its own line so the customer sees it.\n- Anything that may change once opened up: say so in the scope notes \u2014 \"if we find more once it is opened, we stop and agree the difference with you before continuing.\"\n\nHOW REFAEL WRITES AN ESTIMATE\n- One scope by default: the work he recommends. Add Option B (or C) ONLY when the customer has a real choice (keep the stove vs. new stove, stainless vs. galvanized, vent-free vs. vented gas). Each option has its own full total. \"Choose one \u2014 you do not need both.\"\n- Add-ons the customer can take or leave (a vent cap, a second liner) are listed separately as optional.\n- Each line: a clear name, 3-7 short scope lines specific to this house (sizes, lengths, where), and a price.\n- Explain the cause in plain words (\"a square damper cannot seal a round liner\"), then the fix. Safety items first and clearly: \"This one should not wait.\"\n- Scope notes say what is NOT included and what the customer prepares.\n- Tone: plain, confident, respectful. No jargon, no code numbers, no sales filler.\n\nSELLING (coach the technician)\n- Before the price: show the customer the photos, explain what is wrong, why it happened, and what happens if it waits.\n- Present the recommended scope first, with the total. If there is a real choice, present Option A and Option B side by side.\n- \"It's too expensive\": 1) Acknowledge (\"I understand, it's a real number.\"). 2) Ask (\"What matters most to you \u2014 the lowest price today, or fixing it so it doesn't come back?\" / \"What budget did you have in mind?\"). 3) Advise:\n  a) Split it: the safety / water-stopping part now, the rest later (becomes Option A / B).\n  b) Show the value: materials, labor, cleanup, photos, written warranty, licensed and insured, CSIA/NCSG.\n  c) Deposit 20-40% now, balance when done.\n  d) A discount is a closing tool, tied to a decision today or booking now. Give it once, clearly (\"If we book it today I can take $X off\").\n- \"I need to think about it\": ask what is holding them back; offer to email the estimate now with the Sign button; tell them Refael will follow up.\n- \"I'm getting other quotes\": that's fine; point to the written scope and warranty so they compare the same work. Never bash competitors.\n- Close: ask for the decision. \"Shall I send it to your email so you can sign it on your phone?\"\n\nSAFETY \u2014 STOP AND TELL THE CUSTOMER\n- Gas leak found (bubbles on leak test, smell): the appliance must not be used until repaired; if they smell gas, shut the supply and call the gas utility. Call Refael.\n- Blocked flue (debris, animal nest, collapsed tile) on a furnace or water heater: do not operate that appliance until cleared/lined. CO risk.\n- Unlined or badly cracked flue on a wood fireplace: do not use until repaired.\n- Disconnected or rusted-through vent connector: do not operate.\n- Creosote glaze or heavy buildup: no fires until swept.\n- Say it in one calm sentence, write it on the estimate, and call Refael.\n\nWHAT TO CHECK AND PHOTOGRAPH (standard order, bottom up)\n- First find out what system it is (wood fireplace, gas logs in a fireplace, direct-vent gas, vent-free gas, insert/stove, furnace or water heater flue) and check only the parts that system has. Vent-free gas has no flue: no damper, liner or roof checks.\n- Level 1: inside the home and from the ground only \u2014 no roof or attic. Level 2 adds the roof and the top when it is safe, and a camera scan of the flue. We do not go into attics, basements or crawl spaces.\n1. Front of the house (cover photo), then the appliance / fireplace.\n2. Firebox: cracks, gaps in joints, missing panels.\n3. Damper and throat: opens/closes and seals; damper type vs. flue shape.\n4. Smoke chamber: voids, rough/unparged brick, creosote.\n5. Flue and liner: camera scan if possible; clay tile cracks, offsets, missing mortar; liner size and material; debris.\n6. Appliance vents (furnace/water heater): connector condition, slope, clearance (single-wall 6\", B-vent 1\"), draft.\n8. Roof and exterior: flashing, cricket (chimney wider than 30\"), crown cracks, cap/spark arrestor, chase cover rust, brick and mortar, height (3-2-10 rule).\n9. Measurements that set the price: flue size (inside dimensions), liner length (roofline to appliance + above the top), chimney top size (for cap/chase cover), number of flues, stories, roof pitch, access.\n\nHOW TO MEASURE (short)\n- Liner length: from the appliance connection (or smoke chamber) to the top of the flue tile + about 1 ft; count stories (about 10 ft each) if you cannot measure directly.\n- Flue size: inside width x depth of the clay tile (or diameter for round); the liner is sized to the appliance outlet.\n- Chase cover / cap: outside length x width of the top (crown or chase), plus the flue tile height above the crown.\n- Chimney height above the roof: at least 3 ft above where it passes the roof and 2 ft higher than anything within 10 ft.\n\nWHEN TO CALL REFAEL\n- Any safety hazard, any job over a few thousand dollars, anything not in the price list, anything structural, any date/warranty question, any customer who is unhappy, and whenever unsure.";
 /* Photos keep their real shape: height/width of an image (0.75 if unknown). */
@@ -3563,13 +3563,13 @@ function dayStopHTML(r, n, total) {
 }
 
 function dayBlockHTML() {
-  if (!isTech()) return '';
+  if (!techSurface()) return '';
   var tj = tjStore();
   if (!tj.loaded && !tj.busy) tjLoad();
   var d = dayStore();
   if (!d.loaded && !d.busy) dayLoad();
   var today = isoToday();
-  var mine = (tj.rows || []).filter(function (r) { return String(r.day).slice(0, 10) === today; })
+  var mine = tjMine(tj.rows).filter(function (r) { return String(r.day).slice(0, 10) === today; })
     .sort(function (a, b) { return String(a.start_time || '').localeCompare(String(b.start_time || '')); });
   if (!mine.length) return '';
   var left = mine.filter(function (r) { return dayStage(r.job_key || r.id) !== 'closed'; }).length;
@@ -5215,6 +5215,121 @@ function dayEvents(iso) {
     .sort(function (a, b) { return (a.time || '').localeCompare(b.time || ''); });
 }
 
+/* \u2500\u2500 The day as a shape \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
+   A list says what is on. It does not say that two men are out at ten and
+   nobody is out at two. Side by side on an hour rail, the holes and the
+   collisions are the first thing the eye lands on.
+
+   Jobs that overlap are put in their own columns rather than stacked, so a
+   clash reads as a clash and not as one job hiding another. */
+var TL_MIN_PX = 1.15;          /* a minute of the day, in pixels */
+var TL_DEFAULT_MINS = 90;      /* when nobody set an end time */
+function tlMins(v) { return etaParseHM(v); }
+function tlSpan(e) {
+  var a = tlMins(e.time);
+  if (a == null) return null;
+  var b = tlMins(e.endTime);
+  if (b == null || b <= a) b = a + TL_DEFAULT_MINS;
+  return { from: a, to: b };
+}
+/* Put each job in the leftmost column where it does not touch what is
+   already there. Greedy is right here: the list is in time order, so the
+   first free column is the one a person would pick. */
+function tlLanes(items) {
+  var ends = [];
+  items.forEach(function (it) {
+    var placed = -1;
+    for (var i = 0; i < ends.length; i++) {
+      if (it.from >= ends[i]) { placed = i; break; }
+    }
+    if (placed < 0) { ends.push(it.to); placed = ends.length - 1; }
+    else ends[placed] = it.to;
+    it.lane = placed;
+  });
+  return ends.length || 1;
+}
+function tlBuild(jobs) {
+  var timed = [], loose = [];
+  jobs.forEach(function (e) {
+    var sp = tlSpan(e);
+    if (!sp) { loose.push(e); return; }
+    timed.push({ ev: e, from: sp.from, to: sp.to });
+  });
+  timed.sort(function (a, b) { return a.from - b.from || a.to - b.to; });
+  var lanes = tlLanes(timed);
+  var first = timed.length ? timed[0].from : 8 * 60;
+  var last = timed.reduce(function (m, it) { return Math.max(m, it.to); }, first + 60);
+  /* Whole hours top and bottom, so the rail reads like a clock. */
+  var top = Math.floor(first / 60) * 60, bot = Math.ceil(last / 60) * 60;
+  if (bot - top < 240) bot = top + 240;
+  return { items: timed, loose: loose, lanes: lanes, top: top, bot: bot };
+}
+function tlGapsHTML(t) {
+  /* A gap only counts between two jobs, and only when it is long enough to
+     put something in. Anything shorter is a drive, not a hole. */
+  var out = [], byTime = t.items.slice().sort(function (a, b) { return a.from - b.from; });
+  var reach = null;
+  byTime.forEach(function (it) {
+    if (reach != null && it.from - reach >= 60) out.push({ from: reach, to: it.from });
+    reach = reach == null ? it.to : Math.max(reach, it.to);
+  });
+  return out;
+}
+function dayTimelineHTML(jobs) {
+  if (!jobs.length) return '';
+  var t = tlBuild(jobs);
+  if (!t.items.length) return '';
+  var H = Math.round((t.bot - t.top) * TL_MIN_PX);
+  var rail = '';
+  for (var m = t.top; m <= t.bot; m += 60) {
+    var y = Math.round((m - t.top) * TL_MIN_PX);
+    rail += '<div style="position:absolute;left:0;right:0;top:' + y + 'px;height:0;border-top:1px solid var(--line)"></div>' +
+      '<div style="position:absolute;left:0;top:' + (y - 7) + 'px;width:52px;text-align:right;' +
+        'font-family:var(--mono);font-size:10.5px;color:var(--muted)">' + esc(etaClock(m)) + '</div>';
+  }
+  var gaps = tlGapsHTML(t).map(function (g) {
+    var y = Math.round((g.from - t.top) * TL_MIN_PX), h = Math.round((g.to - g.from) * TL_MIN_PX);
+    return '<div style="position:absolute;left:60px;right:0;top:' + y + 'px;height:' + h + 'px;' +
+      'border:1px dashed var(--rule);border-radius:8px;display:flex;align-items:center;justify-content:center;' +
+      'color:var(--muted);font-size:11px;font-family:var(--mono)">' + Math.round((g.to - g.from) / 60 * 10) / 10 + 'h free</div>';
+  }).join('');
+  var blocks = t.items.map(function (it) {
+    var e = it.ev, who = tjPerformerOf(e), col = tjColorFor(who);
+    var y = Math.round((it.from - t.top) * TL_MIN_PX);
+    var h = Math.max(26, Math.round((it.to - it.from) * TL_MIN_PX) - 2);
+    var w = 100 / t.lanes;
+    var done = clStore().byJob[clKey(e)];
+    return '<button class="card-tap" data-act="cal-open" data-arg="' + esc(e.acct + '|' + e.id) + '" ' +
+      'style="position:absolute;top:' + y + 'px;height:' + h + 'px;' +
+      'left:calc(60px + (100% - 60px) * ' + (it.lane * w / 100) + ');width:calc((100% - 60px) * ' + (w / 100) + ' - 3px);' +
+      'background:var(--mortar);border:1px solid var(--rule);border-left:3px solid ' + col + ';border-radius:8px;' +
+      'padding:4px 6px;text-align:left;overflow:hidden;color:inherit">' +
+      '<div style="font-family:var(--mono);font-size:10px;color:var(--muted)">' + esc(e.time || '') +
+        (done ? ' \u00b7 \u2713' : '') + '</div>' +
+      '<div style="font-size:12.5px;font-weight:650;line-height:1.25;overflow:hidden">' + esc(e.title || 'Job') + '</div>' +
+      (h > 54 && e.location ? '<div style="font-size:11px;color:var(--muted);overflow:hidden">' + esc(String(e.location).split(',')[0]) + '</div>' : '') +
+    '</button>';
+  }).join('');
+  var people = {};
+  t.items.forEach(function (it) { var w = tjPerformerOf(it.ev); people[tjPerformerName(w) || 'Unassigned'] = tjColorFor(w); });
+  var key = Object.keys(people).map(function (n) {
+    return '<span style="display:inline-flex;align-items:center;gap:5px;font-size:12px;color:var(--muted)">' +
+      '<span style="width:9px;height:9px;border-radius:2px;background:' + people[n] + '"></span>' + esc(n) + '</span>';
+  }).join('');
+  return '<div class="card" style="padding:12px 12px 14px">' +
+    '<div class="row" style="justify-content:space-between;align-items:baseline;gap:10px;margin-bottom:10px">' +
+      '<div class="eyebrow" style="margin:0">The day</div>' +
+      (t.lanes > 1 ? '<span style="font-size:11.5px;color:var(--muted)">' + t.lanes + ' at once</span>' : '') +
+    '</div>' +
+    (key ? '<div class="row" style="gap:12px;flex-wrap:wrap;margin-bottom:10px">' + key + '</div>' : '') +
+    '<div style="position:relative;height:' + H + 'px">' + rail + gaps + blocks + '</div>' +
+    (t.loose.length
+      ? '<div style="margin-top:10px;font-size:12px;color:var(--muted)">' + t.loose.length +
+        ' with no set hour, below.</div>'
+      : '') +
+  '</div>';
+}
+
 function viewDay() {
   var iso = state.dayISO || isoToday();
   var evs = dayEvents(iso), cl = clStore(), today = isoToday();
@@ -5222,6 +5337,7 @@ function viewDay() {
 
   /* Jobs, each with who has it and whether the money came in. */
   var jobs = evs.filter(clIsJob), errands = evs.filter(function (e) { return !clIsJob(e); });
+  var timeline = dayTimelineHTML(jobs);
   var jobsHTML = jobs.map(function (e) {
     var k = clKey(e), done = cl.byJob[k], who = tjPerformerOf(e), col = tjColorFor(who);
     var pill = done
@@ -5292,7 +5408,8 @@ function viewDay() {
         '<div class="sub">' + jobs.length + ' job' + (jobs.length === 1 ? '' : 's') + (iso === today ? ' · today' : '') + '</div></div>' +
       '<button class="iconbtn" data-act="day-prev">‹</button><button class="iconbtn" data-act="day-next">›</button></div>' +
     '<div class="screen">' +
-      '<div class="eyebrow">Jobs</div>' +
+      timeline +
+      '<div class="eyebrow"' + (timeline ? ' style="margin-top:16px"' : '') + '>Jobs</div>' +
       (jobsHTML || '<div class="empty" style="padding:12px">No jobs on this day.</div>') +
       '<div class="eyebrow" style="margin-top:16px">To sort out</div>' + todoHTML +
       (stand ? '<div class="eyebrow" style="margin-top:16px">The crew today</div>' + stand : '') +
@@ -6032,9 +6149,32 @@ function tjPhone(text) {
    localeCompare puts punctuation before digits, so the sentinel is 99:99
    and the comparison is a plain one. */
 function tjTimeKey(r) { return r.start_time || '99:99'; }
+/* \u2500\u2500 The owner, working as one of his own men \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
+   He wanted the technician's screens inside his own app so he can run his
+   own jobs through them and feel what the crew feels.
+
+   The danger is the data, not the screens. A technician's phone is sent
+   only his own rows by the server; the owner's phone is sent EVERY man's.
+   So the surface opens, and the rows are cut down to his own key \u2014 Dan's
+   and Omi's work never appears on a screen called "my day". */
+function asTech() { try { return localStorage.getItem('aio-as-tech') === '1'; } catch (e) { return false; } }
+function asTechSet(on) { try { localStorage.setItem('aio-as-tech', on ? '1' : '0'); } catch (e) {} }
+function canAsTech() { return !!ownerKey() && !isOffice(); }
+/* The technician SURFACE. Never use this for a permission: what he is
+   allowed to see is still decided by isTech()/isOffice()/ownerKey(). */
+function techSurface() { return isTech() || (canAsTech() && asTech()); }
+/* His own jobs and nobody else's. A technician's list is already his, so
+   it passes straight through; the owner's is filtered to his own key, and
+   with no key at all nothing is his. */
+function tjMine(rows) {
+  if (isTech()) return rows || [];
+  var me = myTechId();
+  if (!me) return [];
+  return (rows || []).filter(function (r) { return r.tech_id === me; });
+}
 function tjDayRows(iso) {
   var seen = {};
-  return (tjStore().rows || []).filter(function (r) {
+  return tjMine(tjStore().rows).filter(function (r) {
     if (r.day !== iso || seen[r.id]) return false;
     seen[r.id] = 1; return true;
   }).sort(function (a, b) {
@@ -7051,7 +7191,7 @@ function viewHome() {
       '</div>' +
       /* For a man in the field the day comes before the menu. Everything
          below this is a way of getting somewhere; this is the work. */
-      (isTech() ? '<div style="margin:0 0 18px">' + dayBlockHTML() + '</div>' : '') +
+      (techSurface() ? '<div style="margin:0 0 18px">' + dayBlockHTML() + '</div>' : '') +
       '<div class="lbl">WORKSPACE</div>' + tiles +
       '</div>';
     var todayBlk = '<div class="eyebrow">Today · ' + esc(fmtDay(today)) + '</div>' +
@@ -7203,6 +7343,21 @@ function viewSettings() {
           '<button class="btn btn-ghost" data-act="export-data">Export backup</button>' +
           '<button class="btn btn-ghost" data-act="import-data">Import</button>' +
         '</div></div>' +
+      (canAsTech()
+        ? '<div class="card"><div class="eyebrow">Work it yourself</div>' +
+            '<div style="font-size:14px;line-height:1.55;margin-bottom:10px">' +
+              'Turn this on and you get the technician\u2019s screens on your own jobs \u2014 the same day list, the same ' +
+              '\u201con my way\u201d, the same closing walk. It is how you feel what they feel before you change it for them.' +
+            '</div>' +
+            '<div style="font-size:12.5px;color:var(--muted);margin-bottom:10px">' +
+              'Only the jobs on your own key show there. Nothing of Dan\u2019s or Omi\u2019s appears on a screen called \u201cmy day\u201d, ' +
+              'and this changes nothing they see.' +
+            '</div>' +
+            '<div class="row" style="gap:8px">' +
+              '<button class="btn ' + (asTech() ? 'btn-gold btn-primary' : 'btn-ghost') + '" data-act="as-tech" data-arg="1" style="flex:1">On</button>' +
+              '<button class="btn ' + (asTech() ? 'btn-ghost' : 'btn-gold btn-primary') + '" data-act="as-tech" data-arg="0" style="flex:1">Off</button>' +
+            '</div></div>'
+        : '') +
       '<div style="text-align:center;color:var(--muted);font-family:var(--mono);font-size:11px;margin-top:2px">AIO Pro Inspect · build ' + APP_BUILD + '</div>' +
       updStatusHTML() +
     '</div>' +
@@ -12783,32 +12938,40 @@ function updStatusHTML() {
    version of this strip handed a technician a button straight to the owner's
    screen \u2014 he has never had a tile for it, and he must not have a tab for it
    either. The office seat has one place and so gets no strip at all. */
-function navSecond() {
-  if (isOffice()) return null;
-  if (isTech()) return { view: 'techday', act: 'tech-day', label: 'My day' };
-  return { view: 'schedule', act: 'schedule', label: 'Schedule' };
+var NAV_ICO = {
+  home: '<path d="M3.6 10.7L12 3.8l8.4 6.9"/><path d="M5.9 9.6V20h12.2V9.6"/>',
+  cal: '<rect x="4" y="5" width="16" height="15" rx="2"/><path d="M4 9.5h16M8.5 3v4M15.5 3v4"/>',
+  list: '<path d="M9 6h11M9 12h11M9 18h11"/><path d="M4.5 6l.9.9L7.2 5M4.5 12l.9.9L7.2 11M4.5 18l.9.9L7.2 17"/>'
+};
+/* The places a man moves BETWEEN. The office has one. A technician has his
+   day. The owner has the schedule \u2014 and, once he turns on working as a
+   technician, his own day as well, because taking the schedule off his
+   strip to make room would be a straight loss to him. */
+function navTabs() {
+  var home = { view: 'home', act: 'nav', label: 'Home', ico: NAV_ICO.home };
+  if (isOffice()) return [];
+  if (isTech()) return [home, { view: 'techday', act: 'tech-day', label: 'My day', ico: NAV_ICO.list }];
+  var out = [home];
+  if (canAsTech() && asTech()) out.push({ view: 'techday', act: 'tech-day', label: 'My day', ico: NAV_ICO.list });
+  out.push({ view: 'schedule', act: 'schedule', label: 'Schedule', ico: NAV_ICO.cal });
+  return out;
 }
 function navHere() {
-  var v = state.view || 'home', sec = navSecond();
+  var v = state.view || 'home', tabs = navTabs();
+  if (!tabs.length) return '';
   if (v === 'home') return 'home';
-  if (sec && v === sec.view) return sec.view;
+  for (var i = 0; i < tabs.length; i++) if (tabs[i].view === v) return v;
   return '';
 }
 function navBarHTML() {
-  var here = navHere(), sec = navSecond();
-  if (!here || !sec || state.picking) return '';
-  /* The same drawn icons the tiles use. A unicode glyph renders as whatever
-     the phone happens to have and looks nothing like the rest of the app. */
-  function tab(v, act, label, path) {
-    return '<button data-act="' + esc(act) + '" data-arg="' + esc(v) + '" class="' + (here === v ? 'on' : '') + '">' +
+  var here = navHere(), tabs = navTabs();
+  if (!here || tabs.length < 2 || state.picking) return '';
+  return '<div class="navbar">' + tabs.map(function (t) {
+    return '<button data-act="' + esc(t.act) + '" data-arg="' + esc(t.view) + '" class="' + (here === t.view ? 'on' : '') + '">' +
       '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" ' +
-        'stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + path + '</svg>' +
-      esc(label) + '</button>';
-  }
-  return '<div class="navbar">' +
-    tab('home', 'nav', 'Home', '<path d="M3.6 10.7L12 3.8l8.4 6.9"/><path d="M5.9 9.6V20h12.2V9.6"/>') +
-    tab(sec.view, sec.act, sec.label, '<rect x="4" y="5" width="16" height="15" rx="2"/><path d="M4 9.5h16M8.5 3v4M15.5 3v4"/>') +
-    '</div>';
+        'stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + t.ico + '</svg>' +
+      esc(t.label) + '</button>';
+  }).join('') + '</div>';
 }
 function render() {
   var html;
@@ -13249,6 +13412,14 @@ root.addEventListener('click', function (e) {
     case 'cl-sqlink': sqMakeLink(); break;
     case 'sq-connect': { var si = root.querySelector('#sq_tok'); if (si) sqStore().tok = si.value; sqConnect(); break; }
     case 'cl-method2': if (state.closing) { var cc = state.closing; cc.method2 = cc.method2 === arg ? '' : arg; if (!cc.method2) cc.amount2 = ''; render(); } break;
+    case 'as-tech': {
+      if (!canAsTech()) break;
+      asTechSet(arg === '1');
+      /* He may be standing on the technician day when he switches it off. */
+      if (!techSurface() && state.view === 'techday') state.view = 'home';
+      render();
+      break;
+    }
     case 'nav': {
       /* Leaving a half-finished closing by the strip would lose it quietly,
          so the strip is not drawn on those screens at all. This is only the
