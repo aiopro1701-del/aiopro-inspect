@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Paid — AIO Pro Chimney</title>
+<style>
+  :root { --paper:#F2F1EE; --ink:#15171C; --muted:#6E7076; --ok:#1D6B45; --rule:#E2E0DB; color-scheme: light; }
+  * { box-sizing: border-box; }
+  html, body { height: 100%; margin: 0; }
+  body {
+    background: var(--paper); color: var(--ink);
+    font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+    display: flex; align-items: center; justify-content: center;
+    padding-left: max(16px, env(safe-area-inset-left, 0px));
+    padding-right: max(16px, env(safe-area-inset-right, 0px));
+    padding-block: 32px;
+  }
+  .card {
+    background: #fff; border: 1px solid var(--rule); border-radius: 16px;
+    padding: 28px 24px; max-width: 420px; width: 100%; text-align: center;
+  }
+  .tick {
+    width: 56px; height: 56px; border-radius: 28px; margin: 0 auto 16px;
+    border: 2px solid var(--ok); display: flex; align-items: center; justify-content: center;
+    color: var(--ok); font-size: 28px; line-height: 1;
+  }
+  h1 { font-size: 22px; letter-spacing: -0.02em; margin: 0 0 6px; }
+  p { color: var(--muted); font-size: 15px; line-height: 1.55; margin: 0; }
+  .amt { font-size: 30px; font-weight: 700; letter-spacing: -0.02em; margin: 10px 0 2px;
+         font-variant-numeric: tabular-nums; }
+</style>
+</head>
+<body>
+  <div class="card">
+    <div class="tick" aria-hidden="true">&#10003;</div>
+    <h1>Payment received</h1>
+    <div class="amt" id="amt"></div>
+    <p id="msg">Thank you. A receipt is on its way from Square.</p>
+  </div>
+
+<script>
+/* Square sends the customer here when the card goes through. The whole point
+   of this page is the line below: it tells the app, which is holding this
+   page inside a frame, that the money is in. The technician never has to
+   decide whether it worked — he watched it, and the app knows too. */
+(function () {
+  var q = {};
+  try {
+    new URLSearchParams(location.search).forEach(function (v, k) { q[k] = v; });
+  } catch (e) {}
+
+  var el = document.getElementById('amt');
+  /* Square's own parameters vary by link type; whatever it sends is passed
+     straight on, and the app uses the figure it already asked for. */
+  if (el && q.amount) { el.textContent = '$' + q.amount; }
+
+  try {
+    if (window.parent && window.parent !== window) {
+      window.parent.postMessage({ aioPaid: true, q: q }, '*');
+      var m = document.getElementById('msg');
+      if (m) m.textContent = 'Thank you. You can hand the phone back.';
+    }
+  } catch (e) {}
+})();
+</script>
+</body>
+</html>
