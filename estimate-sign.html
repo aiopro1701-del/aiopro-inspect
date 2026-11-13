@@ -82,6 +82,21 @@ canvas{width:100%;height:200px;background:#fbfaf7;border:1.5px dashed #c9c2b5;bo
 .done img{max-width:240px;border:1px solid #cfe3d7;border-radius:8px;background:#fff;margin-top:10px}
 .center{text-align:center;padding:60px 20px;color:#777}
 .sig{margin-top:26px;border-top:1.5px solid var(--rust);padding-top:12px;font-size:14px}
+
+/* \u2500\u2500 The pay card \u2500\u2500 the first thing on the page, because paying is what
+   he opened it for. */
+.card.pay { border: 2px solid #B4431E; border-radius: 14px; padding: 16px; margin: 0 0 20px; background: #fff; }
+.card.pay .due { font-size: 34px; font-weight: 800; letter-spacing: -.02em; color: #B4431E; line-height: 1.1; margin-top: 2px; font-variant-numeric: tabular-nums; }
+.tips { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
+.tipchip { border: 1px solid #ddd6c8; background: #fff; border-radius: 10px; padding: 9px 2px; cursor: pointer;
+  font: inherit; line-height: 1.25; text-align: center; color: inherit; }
+.tipchip.on { background: #B4431E; border-color: #B4431E; color: #fff; }
+.tipchip .tb { display: block; font-weight: 700; font-size: 14px; }
+.tipchip .ts { display: block; font-size: 11px; opacity: .72; font-variant-numeric: tabular-nums; }
+.tipchip.wideish { width: 100%; font-weight: 600; font-size: 13.5px; padding: 10px 2px; }
+.tipin { width: 100%; box-sizing: border-box; margin-top: 8px; font-size: 16px; padding: 11px;
+  border: 1px solid #ddd6c8; border-radius: 10px; background: transparent; color: inherit; }
+.btn.pay-go { background: #B4431E; color: #fff; border-color: #B4431E; font-variant-numeric: tabular-nums; }
 </style>
 </head>
 <body>
@@ -145,7 +160,10 @@ canvas{width:100%;height:200px;background:#fbfaf7;border:1.5px dashed #c9c2b5;bo
     return h + '</div>';
   }
   function isInvoice() { return /invoice/i.test(String(pay.modeName || '') + ' ' + String(pay.title || '')); }
-  function payHTML() {
+  /* The line-item table. It was called payHTML too, and the pay card
+     further down the file quietly replaced it \u2014 so an invoice went out
+     with no list of what the customer was paying for. */
+  function linesHTML() {
     var li = (pay.lineItems || []).filter(function (it) { return it && (String(it.description || '').trim() || num(it.amount) || num(it.unitPrice)); });
     var h = '';
     if (li.length) {
@@ -178,7 +196,7 @@ canvas{width:100%;height:200px;background:#fbfaf7;border:1.5px dashed #c9c2b5;bo
   }
   function reportHTML() {
     var h = '';
-    if (isInvoice()) return payHTML() + (pay.summary ? '<div class="sec">Notes</div><div class="lead">' + esc(pay.summary) + '</div>' : '') + (pay.conclusion ? '<div>' + esc(pay.conclusion) + '</div>' : '');
+    if (isInvoice()) return linesHTML() + (pay.summary ? '<div class="sec">Notes</div><div class="lead">' + esc(pay.summary) + '</div>' : '') + (pay.conclusion ? '<div>' + esc(pay.conclusion) + '</div>' : '');
     if (pay.levelOfInspection) h += '<div class="sec">Level of inspection</div><div>' + esc(pay.levelOfInspection) + '</div>';
     if (pay.summary) h += '<div class="sec">In short</div><div class="lead">' + esc(pay.summary) + '</div>';
     var comps = Array.isArray(pay.components) ? pay.components : [];
@@ -193,7 +211,7 @@ canvas{width:100%;height:200px;background:#fbfaf7;border:1.5px dashed #c9c2b5;bo
       });
     }
     if (pay.conclusion) h += '<div class="sec">Conclusion</div><div class="lead">' + esc(pay.conclusion) + '</div>';
-    h += payHTML();
+    h += linesHTML();
     if (pay.limitations) h += '<div class="sec">Limitations</div><div class="terms">' + esc(pay.limitations) + '</div>';
     return h;
   }
@@ -206,7 +224,8 @@ canvas{width:100%;height:200px;background:#fbfaf7;border:1.5px dashed #c9c2b5;bo
     var inv = isRep && isInvoice();
     document.title = (inv ? 'Your Invoice' : isRep ? 'Your Inspection Report' : 'Your Estimate') + ' — ' + (c.name || 'AIO Pro Chimney');
     var title = inv ? 'Invoice' : isRep ? (pay.title || 'Chimney Inspection Report') : (pay.title ? (/estimate/i.test(pay.title) ? pay.title : pay.title + ' estimate') : 'Your estimate');
-    var h = '<h1>' + esc(title) + '</h1>';
+    var h = payHTML();
+    h += '<h1>' + esc(title) + '</h1>';
     h += '<div class="grid"><div class="k">CLIENT</div><div>' + esc(cu.name || '') + '</div>' +
       (pay.no ? '<div class="k">ESTIMATE NO.</div><div>' + esc(pay.no) + '</div>' : '') +
       (isRep && !inv && pay.modeName ? '<div class="k">INSPECTION</div><div>' + esc(pay.modeName) + '</div>' : '') +
@@ -251,13 +270,29 @@ canvas{width:100%;height:200px;background:#fbfaf7;border:1.5px dashed #c9c2b5;bo
     if (ph) ph.addEventListener('click', function (ev) { var im = ev.target.closest('img'); if (!im) return; var lb = document.createElement('div'); lb.className = 'lb'; lb.innerHTML = '<img src="' + im.src + '" alt="">'; lb.addEventListener('click', function () { lb.remove(); }); document.body.appendChild(lb); });
     var st = document.getElementById('startSign'); if (st) st.addEventListener('click', function () { openSign(true); });
     var pb = document.getElementById('payBtn'); if (pb) pb.addEventListener('click', payStart);
+    [].slice.call(document.querySelectorAll('[data-tip]')).forEach(function (el) {
+      el.addEventListener('click', function () {
+        var v = el.getAttribute('data-tip');
+        PAY.tip = (String(PAY.tip) === v && v !== 'other') ? '0' : v;
+        if (PAY.tip !== 'other') PAY.tipOther = '';
+        PAY.err = ''; render();
+      });
+    });
+    var ti = document.getElementById('tipOther');
+    if (ti) {
+      ti.addEventListener('input', function () {
+        PAY.tipOther = ti.value;
+        var b2 = document.getElementById('payBtn');
+        if (b2 && !PAY.busy) b2.textContent = 'Pay ' + money(payTotal());
+      });
+    }
     if (S && S.open) drawSign();
     updateBar();
   }
   /* Paying, once he has agreed. The amount is never sent from this page -
      the office works it out from the quote he actually signed, so nothing
      here can be edited into a different number. */
-  var PAY = { busy: false, err: '', url: '' };
+  var PAY = { busy: false, err: '', url: '', tip: '0', tipOther: '', done: false };
   /* What this document actually asks for. A card button on a document with
      nothing on it is a button that cannot work: Square will not take $0, and
      the page used to blame the customer's internet for it. The title is no
@@ -283,25 +318,61 @@ canvas{width:100%;height:200px;background:#fbfaf7;border:1.5px dashed #c9c2b5;bo
     }, 0);
     return sb - num(pay.discount) + num(pay.tax);
   }
+  /* On a phone the thing he came to do is pay, so that is the first thing
+     on the page \u2014 the amount, the tip, one button that already says the
+     total. The document itself reads underneath. Signing and paying are
+     separate and either can come first. */
+  var TIPS = [15, 18, 20];
+  function tipAmount() {
+    var due = amountDue();
+    if (PAY.tip === 'other') return Math.max(0, Math.min(num(PAY.tipOther), due));
+    var pc = Number(PAY.tip);
+    return pc > 0 ? Math.round(due * pc) / 100 : 0;
+  }
+  function payTotal() { return Math.round((amountDue() + tipAmount()) * 100) / 100; }
   function payHTML() {
     if (doc.kind === 'report' && !isInvoice()) return '';
-    if (doc.status !== 'signed') return '';
-    if (!(amountDue() > 0)) return '';
-    if (PAY.url) {
-      return '<div class="card" style="margin-top:14px"><p class="q" style="margin:0 0 8px">Pay by card</p>' +
-        '<a class="btn wide" href="' + esc(PAY.url) + '" target="_blank" rel="noopener">Open the secure card page</a>' +
-        '<p class="h" style="margin:10px 0 0">The page opens on Square, who handle the card. We never see the number.</p></div>';
+    var due = amountDue();
+    if (!(due > 0)) return '';
+    if (PAY.done) {
+      return '<div class="card pay" style="border-color:#2f7a52"><p class="q" style="margin:0;color:#2f7a52">\u2713 Paid \u2014 thank you</p>' +
+        '<p class="h" style="margin:6px 0 0">' + esc(money(payTotal())) + ' on the card. Your receipt comes from Square.</p></div>';
     }
-    return '<div class="card" style="margin-top:14px"><p class="q" style="margin:0 0 8px">Would you like to pay by card?</p>' +
-      '<p class="h" style="margin:0 0 10px">You can also pay us on the day — whichever is easier.</p>' +
-      (PAY.err ? '<p class="h" style="color:#a3362a;margin:0 0 8px">' + esc(PAY.err) + '</p>' : '') +
-      '<button class="btn wide" type="button" id="payBtn"' + (PAY.busy ? ' disabled' : '') + '>' +
-        (PAY.busy ? 'One moment…' : 'Pay by card') + '</button></div>';
+    if (PAY.url) {
+      return '<div class="card pay"><p class="q" style="margin:0 0 8px">Your card page is open</p>' +
+        '<a class="btn wide" href="' + esc(PAY.url) + '" target="_blank" rel="noopener">Pay ' + esc(money(payTotal())) + '</a>' +
+        '<p class="h" style="margin:10px 0 0">Square handle the card. We never see the number.</p></div>';
+    }
+    var who = String(pay.preparedBy || '').split(' ')[0];
+    var tipNow = tipAmount();
+    function chip(v, big, small) {
+      var on = String(PAY.tip) === String(v);
+      return '<button type="button" class="tipchip' + (on ? ' on' : '') + '" data-tip="' + esc(String(v)) + '">' +
+        '<span class="tb">' + big + '</span><span class="ts">' + small + '</span></button>';
+    }
+    return '<div class="card pay">' +
+        '<div class="k" style="letter-spacing:.08em">AMOUNT DUE</div>' +
+        '<div class="due">' + esc(money(due)) + '</div>' +
+        '<div class="k" style="margin:14px 0 7px;letter-spacing:.08em">ADD A TIP' + (who ? ' FOR ' + esc(who.toUpperCase()) : '') + '</div>' +
+        '<div class="tips">' +
+          TIPS.map(function (t) { return chip(t, t + '%', money(Math.round(due * t) / 100)); }).join('') +
+          chip('0', 'None', '&nbsp;') +
+        '</div>' +
+        '<button type="button" class="tipchip wideish' + (PAY.tip === 'other' ? ' on' : '') + '" data-tip="other" style="margin-top:6px">Another amount</button>' +
+        (PAY.tip === 'other'
+          ? '<input id="tipOther" class="tipin" inputmode="decimal" placeholder="0.00" value="' + esc(PAY.tipOther || '') + '">'
+          : '') +
+        (PAY.err ? '<p class="h" style="color:#a3362a;margin:10px 0 0">' + esc(PAY.err) + '</p>' : '') +
+        '<button class="btn wide pay-go" type="button" id="payBtn"' + (PAY.busy ? ' disabled' : '') + ' style="margin-top:12px">' +
+          (PAY.busy ? 'One moment\u2026' : 'Pay ' + money(payTotal())) + '</button>' +
+        (tipNow ? '<p class="h" style="margin:8px 0 0">' + esc(money(due)) + ' for the work and ' + esc(money(tipNow)) + ' tip.</p>' : '') +
+        '<p class="h" style="margin:8px 0 0">Card, Apple Pay or bank transfer \u2014 handled by Square.</p>' +
+      '</div>';
   }
   function payStart() {
     if (PAY.busy) return;
     PAY.busy = true; PAY.err = ''; render();
-    rpc('share_public_pay', { p_id: doc.id })
+    rpc('share_public_pay', { p_id: doc.id, p_tip: tipAmount() })
       .then(function (r) {
         PAY.busy = false;
         PAY.url = (r && r.url) || '';
@@ -326,7 +397,7 @@ canvas{width:100%;height:200px;background:#fbfaf7;border:1.5px dashed #c9c2b5;bo
     var sig = /^data:image\/png;base64,[A-Za-z0-9+\/=]+$/.test(String(doc.signature || '')) ? '<br><img src="' + doc.signature + '" alt="Signature">' : '';
     return '<div class="done">✓ Signed' + (doc.signer_name ? ' by ' + esc(doc.signer_name) : '') + (doc.sign_date ? '<br><span style="font-size:14px">Dated ' + esc(doc.sign_date) + '</span>' : '') + sig +
       '<div style="font-size:14px;color:#3d6b52;margin-top:8px">' + (doc.kind === 'report' ? 'Thank you — we have your confirmation.' : 'Thank you! We will call you to schedule the work.') + '</div></div>' +
-      payHTML();
+      '';
   }
   function updateBar() {
     if (!doc || doc.status === 'signed' || (S && S.open)) { bar.hidden = true; return; }

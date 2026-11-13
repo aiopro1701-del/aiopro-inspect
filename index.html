@@ -1338,7 +1338,7 @@ var M = 43, PW = 612, PH = 792, CONTENT = PW - M * 2;
 var APP_DIR = (/^https?:$/.test(location.protocol) && location.hostname) ? location.origin + location.pathname.replace(/[^\/]*$/, '') : 'https://aiopro1701-del.github.io/aiopro-inspect/';
 var IS_BETA = /\/beta\/$/.test(APP_DIR);
 /* Bumped on every deploy, so a screenshot of Settings says which build is on the phone. */
-var APP_BUILD = '2026-11-15 03:20 UTC';
+var APP_BUILD = '2026-11-15 05:10 UTC';
 /* Refael's field knowledge — the bot answers from this. Kept word-for-word stable so it is cached (cheap). */
 var AIO_KB = "AIO PRO CHIMNEY \u2014 FIELD KNOWLEDGE (from the owner, Refael Maman). Use this to answer the technician the way Refael would.\n\nWHO WE ARE\n- AIOPRO LLC, trading as AIO Pro Chimney. 1505 North and South Rd, St. Louis, MO 63130. Phone (314) 379-2871. Email Aiopro1701@gmail.com. aioprochimney.com.\n- Licensed general contractor, insured, CSIA member, NCSG member, BBB accredited. Greater St. Louis; east as far as Belleville and O'Fallon, IL. A Kansas City employee can take Kansas City jobs.\n- Owner: Refael Maman. The office = Refael.\n\nWHO USES THE APP\n- Owner (Refael): everything.\n- Technician: visits the house, finds the problem, prices it, presents it, closes it. Most of the work is technician and customer face to face. The technician is still learning and calls Refael on most jobs; that is fine and expected.\n- Installer: does the booked job. Needs to know when and where, what to bring, and what the technician found (photos + scope).\n\nWHAT THE TECHNICIAN MAY AND MAY NOT SAY\n- Prices: he may give prices and approximate (+/-) ranges, and he may adjust a price or give a discount (see Selling).\n- Dates: never promise a date. Scheduling always goes through the office: \"Refael will call you to book it.\"\n- Warranty: never promise warranty terms. \"The warranty is written on the estimate; Refael confirms it.\"\n- If he does not know something: say \"Let me confirm that with Refael\" and call him. Never guess about safety, code, or warranty.\n- Never run down another company. Never argue with the customer.\n\nMONEY RULES\n- Minimum service charge is usually $49. Sometimes the estimate visit is free, but not often.\n- Deposit: 20% to 40% of the job, depending on the size of the job. Balance on completion unless agreed otherwise.\n- Estimate prices hold for 30 days.\n- Price goes up with: roof pitch (steep = harder/slower, may need extra safety gear), job difficulty, how hard the chimney is to reach (height, stories, trees, lift or scaffold needed), and how much material is needed (liner length, size of the chimney top, number of flues).\n- Access equipment (boom lift, scaffold) is priced as its own line so the customer sees it.\n- Anything that may change once opened up: say so in the scope notes \u2014 \"if we find more once it is opened, we stop and agree the difference with you before continuing.\"\n\nHOW REFAEL WRITES AN ESTIMATE\n- One scope by default: the work he recommends. Add Option B (or C) ONLY when the customer has a real choice (keep the stove vs. new stove, stainless vs. galvanized, vent-free vs. vented gas). Each option has its own full total. \"Choose one \u2014 you do not need both.\"\n- Add-ons the customer can take or leave (a vent cap, a second liner) are listed separately as optional.\n- Each line: a clear name, 3-7 short scope lines specific to this house (sizes, lengths, where), and a price.\n- Explain the cause in plain words (\"a square damper cannot seal a round liner\"), then the fix. Safety items first and clearly: \"This one should not wait.\"\n- Scope notes say what is NOT included and what the customer prepares.\n- Tone: plain, confident, respectful. No jargon, no code numbers, no sales filler.\n\nSELLING (coach the technician)\n- Before the price: show the customer the photos, explain what is wrong, why it happened, and what happens if it waits.\n- Present the recommended scope first, with the total. If there is a real choice, present Option A and Option B side by side.\n- \"It's too expensive\": 1) Acknowledge (\"I understand, it's a real number.\"). 2) Ask (\"What matters most to you \u2014 the lowest price today, or fixing it so it doesn't come back?\" / \"What budget did you have in mind?\"). 3) Advise:\n  a) Split it: the safety / water-stopping part now, the rest later (becomes Option A / B).\n  b) Show the value: materials, labor, cleanup, photos, written warranty, licensed and insured, CSIA/NCSG.\n  c) Deposit 20-40% now, balance when done.\n  d) A discount is a closing tool, tied to a decision today or booking now. Give it once, clearly (\"If we book it today I can take $X off\").\n- \"I need to think about it\": ask what is holding them back; offer to email the estimate now with the Sign button; tell them Refael will follow up.\n- \"I'm getting other quotes\": that's fine; point to the written scope and warranty so they compare the same work. Never bash competitors.\n- Close: ask for the decision. \"Shall I send it to your email so you can sign it on your phone?\"\n\nSAFETY \u2014 STOP AND TELL THE CUSTOMER\n- Gas leak found (bubbles on leak test, smell): the appliance must not be used until repaired; if they smell gas, shut the supply and call the gas utility. Call Refael.\n- Blocked flue (debris, animal nest, collapsed tile) on a furnace or water heater: do not operate that appliance until cleared/lined. CO risk.\n- Unlined or badly cracked flue on a wood fireplace: do not use until repaired.\n- Disconnected or rusted-through vent connector: do not operate.\n- Creosote glaze or heavy buildup: no fires until swept.\n- Say it in one calm sentence, write it on the estimate, and call Refael.\n\nWHAT TO CHECK AND PHOTOGRAPH (standard order, bottom up)\n- First find out what system it is (wood fireplace, gas logs in a fireplace, direct-vent gas, vent-free gas, insert/stove, furnace or water heater flue) and check only the parts that system has. Vent-free gas has no flue: no damper, liner or roof checks.\n- Level 1: inside the home and from the ground only \u2014 no roof or attic. Level 2 adds the roof and the top when it is safe, and a camera scan of the flue. We do not go into attics, basements or crawl spaces.\n1. Front of the house (cover photo), then the appliance / fireplace.\n2. Firebox: cracks, gaps in joints, missing panels.\n3. Damper and throat: opens/closes and seals; damper type vs. flue shape.\n4. Smoke chamber: voids, rough/unparged brick, creosote.\n5. Flue and liner: camera scan if possible; clay tile cracks, offsets, missing mortar; liner size and material; debris.\n6. Appliance vents (furnace/water heater): connector condition, slope, clearance (single-wall 6\", B-vent 1\"), draft.\n8. Roof and exterior: flashing, cricket (chimney wider than 30\"), crown cracks, cap/spark arrestor, chase cover rust, brick and mortar, height (3-2-10 rule).\n9. Measurements that set the price: flue size (inside dimensions), liner length (roofline to appliance + above the top), chimney top size (for cap/chase cover), number of flues, stories, roof pitch, access.\n\nHOW TO MEASURE (short)\n- Liner length: from the appliance connection (or smoke chamber) to the top of the flue tile + about 1 ft; count stories (about 10 ft each) if you cannot measure directly.\n- Flue size: inside width x depth of the clay tile (or diameter for round); the liner is sized to the appliance outlet.\n- Chase cover / cap: outside length x width of the top (crown or chase), plus the flue tile height above the crown.\n- Chimney height above the roof: at least 3 ft above where it passes the roof and 2 ft higher than anything within 10 ft.\n\nWHEN TO CALL REFAEL\n- Any safety hazard, any job over a few thousand dollars, anything not in the price list, anything structural, any date/warranty question, any customer who is unhappy, and whenever unsure.";
 /* Photos keep their real shape: height/width of an image (0.75 if unknown). */
@@ -2395,7 +2395,19 @@ var CL_STEPS = {
   note:     'Anything worth writing down?',
   review:   'Check it over'
 };
+/* When an invoice was written on this job, the app already knows how it
+   ended, what it is worth and \u2014 from the ticket \u2014 what it pays. Walking a
+   man through eight questions he has already answered is the app wasting
+   his evening. The summary IS the closing then: one screen, every figure
+   on it, and any line still tappable if something is wrong. */
+function clKnown(c) {
+  if (!c) return false;
+  if (c.status !== 'paid' && c.status !== 'zero') return false;
+  if (!clPos(c.job_total)) return false;
+  return !!c.job_source;
+}
 function clStepList(c) {
+  if (clKnown(c)) return ['review'];
   var s = ['outcome'];
   if (clMoneyStatus(c.status)) {
     s.push('money', 'method');
@@ -2415,6 +2427,41 @@ function clStepList(c) {
   if (!c.fuHad && c.status !== 'cancelled' && c.status !== 'noshow') s.push('estimate');
   s.push('note', 'review');
   return s;
+}
+/* The one thing the app cannot know is what the job cost him, so it is the
+   one thing the short closing asks. Everything after it is arithmetic, and
+   he sees what he earned before he presses the button \u2014 a wrong figure is
+   caught at the door instead of on payday. */
+function clCostsCardHTML(c) {
+  var took = clPos(c.collected), parts = clPos(c.parts_amount), sub = clPos(c.sub_amount);
+  var base = took - parts - sub; if (base < 0) base = 0;
+  var rate = clRate(c), comm = Math.round(base * rate * 100) / 100;
+  var back = c.parts_paid_by === 'tech' ? parts : 0;
+  var tip = clPos(c.tip);
+  var mine = Math.round((comm + back + tip) * 100) / 100;
+  function ln(l, v, strong) {
+    return '<div class="row" style="justify-content:space-between;gap:10px;align-items:baseline;padding:' +
+      (strong ? '9px 0 0;border-top:2px solid var(--gold);margin-top:5px' : '4px 0') + '">' +
+      '<span style="flex:1;' + (strong ? 'font-weight:700' : 'color:var(--muted);font-size:13.5px') + '">' + l + '</span>' +
+      '<span style="flex:0 0 auto;' + (strong ? 'font-weight:700;font-size:17px;color:var(--ember)' : 'font-size:13.5px') + '">' + v + '</span></div>';
+  }
+  return '<div class="card">' +
+      '<div class="eyebrow">What the job cost you</div>' +
+      '<div class="row" style="gap:8px;margin-top:8px;align-items:flex-end">' +
+        '<div class="field" style="flex:1;margin-bottom:0"><label>Parts spent</label>' +
+          '<input data-model="cls.parts_amount" inputmode="decimal" value="' + esc(c.parts_amount || '') + '" placeholder="0.00"></div>' +
+        '<button class="btn ' + (c.parts_paid_by === 'tech' ? 'btn-gold btn-primary' : 'btn-ghost') + '" data-act="cl-parts" data-arg="tech" style="flex:0 0 auto;padding:0 14px">I paid</button>' +
+        '<button class="btn ' + (c.parts_paid_by === 'office' ? 'btn-gold btn-primary' : 'btn-ghost') + '" data-act="cl-parts" data-arg="office" style="flex:0 0 auto;padding:0 14px">The office</button>' +
+      '</div>' +
+      '<div style="color:var(--muted);font-size:12px;margin-top:7px">Parts come off the commission base, and what you laid out comes back to you whole.</div>' +
+      '<div style="margin-top:11px;padding-top:9px;border-top:1px solid var(--line)">' +
+        ln(esc(clRateLabel(c)) + ' of ' + money(base), money(comm)) +
+        (back ? ln('Parts back to you', '+ ' + money(back)) : '') +
+        (tip ? ln('Tip', '+ ' + money(tip)) : '') +
+        (sub ? ln('Escobar is owed', money(sub)) : '') +
+        ln('Yours on this job', money(mine), true) +
+      '</div>' +
+    '</div>';
 }
 function clStepNow(c) {
   var l = clStepList(c);
@@ -2455,8 +2502,11 @@ function clGo(step) {
       if (e) { c.err = e; render(); return; }
       if (i >= l.length - 1) return;
       c.step = l[i + 1];
+    } else if (i < 0) {
+      /* He came here from the summary to fix one line. Back belongs there. */
+      c.step = l[l.length - 1];
     } else {
-      if (i <= 0) { clLeave(); return; }
+      if (i === 0) { clLeave(); return; }
       c.step = l[i - 1];
     }
   } else if (l.indexOf(step) >= 0) {
@@ -2752,7 +2802,9 @@ function viewClosing() {
       h += clRow('Estimate given', c.fuOn ? ((c.fu.what || 'yes') + (clPos(c.fu.amount) ? ' · ' + money(clPos(c.fu.amount)) : '') + (c.fu.due ? ' · chase ' + fmtDay(c.fu.due) : '')) : 'No', 'estimate');
     }
     h += clRow('Note', c.note || '', 'note');
-    return h + '</div>';
+    h += '</div>';
+    if (moneyOn && clKnown(c)) h += clCostsCardHTML(c);
+    return h;
   }
 
   var body = step === 'outcome' ? stepOutcome()
@@ -3815,51 +3867,71 @@ function viewTechJob() {
     invoice: '<path d="M10 6h9M10 12h9M10 18h9"/><path d="M4.5 6l1 1 1.8-2M4.5 12l1 1 1.8-2M4.5 18l1 1 1.8-2"/>'
   };
 
+  /* The way in and the way to reach him, above everything else \u2014 a man
+     standing at the truck needs those two before he needs the ticket.
+     Then one row of the things he actually presses during a job, then one
+     door into the money. The ticket is reference, so it sits underneath. */
+  var stage = dayStage(r.id), nxt = DAY_NEXT[stage];
+  var map = r.location ? 'https://www.google.com/maps/dir/?api=1&destination=' + encodeURIComponent(r.location) : '';
+  function act(label, a2, arg, solid) {
+    return '<button class="btn ' + (solid ? 'btn-gold' : 'btn-ghost') + '" data-act="' + a2 + '"' +
+      (arg ? ' data-arg="' + esc(arg) + '"' : '') + ' style="flex:1 1 0;min-width:0;font-size:13.5px;padding:0 8px">' + label + '</button>';
+  }
   return '<div class="app">' +
-    '<div class="topbar"><button class="iconbtn" data-act="tj-back">\u2039</button><div style="flex:1">' +
-      '<h1>' + esc(r.title || 'Job') + '</h1>' +
+    '<div class="topbar"><button class="iconbtn" data-act="tj-back">\u2039</button><div style="flex:1;min-width:0">' +
+      '<h1 style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + esc(clTidyName(r.title) || 'Job') + '</h1>' +
       '<div class="sub">' + esc(fmtDay(r.day) + ' \u00b7 ' + when) + '</div></div></div>' +
     '<div class="screen">' +
 
       (r.location
         ? '<div class="card">' +
-            /* The address itself is the way to the map. A man looking at a
-               house reaches for the address, not for a button beside it. */
-            '<a href="https://maps.google.com/?q=' + encodeURIComponent(r.location) + '" target="_blank" rel="noopener" ' +
-              'style="display:block;font-weight:650;font-size:16px;color:inherit;text-decoration:none;unicode-bidi:plaintext">' +
-              esc(r.location) +
-              '<span style="color:var(--gold);font-size:12px;font-weight:600;margin-left:8px;white-space:nowrap">Open in Maps \u203a</span>' +
-            '</a>' +
-            '<div class="row" style="gap:8px;margin-top:10px">' +
-              '<a class="btn btn-gold" style="flex:1;text-align:center;text-decoration:none" target="_blank" rel="noopener" href="https://maps.google.com/?q=' + encodeURIComponent(r.location) + '">Maps</a>' +
+            '<div style="font-weight:650;font-size:16.5px;letter-spacing:-0.01em;unicode-bidi:plaintext">' + esc(String(r.location).split(',')[0]) + '</div>' +
+            '<div style="color:var(--muted);font-size:13px;margin-top:1px;unicode-bidi:plaintext">' + esc(String(r.location).split(',').slice(1).join(',').trim()) + '</div>' +
+            '<div class="row" style="gap:8px;margin-top:11px">' +
+              '<a class="btn btn-gold" style="flex:1;text-align:center;text-decoration:none" target="_blank" rel="noopener" href="' + esc(map) + '">Navigate</a>' +
               (phone ? '<a class="btn btn-ghost" style="flex:1;text-align:center;text-decoration:none" href="tel:' + esc(phone) + '">Call</a>' +
                        '<a class="btn btn-ghost" style="flex:1;text-align:center;text-decoration:none" href="sms:' + esc(phone) + '">Text</a>' : '') +
             '</div></div>'
         : '') +
 
-      (closed
-        ? '<div class="card" style="border-color:var(--ok)">' +
-            '<div style="font-weight:700;color:var(--ok);font-size:16px">Closed \u00b7 ' + esc(closed.status) +
+      (etaStore().job === r.id ? '<div class="card">' + etaPanelHTML(r, r.id) + '</div>' : '') +
+
+      /* One button, and only when there is a next move to make. A row of
+         buttons where some do nothing is worse than no row. */
+      (!closed && nxt && etaStore().job !== r.id
+        ? '<button class="btn btn-gold btn-wide" data-act="' + nxt.act + '" data-arg="' + esc(r.id) + '" ' +
+            'style="min-height:54px;font-size:16px;margin-bottom:12px"' + (dayStore().saving === r.id ? ' disabled' : '') + '>' +
+            esc(nxt.label) + '</button>'
+        : '') +
+
+      '<div class="card">' +
+        '<div class="row" style="align-items:baseline"><span class="eyebrow" style="flex:1;margin:0">The work</span>' +
+          '<span style="flex:0 0 auto;color:var(--muted);font-size:13px">' + esc(tjWorkLine(r)) + '</span></div>' +
+        (closed
+          ? '<div style="font-weight:700;color:var(--ok);font-size:16px;margin-top:8px">Closed \u00b7 ' + esc(closed.status) +
               (clPos(closed.collected) ? ' \u00b7 ' + money(clPos(closed.collected)) : '') + '</div>' +
-            '<button class="btn btn-ghost" data-act="cl-open" data-arg="' + esc(r.id) + '" style="width:100%;margin-top:10px">Fix the closing</button>' +
-          '</div>'
-        : '<button class="btn btn-gold btn-wide" data-act="cl-open" data-arg="' + esc(r.id) + '" ' +
-          'style="min-height:58px;font-size:17px">Close this job</button>') +
-
-      '<div class="lbl" style="margin:18px 2px 8px">START SOMETHING</div>' +
-      '<div class="tiles">' +
-        doTile('inspection', 'Inspection', ICO2.inspect) +
-        doTile('estimate', 'Estimate', ICO2.estimate) +
-        doTile('invoice', 'Invoice', ICO2.invoice) +
+            '<button class="btn btn-ghost" data-act="cl-open" data-arg="' + esc(r.id) + '" style="width:100%;margin-top:10px">Fix the closing</button>'
+          : '<button class="btn btn-gold" data-act="tj-start" data-arg="invoice" style="width:100%;margin-top:10px;min-height:54px;font-size:16px">Add what you did</button>' +
+            '<div class="row" style="gap:7px;margin-top:7px">' +
+              act('Estimate', 'tj-start', 'estimate') + act('Inspection', 'tj-start', 'inspection') +
+            '</div>' +
+            '<button class="btn btn-ghost" data-act="cl-open" data-arg="' + esc(r.id) + '" style="width:100%;margin-top:7px">Close without paperwork</button>') +
       '</div>' +
-      '<div style="color:var(--muted);font-size:12.5px;margin:8px 2px 4px">The customer and the address come across on their own \u2014 you do not type them again.</div>' +
 
-      (r.notes ? '<div class="card" style="margin-top:14px"><div class="eyebrow">What you were sent</div>' +
+      (r.notes ? '<div class="card"><div class="eyebrow">What you were sent</div>' +
         '<div style="white-space:pre-wrap;font-size:14px;line-height:1.6">' + esc(r.notes) + '</div></div>' : '') +
 
       (function () { var tev = clEventByKey(r.id); return juBlock(r.id, (tev && !tev.fromServer) ? tev : null, r.role); })() +
 
     '</div></div>';
+}
+
+/* What is already on this job, in a few words, so the card is never a
+   mystery box: papers sent, or nothing yet. */
+function tjWorkLine(r) {
+  var k = mcKey(clTidyName(r.title), r.location), c = k ? mcFind(k) : null;
+  var n = c ? c.docs.length : 0;
+  return n ? (n === 1 ? 'one paper sent' : n + ' papers sent') : 'nothing on it yet';
 }
 
 /* ───────────────────── The crew: one screen per technician ─────────────
