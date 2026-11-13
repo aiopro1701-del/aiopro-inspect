@@ -1327,7 +1327,7 @@ var M = 43, PW = 612, PH = 792, CONTENT = PW - M * 2;
 var APP_DIR = (/^https?:$/.test(location.protocol) && location.hostname) ? location.origin + location.pathname.replace(/[^\/]*$/, '') : 'https://aiopro1701-del.github.io/aiopro-inspect/';
 var IS_BETA = /\/beta\/$/.test(APP_DIR);
 /* Bumped on every deploy, so a screenshot of Settings says which build is on the phone. */
-var APP_BUILD = '2026-11-14 13:30 UTC';
+var APP_BUILD = '2026-11-14 16:40 UTC';
 /* Refael's field knowledge — the bot answers from this. Kept word-for-word stable so it is cached (cheap). */
 var AIO_KB = "AIO PRO CHIMNEY \u2014 FIELD KNOWLEDGE (from the owner, Refael Maman). Use this to answer the technician the way Refael would.\n\nWHO WE ARE\n- AIOPRO LLC, trading as AIO Pro Chimney. 1505 North and South Rd, St. Louis, MO 63130. Phone (314) 379-2871. Email Aiopro1701@gmail.com. aioprochimney.com.\n- Licensed general contractor, insured, CSIA member, NCSG member, BBB accredited. Greater St. Louis; east as far as Belleville and O'Fallon, IL. A Kansas City employee can take Kansas City jobs.\n- Owner: Refael Maman. The office = Refael.\n\nWHO USES THE APP\n- Owner (Refael): everything.\n- Technician: visits the house, finds the problem, prices it, presents it, closes it. Most of the work is technician and customer face to face. The technician is still learning and calls Refael on most jobs; that is fine and expected.\n- Installer: does the booked job. Needs to know when and where, what to bring, and what the technician found (photos + scope).\n\nWHAT THE TECHNICIAN MAY AND MAY NOT SAY\n- Prices: he may give prices and approximate (+/-) ranges, and he may adjust a price or give a discount (see Selling).\n- Dates: never promise a date. Scheduling always goes through the office: \"Refael will call you to book it.\"\n- Warranty: never promise warranty terms. \"The warranty is written on the estimate; Refael confirms it.\"\n- If he does not know something: say \"Let me confirm that with Refael\" and call him. Never guess about safety, code, or warranty.\n- Never run down another company. Never argue with the customer.\n\nMONEY RULES\n- Minimum service charge is usually $49. Sometimes the estimate visit is free, but not often.\n- Deposit: 20% to 40% of the job, depending on the size of the job. Balance on completion unless agreed otherwise.\n- Estimate prices hold for 30 days.\n- Price goes up with: roof pitch (steep = harder/slower, may need extra safety gear), job difficulty, how hard the chimney is to reach (height, stories, trees, lift or scaffold needed), and how much material is needed (liner length, size of the chimney top, number of flues).\n- Access equipment (boom lift, scaffold) is priced as its own line so the customer sees it.\n- Anything that may change once opened up: say so in the scope notes \u2014 \"if we find more once it is opened, we stop and agree the difference with you before continuing.\"\n\nHOW REFAEL WRITES AN ESTIMATE\n- One scope by default: the work he recommends. Add Option B (or C) ONLY when the customer has a real choice (keep the stove vs. new stove, stainless vs. galvanized, vent-free vs. vented gas). Each option has its own full total. \"Choose one \u2014 you do not need both.\"\n- Add-ons the customer can take or leave (a vent cap, a second liner) are listed separately as optional.\n- Each line: a clear name, 3-7 short scope lines specific to this house (sizes, lengths, where), and a price.\n- Explain the cause in plain words (\"a square damper cannot seal a round liner\"), then the fix. Safety items first and clearly: \"This one should not wait.\"\n- Scope notes say what is NOT included and what the customer prepares.\n- Tone: plain, confident, respectful. No jargon, no code numbers, no sales filler.\n\nSELLING (coach the technician)\n- Before the price: show the customer the photos, explain what is wrong, why it happened, and what happens if it waits.\n- Present the recommended scope first, with the total. If there is a real choice, present Option A and Option B side by side.\n- \"It's too expensive\": 1) Acknowledge (\"I understand, it's a real number.\"). 2) Ask (\"What matters most to you \u2014 the lowest price today, or fixing it so it doesn't come back?\" / \"What budget did you have in mind?\"). 3) Advise:\n  a) Split it: the safety / water-stopping part now, the rest later (becomes Option A / B).\n  b) Show the value: materials, labor, cleanup, photos, written warranty, licensed and insured, CSIA/NCSG.\n  c) Deposit 20-40% now, balance when done.\n  d) A discount is a closing tool, tied to a decision today or booking now. Give it once, clearly (\"If we book it today I can take $X off\").\n- \"I need to think about it\": ask what is holding them back; offer to email the estimate now with the Sign button; tell them Refael will follow up.\n- \"I'm getting other quotes\": that's fine; point to the written scope and warranty so they compare the same work. Never bash competitors.\n- Close: ask for the decision. \"Shall I send it to your email so you can sign it on your phone?\"\n\nSAFETY \u2014 STOP AND TELL THE CUSTOMER\n- Gas leak found (bubbles on leak test, smell): the appliance must not be used until repaired; if they smell gas, shut the supply and call the gas utility. Call Refael.\n- Blocked flue (debris, animal nest, collapsed tile) on a furnace or water heater: do not operate that appliance until cleared/lined. CO risk.\n- Unlined or badly cracked flue on a wood fireplace: do not use until repaired.\n- Disconnected or rusted-through vent connector: do not operate.\n- Creosote glaze or heavy buildup: no fires until swept.\n- Say it in one calm sentence, write it on the estimate, and call Refael.\n\nWHAT TO CHECK AND PHOTOGRAPH (standard order, bottom up)\n- First find out what system it is (wood fireplace, gas logs in a fireplace, direct-vent gas, vent-free gas, insert/stove, furnace or water heater flue) and check only the parts that system has. Vent-free gas has no flue: no damper, liner or roof checks.\n- Level 1: inside the home and from the ground only \u2014 no roof or attic. Level 2 adds the roof and the top when it is safe, and a camera scan of the flue. We do not go into attics, basements or crawl spaces.\n1. Front of the house (cover photo), then the appliance / fireplace.\n2. Firebox: cracks, gaps in joints, missing panels.\n3. Damper and throat: opens/closes and seals; damper type vs. flue shape.\n4. Smoke chamber: voids, rough/unparged brick, creosote.\n5. Flue and liner: camera scan if possible; clay tile cracks, offsets, missing mortar; liner size and material; debris.\n6. Appliance vents (furnace/water heater): connector condition, slope, clearance (single-wall 6\", B-vent 1\"), draft.\n8. Roof and exterior: flashing, cricket (chimney wider than 30\"), crown cracks, cap/spark arrestor, chase cover rust, brick and mortar, height (3-2-10 rule).\n9. Measurements that set the price: flue size (inside dimensions), liner length (roofline to appliance + above the top), chimney top size (for cap/chase cover), number of flues, stories, roof pitch, access.\n\nHOW TO MEASURE (short)\n- Liner length: from the appliance connection (or smoke chamber) to the top of the flue tile + about 1 ft; count stories (about 10 ft each) if you cannot measure directly.\n- Flue size: inside width x depth of the clay tile (or diameter for round); the liner is sized to the appliance outlet.\n- Chase cover / cap: outside length x width of the top (crown or chase), plus the flue tile height above the crown.\n- Chimney height above the roof: at least 3 ft above where it passes the roof and 2 ft higher than anything within 10 ft.\n\nWHEN TO CALL REFAEL\n- Any safety hazard, any job over a few thousand dollars, anything not in the price list, anything structural, any date/warranty question, any customer who is unhappy, and whenever unsure.";
 /* Photos keep their real shape: height/width of an image (0.75 if unknown). */
@@ -2391,6 +2391,9 @@ function clStepNow(c) {
    status change after it was answered. */
 function clStepErr(c, step) {
   if (step === 'outcome' && !c.status) return 'Say how it ended.';
+  if (step === 'outcome' && (c.status === 'cancelled' || c.status === 'noshow') && !String(c.offReason || '').trim()) {
+    return c.status === 'noshow' ? 'Write one line about what happened when you got there.' : 'Write one line about why it was cancelled.';
+  }
   if (step === 'money' && clNeedsMoney(c.status) && !clPos(c.collected) && !clPos(c.job_total)) {
     return c.status === 'deposit'
       ? 'How much did you take, and what is the full price? A deposit with nothing on it is not a deposit.'
@@ -2466,6 +2469,17 @@ function viewClosing() {
   }
   var bal = clPos(c.job_total) - clPos(c.collected);
 
+  /* A job he has already invoiced or quoted was not cancelled and was not a
+     no-show. Offering those next to the paperwork he just wrote is the app
+     contradicting itself, so they come off once a paper exists for it. */
+  function hasPaper() {
+    if (c.share_id) return true;
+    var a = clAddrStem(c.address);
+    if (!a) return false;
+    return ((state.crew && state.crew.list) || []).some(function (d) {
+      return clAddrStem(d.address) === a;
+    });
+  }
   function stepOutcome() {
     return '<div class="card">' +
         '<div class="eyebrow">' + esc(fmtDay(c.day)) + (c.address ? ' · ' + esc(c.address) : '') + '</div>' +
@@ -2474,7 +2488,20 @@ function viewClosing() {
       oBtn('paid', 'Closed with a price', 'The work is finished and you took the money.') +
       oBtn('deposit', 'Deposit taken', 'You took money, the work still has to be finished.') +
       oBtn('estimate', 'Estimate given', 'You quoted him. Put the estimate amount in, and what you collected — 0 if nothing.') +
-      '<div class="row" style="gap:8px;margin:8px 0 4px">' + sBtn2('cancelled', 'Cancelled') + sBtn2('noshow', 'No show') + '</div>';
+      (hasPaper()
+        ? '<div style="color:var(--muted);font-size:12.5px;margin:10px 2px 2px">' +
+            'Paperwork already went out on this one, so it was not a cancellation or a no-show.</div>'
+        : '<div class="row" style="gap:8px;margin:8px 0 4px">' + sBtn2('cancelled', 'Cancelled') + sBtn2('noshow', 'No show') + '</div>') +
+      /* Why it died is the whole value of recording that it died. */
+      (c.status === 'cancelled' || c.status === 'noshow'
+        ? '<div class="card" style="margin-top:10px;border-color:var(--gold)">' +
+            '<div class="field" style="margin-bottom:0"><label>' +
+              (c.status === 'noshow' ? 'What happened when you got there?' : 'Why was it cancelled?') + '</label>' +
+            '<input data-model="cls.offReason" value="' + esc(c.offReason || '') + '" ' +
+              'placeholder="' + (c.status === 'noshow' ? 'Nobody home, no answer on the phone' : 'He had it done by someone else') + '"></div>' +
+            '<div style="font-size:12px;color:var(--muted);margin-top:8px">One line. It is what tells you later whether to chase him again.</div>' +
+          '</div>'
+        : '');
   }
   function stepMoney() {
     return '<div class="card">' +
@@ -2488,8 +2515,12 @@ function viewClosing() {
   function stepMethod() {
     return '<div class="card">' +
         '<div class="row" style="gap:6px;margin:0 0 12px;flex-wrap:wrap">' + CL_METHODS.map(mBtn).join('') + '</div>' +
-        (clPos(c.collected) > 0
-          ? (sqPhone()
+        (clPos(c.collected) > 0 || c.method === 'card'
+          ? (clPos(c.collected) <= 0
+              ? '<div class="field"><label>How much are you charging?</label>' +
+                  '<input data-model="cls.collected" inputmode="decimal" value="' + esc(c.collected || '') + '" placeholder="0.00"></div>'
+              : '') +
+            (sqPhone()
               ? '<button class="btn btn-ghost" data-act="cl-square" style="width:100%;margin:0 0 6px">Take ' + money(clPos(c.collected)) + ' on the card with Square</button>'
               : '') +
             '<button class="btn btn-ghost" data-act="cl-sqlink" style="width:100%;margin:0 0 6px">' +
@@ -2540,11 +2571,6 @@ function viewClosing() {
           '<button class="btn ' + (c.parts_paid_by === 'tech' ? 'btn-gold btn-primary' : 'btn-ghost') + '" data-act="cl-parts" data-arg="tech" style="flex:1">I did</button>' +
           '<button class="btn ' + (c.parts_paid_by === 'office' ? 'btn-gold btn-primary' : 'btn-ghost') + '" data-act="cl-parts" data-arg="office" style="flex:1">The office</button>' +
         '</div>' +
-        '<div class="field" style="margin-top:14px"><label>Escobar on this job</label>' +
-          '<input data-model="cls.sub_amount" inputmode="decimal" value="' + esc(c.sub_amount || '') + '"></div>' +
-        (clSubSent(c.job_key)
-          ? '<div style="font-size:13px;color:var(--ok);margin:-6px 0 4px">' + esc(clSubSent(c.job_key)) + '</div>'
-          : '<div style="font-size:12px;color:var(--muted);margin:-6px 0 4px">Leave it blank if Escobar was not on this one. It comes off the total before any commission, same as parts.</div>') +
         (ownerKey() && c.method === 'cash'
           ? '<div class="field" style="margin-top:14px"><label>Cash from this job already handed to you</label>' +
               '<input data-model="cls.cash_in" inputmode="decimal" value="' + esc(c.cash_in || '') + '"></div>' +
@@ -2587,7 +2613,20 @@ function viewClosing() {
       '</div>';
   }
   function stepPlan() {
-    return '<div class="card">' + planBlockHTML(c.performed_by, c.perform_on, 'cl-who', 'cl-planday', 'cls.perform_on') + '</div>';
+    /* Escobar belongs HERE, not next to the parts on a paid invoice. He is
+       a question about work still to be done: who performs it, and what he
+       is owed for it. On a job already finished and paid he has nothing to
+       do with the money. */
+    return '<div class="card">' + planBlockHTML(c.performed_by, c.perform_on, 'cl-who', 'cl-planday', 'cls.perform_on') + '</div>' +
+      (planIsEsc(c.performed_by)
+        ? '<div class="card"><div class="eyebrow">What Escobar is owed</div>' +
+            '<div class="field" style="margin-bottom:0"><label>His price on this job</label>' +
+              '<input data-model="cls.sub_amount" inputmode="decimal" value="' + esc(c.sub_amount || '') + '"></div>' +
+            (clSubSent(c.job_key)
+              ? '<div style="font-size:13px;color:var(--ok);margin-top:8px">' + esc(clSubSent(c.job_key)) + '</div>'
+              : '<div style="font-size:12px;color:var(--muted);margin-top:8px">It comes off the total before any commission, and shows as what he is owed \u2014 never as parts.</div>') +
+          '</div>'
+        : '');
   }
   function stepEstimate() {
     return '<div class="card">' +
@@ -2635,10 +2674,11 @@ function viewClosing() {
         (bal > 0 ? clRow('Still open', money(bal), 'money') : '') +
         clRow('Paid by', c.method2 ? (c.method + ' + ' + c.method2) : (c.method || ''), 'method') +
         (clPos(c.parts_amount) ? clRow('Parts', money(clPos(c.parts_amount)) + (c.parts_paid_by === 'tech' ? ' — you paid' : c.parts_paid_by === 'office' ? ' — the office paid' : ''), 'costs') : '') +
-        (clPos(c.sub_amount) ? clRow('Escobar', money(clPos(c.sub_amount)), 'costs') : '') +
+        
         (clPos(c.collected) > 0 ? clRow('Tip', clPos(c.tip) ? money(clPos(c.tip)) : 'Nothing', 'tip') : '') +
         clRow('Came from', c.job_source === 'supplier' ? 'A dispatcher' : c.job_source === 'aio' ? 'AIO Pro' : '', 'source');
     }
+    if (c.status === 'deposit' && clPos(c.sub_amount)) h += clRow('Escobar is owed', money(clPos(c.sub_amount)), 'plan');
     if (c.status === 'deposit') h += clRow('Work still to do', (c.performed_by || '') + (c.perform_on ? ' · ' + fmtDay(c.perform_on) : ''), 'plan');
     if (!c.fuHad && c.status !== 'cancelled' && c.status !== 'noshow') {
       h += clRow('Estimate given', c.fuOn ? ((c.fu.what || 'yes') + (clPos(c.fu.amount) ? ' · ' + money(clPos(c.fu.amount)) : '') + (c.fu.due ? ' · chase ' + fmtDay(c.fu.due) : '')) : 'No', 'estimate');
@@ -2888,7 +2928,11 @@ function clSave() {
     job_source: moneyOn ? (c.job_source || '') : '',
     performed_by: c.performed_by || '',
     sold_by: c.sold_by || '',
-    note: c.note || ''
+    /* The reason a job died belongs with the job, not in a field nobody
+       reads back. It goes on the front of the note. */
+    note: ((c.status === 'cancelled' || c.status === 'noshow') && String(c.offReason || '').trim()
+            ? (c.status === 'noshow' ? 'No show: ' : 'Cancelled: ') + String(c.offReason).trim() + (c.note ? '\n' + c.note : '')
+            : (c.note || ''))
   };
   cloudRpc('closing_put', { p_key: key, p_payload: payload }).then(function (id) {
     /* Hold on to the id and put the row in the map straight away: without
@@ -6254,10 +6298,14 @@ function tjMine(rows) {
      and then his own work vanishes from his own screen. Every technician's
      work carries that technician's key, so this can never reach another
      man's job: it only picks up what is unassigned. */
-  var crew = {};
-  tjCrewAll().forEach(function (c) { var id = crewIdOf(c); if (id) crew[id] = 1; });
+  var list = tjCrewAll(), crew = {}, known = 0;
+  list.forEach(function (c) { var id = crewIdOf(c); if (id) { crew[id] = 1; known++; } });
   return (rows || []).filter(function (r) {
     if (r.tech_id === me) return true;
+    /* "Belongs to nobody" can only be judged once the crew is actually
+       known. Before that, an unknown key might be Dan's, and guessing in
+       his favour would put Dan's work on this screen. Strict until then. */
+    if (!known) return false;
     return !r.tech_id || !crew[r.tech_id];
   });
 }
@@ -8022,7 +8070,7 @@ function viewRepEdit() {
           '<div style="font-size:15px;line-height:1.5;margin-bottom:10px">Invoice done. Want to add an estimate for more work while you are here?</div>' +
           '<button class="btn btn-ghost" data-act="fj-to-estimate" style="width:100%;margin-bottom:6px">Yes \u2014 add an estimate</button>' +
           (jk
-            ? '<button class="btn btn-gold btn-primary" data-act="cl-open" data-arg="' + esc(jk) + '" style="width:100%">No \u2014 charge now</button>' +
+            ? '<button class="btn btn-gold btn-primary" data-act="cl-charge" data-arg="' + esc(jk + '|' + clPos(st.rep && st.rep.total)) + '" style="width:100%">No \u2014 charge now</button>' +
               '<div style="font-size:12px;color:var(--muted);margin-top:8px">Straight to the money. You are never made to write an estimate.</div>'
             : '<div style="font-size:12.5px;color:var(--muted)">This invoice is not attached to a job on your day, so the money is taken on that job\u2019s closing.</div>') +
         '</div>';
@@ -13624,7 +13672,16 @@ root.addEventListener('click', function (e) {
       render();
       break;
     }
-    case 'cl-method': if (state.closing) { state.closing.method = state.closing.method === arg ? '' : arg; render(); } break;
+    case 'cl-method': if (state.closing) {
+      var cm = state.closing;
+      cm.method = cm.method === arg ? '' : arg;
+      /* He tapped Card because he is taking a card. If nobody filled in what
+         he is taking, the full price is the obvious answer \u2014 and without it
+         the Square button has nothing to charge and stays hidden, which is
+         how "I pressed Card and nothing happened" happens. */
+      if (cm.method === 'card' && !clPos(cm.collected) && clPos(cm.job_total)) cm.collected = String(clPos(cm.job_total));
+      render();
+    } break;
     case 'cl-square': sqCharge(); break;
     case 'cl-sqlink': sqMakeLink(); break;
     case 'sq-connect': { var si = root.querySelector('#sq_tok'); if (si) sqStore().tok = si.value; sqConnect(); break; }
@@ -13648,6 +13705,27 @@ root.addEventListener('click', function (e) {
     }
     case 'fix-all': state.fixFrom = state.view; state.view = 'fixall'; try { window.scrollTo(0, 0); } catch (e) {} render(); break;
     case 'fix-back': state.view = state.fixFrom || 'home'; state.fixFrom = ''; render(); break;
+    /* He tapped CHARGE. He came to take a card, not to answer questions
+       about how the job ended \u2014 the invoice he just wrote already said
+       that. Straight to the money, with the amount filled and Square on
+       the screen. He can still walk back through the rest if he wants. */
+    case 'cl-charge': {
+      var cut = String(arg).lastIndexOf('|');
+      var jobK = cut < 0 ? String(arg) : String(arg).slice(0, cut);
+      var amt = cut < 0 ? 0 : clPos(String(arg).slice(cut + 1));
+      clOpenForm(jobK);
+      var cc2 = state.closing;
+      if (cc2) {
+        cc2.status = 'paid';
+        if (amt > 0) {
+          if (!clPos(cc2.job_total)) cc2.job_total = String(amt);
+          if (!clPos(cc2.collected)) cc2.collected = String(amt);
+        }
+        cc2.step = clPos(cc2.collected) > 0 ? 'method' : 'money';
+        render();
+      }
+      break;
+    }
     case 'as-tech': {
       if (!canAsTech()) break;
       asTechSet(arg === 'auto' ? null : arg === '1');
@@ -14658,6 +14736,71 @@ function fjStart(kind, customer) {
   state.view = 'fjsetup'; render(); try { window.scrollTo(0, 0); } catch (_) {}
 }
 var FJ_V = [['good', 'Good', 'var(--ok)'], ['monitor', 'Monitor', 'var(--monitor)'], ['bad', 'Needs attention', 'var(--defect)'], ['na', 'N/A', 'var(--muted)']];
+/* What he has already put on this one, as removable lines. */
+function fjChosen(f) {
+  var all = FJ_AREAS.concat(f.custom || []), by = {};
+  all.forEach(function (a) { by[a.id] = a; });
+  return (f.areas || []).map(function (id) { return by[id] || { id: id, name: id }; });
+}
+/* Offered as he types: what the business quotes, then the standard list.
+   Ranked by how often it has actually been sold, because that is what he
+   is most likely to be reaching for. */
+function fjSuggest(f, q) {
+  q = String(q || '').toLowerCase().trim();
+  var chosen = {};
+  (f.areas || []).forEach(function (id) { chosen[id] = 1; });
+  var out = [], seen = {};
+  function push(id, name, note) {
+    var k = String(name).toLowerCase();
+    if (seen[k] || chosen[id]) return;
+    seen[k] = 1; out.push({ id: id, name: name, note: note || '' });
+  }
+  (catStore().rows || []).forEach(function (r) {
+    if (q && String(r.name).toLowerCase().indexOf(q) < 0) return;
+    push('cat:' + r.name, r.name, catNote(r));
+  });
+  FJ_AREAS.concat(f.custom || []).forEach(function (a) {
+    if (q && String(a.name).toLowerCase().indexOf(q) < 0) return;
+    push(a.id, a.name, '');
+  });
+  return out.slice(0, q ? 8 : 6);
+}
+function fjPickHTML(f) {
+  var q = f.q || '', picked = fjChosen(f), sug = fjSuggest(f, q);
+  var exact = sug.some(function (x) { return String(x.name).toLowerCase() === q.toLowerCase(); });
+  return '<div class="card">' +
+      '<div style="font-size:16px;line-height:1.5;margin-bottom:10px">' +
+        (f.kind === 'invoice' ? 'What work did we do?' : 'What did we come for?') + '</div>' +
+      '<input id="fj_q" value="' + esc(q) + '" placeholder="Start typing \u2014 chase cover, sweep, liner\u2026" ' +
+        'style="width:100%;box-sizing:border-box;font-size:16px;padding:12px;border:1px solid var(--rule);border-radius:10px;background:transparent;color:inherit">' +
+      (q && !exact
+        ? '<button class="btn btn-gold btn-primary" data-act="fj-add-typed" style="width:100%;margin-top:8px">Add \u201c' + esc(q) + '\u201d</button>'
+        : '') +
+      (sug.length
+        ? '<div style="margin-top:10px;border-top:1px solid var(--line)">' +
+            sug.map(function (x) {
+              return '<button data-act="fj-pick" data-arg="' + esc(x.id) + '" ' +
+                'style="display:flex;width:100%;justify-content:space-between;gap:10px;align-items:baseline;text-align:left;' +
+                'padding:11px 2px;border:0;border-bottom:1px solid var(--line);background:none;color:inherit;font:inherit">' +
+                '<span style="font-size:15px">' + esc(x.name) + '</span>' +
+                (x.note ? '<span style="color:var(--gold);font-size:11.5px;font-family:var(--mono);white-space:nowrap">' + esc(x.note) + '</span>' : '') +
+              '</button>';
+            }).join('') +
+          '</div>'
+        : (q ? '<div style="color:var(--muted);font-size:13px;margin-top:10px">Nothing like that yet \u2014 add it and it becomes one.</div>' : '')) +
+    '</div>' +
+    (picked.length
+      ? '<div class="eyebrow" style="margin:14px 2px 8px">On this one \u00b7 ' + picked.length + '</div>' +
+        picked.map(function (a) {
+          return '<div class="card" style="padding:12px 14px">' +
+            '<div class="row" style="align-items:center;gap:10px">' +
+              '<span style="flex:1;font-size:15px;font-weight:650">' + esc(a.name) + '</span>' +
+              '<button data-act="fj-pick" data-arg="' + esc(a.id) + '" ' +
+                'style="border:0;background:none;color:var(--muted);font-size:20px;line-height:1;padding:0 4px">\u00d7</button>' +
+            '</div></div>';
+        }).join('')
+      : '<div class="card" style="color:var(--muted);font-size:13.5px">Nothing on it yet. Type what you did and tap it.</div>');
+}
 function viewFjSetup() {
   var f = state.fj; if (!f) { state.view = 'home'; return viewHome(); }
   var K = FJ_KINDS[f.kind];
@@ -14673,14 +14816,12 @@ function viewFjSetup() {
           '<div style="font-weight:700;font-size:17px">' + esc(s.name) + '</div>' + (s.sub ? '<div style="color:var(--muted);font-size:13px">' + esc(s.sub) + '</div>' : '') + '</button>';
       }).join('');
   } else {
-    body = '<div class="card"><div style="font-size:16px;line-height:1.5">' + (f.kind === 'invoice' ? 'What work did we do? Tap everything that applies.' : 'What did we come for? Tap everything that applies.') + '</div></div>' +
-      '<div class="row" style="flex-wrap:wrap;gap:8px;margin-bottom:8px">' +
-      FJ_AREAS.concat(f.custom || []).map(function (a) {
-        var on = (f.areas || []).indexOf(a.id) >= 0;
-        return '<button class="btn ' + (on ? 'btn-gold btn-primary' : 'btn-ghost') + '" data-act="fj-area" data-arg="' + a.id + '" style="flex:1 1 46%;min-height:56px;padding:6px 10px;font-size:14px;text-align:center">' + esc(a.name) + '</button>';
-      }).join('') +
-      '<button class="btn btn-ghost" data-act="fj-own" style="flex:1 1 46%;min-height:56px;padding:6px 10px;font-size:14px;text-align:center;border-style:dashed">+ Something else</button>' +
-      '</div>';
+    /* A wall of fixed squares breaks on the very thing this app is for: it
+       LEARNS, so the list only grows. Eighteen squares today, eighty-four
+       once the catalogue has filled, and nobody finds anything. So it is a
+       line he writes, with what the business actually quotes offered as he
+       types. New words become new items \u2014 that is how the catalogue grows. */
+    body = fjPickHTML(f);
   }
   var ready = f.kind === 'inspection' ? !!f.system : (f.areas || []).length > 0;
   return '<div class="app">' +
