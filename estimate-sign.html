@@ -334,6 +334,12 @@ canvas{width:100%;height:200px;background:#fbfaf7;border:1.5px dashed #c9c2b5;bo
     if (doc.kind === 'report' && !isInvoice()) return '';
     var due = amountDue();
     if (!(due > 0)) return '';
+    /* Already paid \u2014 whether on this page or on the technician's phone.
+       An invoice that has been settled must never ask for money again. */
+    if (doc.paid_at || num(doc.paid_amount) > 0) {
+      return '<div class="card pay" style="border-color:#2f7a52"><p class="q" style="margin:0;color:#2f7a52">\u2713 Paid \u2014 thank you</p>' +
+        '<p class="h" style="margin:6px 0 0">' + esc(money(num(doc.paid_amount) || due)) + ' received. Your receipt comes from Square.</p></div>';
+    }
     if (PAY.done) {
       return '<div class="card pay" style="border-color:#2f7a52"><p class="q" style="margin:0;color:#2f7a52">\u2713 Paid \u2014 thank you</p>' +
         '<p class="h" style="margin:6px 0 0">' + esc(money(payTotal())) + ' on the card. Your receipt comes from Square.</p></div>';
