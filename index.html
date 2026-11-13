@@ -1347,7 +1347,7 @@ var M = 43, PW = 612, PH = 792, CONTENT = PW - M * 2;
 var APP_DIR = (/^https?:$/.test(location.protocol) && location.hostname) ? location.origin + location.pathname.replace(/[^\/]*$/, '') : 'https://aiopro1701-del.github.io/aiopro-inspect/';
 var IS_BETA = /\/beta\/$/.test(APP_DIR);
 /* Bumped on every deploy, so a screenshot of Settings says which build is on the phone. */
-var APP_BUILD = '2026-11-15 06:40 UTC';
+var APP_BUILD = '2026-11-15 08:15 UTC';
 /* Refael's field knowledge — the bot answers from this. Kept word-for-word stable so it is cached (cheap). */
 var AIO_KB = "AIO PRO CHIMNEY \u2014 FIELD KNOWLEDGE (from the owner, Refael Maman). Use this to answer the technician the way Refael would.\n\nWHO WE ARE\n- AIOPRO LLC, trading as AIO Pro Chimney. 1505 North and South Rd, St. Louis, MO 63130. Phone (314) 379-2871. Email Aiopro1701@gmail.com. aioprochimney.com.\n- Licensed general contractor, insured, CSIA member, NCSG member, BBB accredited. Greater St. Louis; east as far as Belleville and O'Fallon, IL. A Kansas City employee can take Kansas City jobs.\n- Owner: Refael Maman. The office = Refael.\n\nWHO USES THE APP\n- Owner (Refael): everything.\n- Technician: visits the house, finds the problem, prices it, presents it, closes it. Most of the work is technician and customer face to face. The technician is still learning and calls Refael on most jobs; that is fine and expected.\n- Installer: does the booked job. Needs to know when and where, what to bring, and what the technician found (photos + scope).\n\nWHAT THE TECHNICIAN MAY AND MAY NOT SAY\n- Prices: he may give prices and approximate (+/-) ranges, and he may adjust a price or give a discount (see Selling).\n- Dates: never promise a date. Scheduling always goes through the office: \"Refael will call you to book it.\"\n- Warranty: never promise warranty terms. \"The warranty is written on the estimate; Refael confirms it.\"\n- If he does not know something: say \"Let me confirm that with Refael\" and call him. Never guess about safety, code, or warranty.\n- Never run down another company. Never argue with the customer.\n\nMONEY RULES\n- Minimum service charge is usually $49. Sometimes the estimate visit is free, but not often.\n- Deposit: 20% to 40% of the job, depending on the size of the job. Balance on completion unless agreed otherwise.\n- Estimate prices hold for 30 days.\n- Price goes up with: roof pitch (steep = harder/slower, may need extra safety gear), job difficulty, how hard the chimney is to reach (height, stories, trees, lift or scaffold needed), and how much material is needed (liner length, size of the chimney top, number of flues).\n- Access equipment (boom lift, scaffold) is priced as its own line so the customer sees it.\n- Anything that may change once opened up: say so in the scope notes \u2014 \"if we find more once it is opened, we stop and agree the difference with you before continuing.\"\n\nHOW REFAEL WRITES AN ESTIMATE\n- One scope by default: the work he recommends. Add Option B (or C) ONLY when the customer has a real choice (keep the stove vs. new stove, stainless vs. galvanized, vent-free vs. vented gas). Each option has its own full total. \"Choose one \u2014 you do not need both.\"\n- Add-ons the customer can take or leave (a vent cap, a second liner) are listed separately as optional.\n- Each line: a clear name, 3-7 short scope lines specific to this house (sizes, lengths, where), and a price.\n- Explain the cause in plain words (\"a square damper cannot seal a round liner\"), then the fix. Safety items first and clearly: \"This one should not wait.\"\n- Scope notes say what is NOT included and what the customer prepares.\n- Tone: plain, confident, respectful. No jargon, no code numbers, no sales filler.\n\nSELLING (coach the technician)\n- Before the price: show the customer the photos, explain what is wrong, why it happened, and what happens if it waits.\n- Present the recommended scope first, with the total. If there is a real choice, present Option A and Option B side by side.\n- \"It's too expensive\": 1) Acknowledge (\"I understand, it's a real number.\"). 2) Ask (\"What matters most to you \u2014 the lowest price today, or fixing it so it doesn't come back?\" / \"What budget did you have in mind?\"). 3) Advise:\n  a) Split it: the safety / water-stopping part now, the rest later (becomes Option A / B).\n  b) Show the value: materials, labor, cleanup, photos, written warranty, licensed and insured, CSIA/NCSG.\n  c) Deposit 20-40% now, balance when done.\n  d) A discount is a closing tool, tied to a decision today or booking now. Give it once, clearly (\"If we book it today I can take $X off\").\n- \"I need to think about it\": ask what is holding them back; offer to email the estimate now with the Sign button; tell them Refael will follow up.\n- \"I'm getting other quotes\": that's fine; point to the written scope and warranty so they compare the same work. Never bash competitors.\n- Close: ask for the decision. \"Shall I send it to your email so you can sign it on your phone?\"\n\nSAFETY \u2014 STOP AND TELL THE CUSTOMER\n- Gas leak found (bubbles on leak test, smell): the appliance must not be used until repaired; if they smell gas, shut the supply and call the gas utility. Call Refael.\n- Blocked flue (debris, animal nest, collapsed tile) on a furnace or water heater: do not operate that appliance until cleared/lined. CO risk.\n- Unlined or badly cracked flue on a wood fireplace: do not use until repaired.\n- Disconnected or rusted-through vent connector: do not operate.\n- Creosote glaze or heavy buildup: no fires until swept.\n- Say it in one calm sentence, write it on the estimate, and call Refael.\n\nWHAT TO CHECK AND PHOTOGRAPH (standard order, bottom up)\n- First find out what system it is (wood fireplace, gas logs in a fireplace, direct-vent gas, vent-free gas, insert/stove, furnace or water heater flue) and check only the parts that system has. Vent-free gas has no flue: no damper, liner or roof checks.\n- Level 1: inside the home and from the ground only \u2014 no roof or attic. Level 2 adds the roof and the top when it is safe, and a camera scan of the flue. We do not go into attics, basements or crawl spaces.\n1. Front of the house (cover photo), then the appliance / fireplace.\n2. Firebox: cracks, gaps in joints, missing panels.\n3. Damper and throat: opens/closes and seals; damper type vs. flue shape.\n4. Smoke chamber: voids, rough/unparged brick, creosote.\n5. Flue and liner: camera scan if possible; clay tile cracks, offsets, missing mortar; liner size and material; debris.\n6. Appliance vents (furnace/water heater): connector condition, slope, clearance (single-wall 6\", B-vent 1\"), draft.\n8. Roof and exterior: flashing, cricket (chimney wider than 30\"), crown cracks, cap/spark arrestor, chase cover rust, brick and mortar, height (3-2-10 rule).\n9. Measurements that set the price: flue size (inside dimensions), liner length (roofline to appliance + above the top), chimney top size (for cap/chase cover), number of flues, stories, roof pitch, access.\n\nHOW TO MEASURE (short)\n- Liner length: from the appliance connection (or smoke chamber) to the top of the flue tile + about 1 ft; count stories (about 10 ft each) if you cannot measure directly.\n- Flue size: inside width x depth of the clay tile (or diameter for round); the liner is sized to the appliance outlet.\n- Chase cover / cap: outside length x width of the top (crown or chase), plus the flue tile height above the crown.\n- Chimney height above the roof: at least 3 ft above where it passes the roof and 2 ft higher than anything within 10 ft.\n\nWHEN TO CALL REFAEL\n- Any safety hazard, any job over a few thousand dollars, anything not in the price list, anything structural, any date/warranty question, any customer who is unhappy, and whenever unsure.";
 /* Photos keep their real shape: height/width of an image (0.75 if unknown). */
@@ -1765,7 +1765,7 @@ function sqResume() {
    near this file: anyone can read it. The token lives in the office
    database instead, where only a function running as the owner can see
    it, and the phone just asks that function for a link. */
-function sqStore() { return state.sq || (state.sq = { connected: null, busy: false, err: '', link: '', tok: '', msg: '' }); }
+function sqStore() { return state.sq || (state.sq = { connected: null, busy: false, err: '', link: '', tok: '', msg: '', sheet: false, orderId: '', linkId: '', amount: 0 }); }
 
 function sqStatus() {
   var q = sqStore(), key = sendKey(); if (!key || q.busy) return;
@@ -1803,7 +1803,11 @@ function sqMakeLink() {
     p_what: (c.title || 'Chimney work') + (c.customer ? ' — ' + c.customer : '') })
     .then(function (r) {
       q.busy = false; q.link = (r && r.url) || '';
+      q.orderId = (r && r.order_id) || '';
+      q.linkId = (r && r.id) || '';
+      q.amount = amt;
       if (!q.link) q.err = 'Square did not give a link back.';
+      else { q.sheet = true; }
       render();
     })
     .catch(function (err) { q.busy = false; q.err = (err && err.message) || 'Could not make the link.'; render(); });
@@ -2651,34 +2655,108 @@ function viewClosing() {
             '<button class="btn btn-ghost" data-act="cl-less" data-arg="on" style="width:100%;margin-top:10px;font-size:13px;padding:9px">He paid less than that</button>') +
       '</div>';
   }
+  /* Taking the money. He was being thrown out to Square with a bare number
+     and no way to tell what the customer was paying for, and he had to find
+     his own way back. Now the whole decision is made here \u2014 what it is for,
+     the tip, Square's cut \u2014 and the card page opens inside the app. */
+  function clPayLines(c) {
+    var k = mcKey(c.customer, c.address), cu = k ? mcFind(k) : null;
+    var doc = null;
+    if (cu) {
+      (cu.docs || []).forEach(function (d) {
+        if (d.kind === 'invoice' && (!doc || String(d.created_at) > String(doc.created_at))) doc = d;
+      });
+    }
+    var items = (doc && doc.data && doc.data.lineItems) || [];
+    return items.filter(function (it) {
+      return it && (String(it.description || '').trim() || clPos(it.amount));
+    }).map(function (it) {
+      return { name: String(it.description || 'Work'), amt: clPos(it.amount) || (clPos(it.qty) * clPos(it.unitPrice)) };
+    });
+  }
+  function clPayFee(c) {
+    if (c.feeOff) return 0;
+    var base = clPos(c.collected); if (base <= 0) return 0;
+    var o = c.method === 'card' ? { r: 0.026, f: 0.15 } : { r: 0.033, f: 0.30 };
+    return Math.round((((base + o.f) / (1 - o.r)) - base) * 100) / 100;
+  }
+  function clPayTotal(c) { return Math.round((clPos(c.collected) + clPos(c.tip) + clPayFee(c)) * 100) / 100; }
   function stepMethod() {
+    var lines = clPayLines(c), due = clPos(c.collected), fee = clPayFee(c), tip = clPos(c.tip);
+    function row(l, v, muted) {
+      return '<div class="row" style="justify-content:space-between;gap:10px;align-items:baseline;padding:4px 0">' +
+        '<span style="flex:1;' + (muted ? 'color:var(--muted);font-size:13px' : 'font-size:14px') + '">' + l + '</span>' +
+        '<span style="flex:0 0 auto;' + (muted ? 'color:var(--muted);font-size:13px' : 'font-size:14px') + '">' + v + '</span></div>';
+    }
     return '<div class="card">' +
-        '<div class="row" style="gap:6px;margin:0 0 12px;flex-wrap:wrap">' + CL_METHODS.map(mBtn).join('') + '</div>' +
-        (clPos(c.collected) > 0 || c.method === 'card'
-          ? (clPos(c.collected) <= 0
-              ? '<div class="field"><label>How much are you charging?</label>' +
-                  '<input data-model="cls.collected" inputmode="decimal" value="' + esc(c.collected || '') + '" placeholder="0.00"></div>'
+        '<div class="eyebrow">What he is paying for</div>' +
+        (lines.length
+          ? lines.map(function (l) { return row(esc(l.name), money(l.amt)); }).join('')
+          : row(esc(clTidyName(c.title) || 'The work'), money(due))) +
+        (tip ? row('Tip', '+ ' + money(tip), true) : '') +
+        (fee ? row('Card processing', '+ ' + money(fee), true) : '') +
+        '<div class="row" style="justify-content:space-between;align-items:baseline;padding:9px 0 2px;border-top:2px solid var(--gold);margin-top:5px">' +
+          '<span style="flex:1;font-weight:700">He pays</span>' +
+          '<span style="flex:0 0 auto;font-weight:700;font-size:19px;color:var(--ember)">' + money(clPayTotal(c)) + '</span></div>' +
+      '</div>' +
+
+      '<div class="card">' +
+        '<div class="eyebrow">A tip, before he pays</div>' +
+        '<div class="row" style="gap:6px;flex-wrap:wrap;margin-top:8px">' +
+          CL_TIPS.map(function (pt) {
+            var on = clTipIs(c, pt);
+            return '<button class="btn ' + (on ? 'btn-gold btn-primary' : 'btn-ghost') + '" data-act="cl-tip" data-arg="' + pt + '" ' +
+              'style="flex:1 1 76px;min-width:0;padding:11px 4px;line-height:1.25">' +
+              '<div style="font-weight:700;font-size:15px">' + pt + '%</div>' +
+              '<div style="font-size:11.5px;opacity:.75">' + money(clTipFor(c, pt)) + '</div></button>';
+          }).join('') +
+          '<button class="btn ' + (!tip ? 'btn-gold btn-primary' : 'btn-ghost') + '" data-act="cl-tip" data-arg="none" style="flex:1 1 76px;padding:11px 4px">None</button>' +
+        '</div>' +
+        '<div class="row" style="gap:6px;margin-top:8px">' +
+          '<button class="btn ' + (c.feeOff ? 'btn-ghost' : 'btn-gold btn-primary') + '" data-act="cl-fee-off" data-arg="0" style="flex:1;font-size:13px">He pays the card fee</button>' +
+          '<button class="btn ' + (c.feeOff ? 'btn-gold btn-primary' : 'btn-ghost') + '" data-act="cl-fee-off" data-arg="1" style="flex:1;font-size:13px">We absorb it</button>' +
+        '</div>' +
+      '</div>' +
+
+      '<div class="card">' +
+        '<div class="eyebrow">How is he paying?</div>' +
+        '<div class="row" style="gap:6px;margin:8px 0 0;flex-wrap:wrap">' + CL_METHODS.map(mBtn).join('') + '</div>' +
+        (c.method === 'card'
+          ? (sqPhone()
+              ? '<button class="btn btn-gold" data-act="cl-square" style="width:100%;margin-top:11px;min-height:54px;font-size:16px">Tap the card \u00b7 ' + money(clPayTotal(c)) + '</button>'
               : '') +
-            (sqPhone()
-              ? '<button class="btn btn-ghost" data-act="cl-square" style="width:100%;margin:0 0 6px">Take ' + money(clPos(c.collected)) + ' on the card with Square</button>'
-              : '') +
-            '<button class="btn btn-ghost" data-act="cl-sqlink" style="width:100%;margin:0 0 6px">' +
-              (sqStore().busy && !sqStore().link ? 'Asking Square…' : 'Send him a link to pay instead') + '</button>' +
-            (sqStore().link
-              ? '<div class="field" style="margin-bottom:6px"><label>His payment link — send him this</label>' +
-                  '<input id="sq_link" readonly value="' + esc(sqStore().link) + '" onclick="this.select()"></div>'
-              : '') +
-            (sqStore().err ? '<div style="color:var(--defect);font-size:12px;margin-bottom:8px">' + esc(sqStore().err) + '</div>' : '') +
-            '<div style="font-size:12px;color:var(--muted);margin-bottom:12px">The card in your hand costs 2.6% + 15¢. A link costs 3.3% + 30¢, so use it only when he is not in front of you.</div>'
+            '<button class="btn btn-gold" data-act="cl-sqlink" style="width:100%;margin-top:8px;min-height:54px;font-size:16px"' + (sqStore().busy ? ' disabled' : '') + '>' +
+              (sqStore().busy ? 'Asking Square\u2026' : 'Show him a page to pay \u00b7 ' + money(clPayTotal(c))) + '</button>' +
+            '<div style="font-size:12px;color:var(--muted);margin-top:8px">The page opens here, inside the app. He pays on your phone and you stay where you are.</div>' +
+            (sqStore().err ? '<div style="color:var(--defect);font-size:12.5px;margin-top:8px">' + esc(sqStore().err) + '</div>' : '')
           : '') +
-        '<label style="color:var(--muted);font-size:13px">Did he split it — part another way?</label>' +
+        '<label style="color:var(--muted);font-size:13px;display:block;margin-top:14px">Did he split it \u2014 part another way?</label>' +
         '<div class="row" style="gap:6px;margin:4px 0 4px;flex-wrap:wrap">' + CL_METHODS.map(m2Btn).join('') + '</div>' +
         (c.method2
           ? '<div class="field"><label>How much of it came that way</label>' +
               '<input data-model="cls.amount2" inputmode="decimal" value="' + esc(c.amount2 || '') + '"></div>' +
             '<div style="font-size:12px;color:var(--muted);margin:-6px 0 4px">' + esc(clSplitLine(c)) + '</div>'
-          : '<div style="font-size:12px;color:var(--muted);margin:0">Leave this alone unless the customer split it — say 450 in cash and the rest on a card.</div>') +
+          : '<div style="font-size:12px;color:var(--muted);margin:0">Leave this alone unless he split it \u2014 say 450 in cash and the rest on a card.</div>') +
       '</div>';
+  }
+  /* The card page, in a sheet over the app. Square render theirs in a frame,
+     so he never leaves \u2014 and when it is done he says so and the closing is
+     already filled in. */
+  function clPaySheetHTML() {
+    var q = sqStore();
+    if (!q.sheet || !q.link) return '';
+    return '<div style="position:fixed;inset:0;z-index:90;background:rgba(10,12,16,.72);display:flex;flex-direction:column">' +
+      '<div style="flex:0 0 auto;padding:calc(env(safe-area-inset-top,0px) + 10px) 14px 10px;display:flex;gap:10px;align-items:center;color:var(--ivory)">' +
+        '<div style="flex:1;min-width:0"><div style="font-weight:700;font-size:15px">Card payment</div>' +
+          '<div style="font-family:var(--mono);font-size:11.5px;opacity:.7">' + money(q.amount) + ' \u00b7 on this phone</div></div>' +
+        '<button class="btn btn-ghost" data-act="cl-pay-close" style="flex:0 0 auto;min-height:40px;padding:0 14px;color:var(--ivory);border-color:rgba(236,237,239,.3)">Close</button>' +
+      '</div>' +
+      '<iframe src="' + esc(q.link) + '" title="Square card payment" ' +
+        'style="flex:1;width:100%;border:0;background:#fff;border-radius:14px 14px 0 0"></iframe>' +
+      '<div style="flex:0 0 auto;background:var(--mortar);padding:10px 14px calc(env(safe-area-inset-bottom,0px) + 10px);display:flex;gap:8px">' +
+        '<button class="btn btn-gold" data-act="cl-pay-done" style="flex:2">He paid ' + money(q.amount) + '</button>' +
+        '<button class="btn btn-ghost" data-act="cl-pay-fail" style="flex:1">It did not go through</button>' +
+      '</div></div>';
   }
   function stepTip() {
     var base = clTipOn(c), custom = clTipCustom(c), none = !clPos(c.tip);
@@ -2842,7 +2920,7 @@ function viewClosing() {
     : stepReview();
 
   var pct = Math.round(((at + 1) / list.length) * 100);
-  return '<div class="app">' +
+  return clPaySheetHTML() + '<div class="app">' +
     '<div class="topbar"><button class="iconbtn" data-act="cl-prev"' + (c.busy ? ' disabled' : '') + '>‹</button>' +
       '<div style="flex:1"><h1>' + (c.wasClosed ? 'Put this closing right' : 'Close this job') + '</h1><div class="sub">' + esc(c.title || '') + '</div></div></div>' +
     '<div class="screen">' +
@@ -14026,6 +14104,27 @@ root.addEventListener('click', function (e) {
       }
       cp.err = ''; render();
       break;
+    }
+    case 'cl-fee-off': if (state.closing) { state.closing.feeOff = arg === '1'; render(); } break;
+    case 'cl-pay-close': { var qc = sqStore(); qc.sheet = false; render(); break; }
+    case 'cl-pay-fail': {
+      var qf = sqStore(); qf.sheet = false; qf.link = '';
+      if (state.closing) state.closing.msg = 'Nothing was taken. Try again, or take it another way.';
+      render(); break;
+    }
+    case 'cl-pay-done': {
+      /* He watched it go through on the Square page in front of him. The
+         closing is filled in from the figures that were on screen, and he
+         is put back on the summary to save it. */
+      var qd = sqStore(), cd = state.closing;
+      qd.sheet = false;
+      if (cd) {
+        cd.method = 'card';
+        cd.paid_total = String(qd.amount || '');
+        cd.msg = 'Paid ' + money(qd.amount) + ' on the card.';
+        cd.step = 'review'; cd.visit = false;
+      }
+      render(); break;
     }
     case 'cl-tip': {
       var ct = state.closing; if (!ct) break;
